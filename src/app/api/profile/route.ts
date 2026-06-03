@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 
 export async function POST(request: Request) {
+  // Get the authenticated user via the normal client
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -11,7 +13,13 @@ export async function POST(request: Request) {
 
   const { handicap_index } = await request.json()
 
-  const { error } = await supabase
+  // Use service role to bypass RLS
+  const admin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  )
+
+  const { error } = await admin
     .from('profiles')
     .upsert({
       id: user.id,
