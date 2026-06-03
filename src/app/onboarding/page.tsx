@@ -1,8 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { formatHandicap } from '@/lib/golf'
 
 function hcpLabel(v: number) {
   if (v <= 5)  return { level: 'Jugador avanzado', sub: 'Índice WHS bajo' }
@@ -31,14 +29,14 @@ export default function OnboardingPage() {
     }
     setLoading(true)
     setError('')
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/login'; return }
 
-    const { error: dbError } = await supabase
-      .from('profiles')
-      .upsert({ id: user.id, name: user.user_metadata?.name ?? user.email?.split('@')[0] ?? 'Jugador', handicap_index: value, avatar_color: '#2a6fdb' })
-
-    if (dbError) { setError(dbError.message || 'Error al guardar.'); setLoading(false); return }
+    const res = await fetch('/api/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ handicap_index: value }),
+    })
+    const json = await res.json()
+    if (!res.ok) { setError(json.error || 'Error al guardar.'); setLoading(false); return }
     window.location.href = '/'
   }
 
