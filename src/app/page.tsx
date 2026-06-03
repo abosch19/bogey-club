@@ -51,7 +51,7 @@ export default async function HomePage() {
 
   type RecentRound = { id: string; date: string; status: string; courses: { name: string; par: number } }
   const recentRounds = (recentRoundPlayers ?? [])
-    .map((rp) => rp.rounds as RecentRound | null)
+    .map((rp) => { const r = rp.rounds; if (!r) return null; return (Array.isArray(r) ? r[0] : r) as RecentRound })
     .filter(Boolean) as RecentRound[]
 
   // Score totals for recent rounds

@@ -30,7 +30,7 @@ export default async function StatsPage() {
 
   type RoundInfo = { id: string; date: string; status: string; courses: { name: string; par: number } }
   const completedRounds: RoundInfo[] = (roundPlayers ?? [])
-    .map((rp) => rp.rounds as RoundInfo | null)
+    .map((rp) => { const r = rp.rounds; if (!r) return null; return (Array.isArray(r) ? r[0] : r) as RoundInfo })
     .filter(Boolean) as RoundInfo[]
 
   const completedRoundIds = completedRounds.map((r) => r.id)
