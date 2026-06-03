@@ -1,190 +1,245 @@
 import Link from 'next/link'
-import { Bell, MapPin, Cloud, ChevronRight, Trophy, Flag } from 'lucide-react'
+import { redirect } from 'next/navigation'
+import { ChevronRight, Flag, Plus, Dumbbell, Trophy } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
 import { TabBar } from '@/components/ui/tab-bar'
-import { Avatar } from '@/components/ui/avatar'
-import { Pill } from '@/components/ui/pill'
-import { PLAYERS, ROUND, LIGA, FEED } from '@/lib/mock-data'
+import { formatHandicap } from '@/lib/golf'
 
-export default function HomePage() {
-  const currentPlayer = PLAYERS[0] // Marcos
-  const filledHoles = ROUND.currentHole - 1
-  const totalHoles = 18
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+export default async function HomePage() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) redirect('/onboarding')
+
+  // Fetch active round where user is a player
+  const { data: activeRoundPlayer } = await supabase
+    .from('round_players')
+    .select('round_id, rounds(id, date, status, courses(name, holes_count))')
+    .eq('profile_id', user.id)
+    .eq('rounds.status', 'active')
+    .not('rounds', 'is', null)
+    .limit(1)
+    .maybeSingle()
+
+  const activeRound = activeRoundPlayer?.rounds as {
+    id: string
+    date: string
+    status: string
+    courses: { name: string; holes_count: number }
+  } | null | undefined
+
+  // Fetch completed rounds (last 3)
+  const { data: recentRoundPlayers } = await supabase
+    .from('round_players')
+    .select('round_id, rounds(id, date, status, courses(name, par))')
+    .eq('profile_id', user.id)
+    .eq('rounds.status', 'completed')
+    .order('round_id', { ascending: false })
+    .limit(3)
+
+  type RecentRound = { id: string; date: string; status: string; courses: { name: string; par: number } }
+  const recentRounds = (recentRoundPlayers ?? [])
+    .map((rp) => rp.rounds as RecentRound | null)
+    .filter(Boolean) as RecentRound[]
+
+  // Score totals for recent rounds
+  const recentRoundIds = recentRounds.map((r) => r.id)
+  const { data: recentScores } = recentRoundIds.length
+    ? await supabase
+        .from('scores')
+        .select('round_id, strokes')
+        .eq('profile_id', user.id)
+        .in('round_id', recentRoundIds)
+    : { data: [] }
+
+  const scoreTotals: Record<string, number> = {}
+  for (const s of recentScores ?? []) {
+    scoreTotals[s.round_id] = (scoreTotals[s.round_id] ?? 0) + (s.strokes ?? 0)
+  }
+
+  // Count completed rounds
+  const { count: totalCompleted } = await supabase
+    .from('round_players')
+    .select('*', { count: 'exact', head: true })
+    .eq('profile_id', user.id)
+
+  // Active league
+  const { data: leagueMembership } = await supabase
+    .from('league_players')
+    .select('league_id, leagues(id, name, active)')
+    .eq('profile_id', user.id)
+    .eq('leagues.active', true)
+    .limit(1)
+    .maybeSingle()
+
+  const activeLeague = leagueMembership?.leagues as { id: string; name: string; active: boolean } | null | undefined
+
+  const firstName = profile.name?.split(' ')[0] ?? 'Jugador'
+  const initials = (profile.name ?? 'U')
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
-      {/* Safe area + header */}
       <div style={{ paddingTop: 'max(54px, env(safe-area-inset-top))' }}>
         {/* Header */}
         <div className="flex items-center justify-between px-[14px] mb-4">
           <div className="flex items-center gap-2">
-            {/* Logo */}
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: '#1f8a5b' }}
-            >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#1f8a5b' }}>
               <Flag size={16} color="#fff" strokeWidth={2.5} />
             </div>
             <span className="text-[17px] font-bold tracking-tight text-[#0e1a16]">bogeyclub</span>
           </div>
-          <button className="w-9 h-9 rounded-full bg-white border border-[#e5e0d4] flex items-center justify-center shadow-sm">
-            <Bell size={18} strokeWidth={1.8} color="#0e1a16" />
-          </button>
+          <Link href="/carnet">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold"
+              style={{ backgroundColor: profile.avatar_color ?? '#1f8a5b' }}
+            >
+              {initials}
+            </div>
+          </Link>
         </div>
 
         <div className="px-[14px] space-y-3">
-
           {/* Hero dark card */}
-          <div className="rounded-[22px] p-5" style={{ backgroundColor: '#0e1a16' }}>
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-[#6b7a72] text-[13px] font-medium mb-0.5">Martes, 3 junio</p>
-                <h1 className="text-white text-[24px] font-bold leading-tight">
-                  Buenas, Marcos
-                </h1>
-                <p className="text-[#6b7a72] text-[13px] mt-1">Tienes una ronda activa</p>
-              </div>
-              {/* Weather chip */}
-              <div className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5">
-                <Cloud size={14} color="#d9eedd" />
-                <span className="text-white text-[13px] font-medium">24°</span>
-              </div>
-            </div>
+          <div className="rounded-[22px] p-5 overflow-hidden relative" style={{ backgroundColor: '#0e1a16' }}>
+            <div
+              className="absolute top-[-60px] right-[-60px] w-[200px] h-[200px] rounded-full opacity-[0.07]"
+              style={{ backgroundColor: '#1f8a5b' }}
+            />
+            <div className="relative">
+              <p className="text-[#6b7a72] text-[13px] font-medium mb-1">
+                {activeRound ? 'Tienes una ronda activa' : 'Lista para jugar'}
+              </p>
+              <h1 className="text-white text-[26px] font-black tracking-tight leading-tight mb-3">
+                Buenas, {firstName}.
+              </h1>
 
-            {/* Handicap strip */}
-            <div className="flex items-center gap-3 pt-3 border-t border-white/10">
-              <div>
-                <p className="text-[#6b7a72] text-[11px] font-medium uppercase tracking-wide">Índice</p>
-                <p className="text-white text-[22px] font-bold leading-none">18.2</p>
+              {/* Handicap chip */}
+              <div className="inline-flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 mb-5">
+                <span className="text-[#6b7a72] text-[11px] font-medium uppercase tracking-wide">HCP</span>
+                <span className="text-white text-[15px] font-bold leading-none">
+                  {formatHandicap(profile.handicap_index)}
+                </span>
               </div>
-              <div className="w-px h-8 bg-white/10" />
-              <div>
-                <p className="text-[#6b7a72] text-[11px] font-medium uppercase tracking-wide">Rondas</p>
-                <p className="text-white text-[22px] font-bold leading-none">24</p>
-              </div>
-              <div className="w-px h-8 bg-white/10" />
-              <div>
-                <p className="text-[#6b7a72] text-[11px] font-medium uppercase tracking-wide">Mejor</p>
-                <p className="text-white text-[22px] font-bold leading-none">82</p>
+
+              {/* CTA buttons */}
+              <div className="flex gap-2">
+                <Link
+                  href="/nueva-ronda"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full font-semibold text-[14px] text-white transition-opacity active:opacity-80"
+                  style={{ backgroundColor: '#1f8a5b' }}
+                >
+                  <Plus size={16} />
+                  Empezar ronda
+                </Link>
+                <Link
+                  href="/nueva-ronda?practice=true"
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-full font-semibold text-[14px] bg-white/10 text-white transition-opacity active:opacity-80"
+                >
+                  <Dumbbell size={16} />
+                  Práctica
+                </Link>
               </div>
             </div>
           </div>
 
           {/* Active round card */}
-          <div className="bg-white rounded-[22px] p-4 border border-[#e5e0d4] shadow-sm">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Pill variant="accent" size="sm">EN CURSO</Pill>
-                </div>
-                <h2 className="text-[#0e1a16] text-[15px] font-bold leading-tight">
-                  {ROUND.course.shortName}
-                </h2>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <MapPin size={12} color="#6b7a72" />
-                  <span className="text-[#6b7a72] text-[12px]">{ROUND.date} · {ROUND.mode}</span>
-                </div>
-              </div>
-              <Pill variant="default" size="sm">Hoyo {ROUND.currentHole}/18</Pill>
-            </div>
-
-            {/* Players strip */}
-            <div className="flex items-center gap-2 mb-3">
-              {PLAYERS.map((p, i) => (
-                <Avatar key={p.id} name={p.name} color={p.color} size="sm" you={i === 0} />
-              ))}
-              <span className="text-[#6b7a72] text-[12px] ml-1">
-                {PLAYERS.map(p => p.name).join(', ')}
-              </span>
-            </div>
-
-            {/* Hole progress bar */}
-            <div className="mb-3">
-              <div className="flex gap-0.5 h-2 rounded-full overflow-hidden">
-                {Array.from({ length: totalHoles }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 rounded-full"
-                    style={{
-                      backgroundColor: i < filledHoles ? '#1f8a5b' : '#e5e0d4',
-                    }}
-                  />
-                ))}
-              </div>
-              <p className="text-[#6b7a72] text-[11px] mt-1">{filledHoles} de {totalHoles} hoyos completados</p>
-            </div>
-
-            {/* CTA */}
-            <Link
-              href="/tarjeta"
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-[12px] font-semibold text-[14px] text-white transition-opacity active:opacity-80"
-              style={{ backgroundColor: '#1f8a5b' }}
-            >
-              Continuar ronda
-              <ChevronRight size={16} />
-            </Link>
-          </div>
-
-          {/* Liga card */}
-          <Link href="/liga" className="block">
-            <div className="bg-white rounded-[22px] p-4 border border-[#e5e0d4] shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: '#fdf0d5' }}
-                  >
-                    <Trophy size={16} color="#e8b75a" />
+          {activeRound && (
+            <div className="bg-white rounded-[22px] p-4 border border-[#e5e0d4]">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#d9eedd] text-[#1f8a5b] text-[11px] font-bold mb-1.5">
+                    EN CURSO
                   </div>
-                  <div>
-                    <h2 className="text-[#0e1a16] text-[14px] font-bold leading-tight">{LIGA.name}</h2>
-                    <p className="text-[#6b7a72] text-[12px]">Jornada {LIGA.roundsPlayed}/{LIGA.rounds}</p>
-                  </div>
+                  <h2 className="text-[#0e1a16] text-[16px] font-bold leading-tight">
+                    {activeRound.courses?.name ?? 'Campo'}
+                  </h2>
+                  <p className="text-[#6b7a72] text-[12px] mt-0.5">{formatDate(activeRound.date)}</p>
                 </div>
-                <ChevronRight size={16} color="#6b7a72" />
               </div>
+              <Link
+                href={`/tarjeta?round=${activeRound.id}`}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-[12px] font-semibold text-[14px] text-white transition-opacity active:opacity-80"
+                style={{ backgroundColor: '#1f8a5b' }}
+              >
+                Continuar →
+              </Link>
+            </div>
+          )}
 
-              {/* Standings preview */}
+          {/* Recent rounds */}
+          {recentRounds.length > 0 && (
+            <div>
+              <h3 className="text-[#0e1a16] text-[14px] font-bold px-1 mb-2">Últimas rondas</h3>
               <div className="space-y-2">
-                {LIGA.standings.slice(0, 3).map((entry) => (
-                  <div key={entry.player.id} className="flex items-center gap-3">
-                    <span className="text-[12px] font-bold text-[#6b7a72] w-4">{entry.pos}</span>
-                    <Avatar name={entry.player.name} color={entry.player.color} size="sm" />
-                    <span className="flex-1 text-[13px] font-medium text-[#0e1a16]">{entry.player.name}</span>
-                    <span
-                      className="text-[13px] font-bold"
-                      style={{ color: entry.pos === 1 ? '#e8b75a' : '#0e1a16' }}
+                {recentRounds.map((round) => {
+                  const total = scoreTotals[round.id]
+                  const par = round.courses?.par ?? 72
+                  const delta = total != null ? total - par : null
+                  return (
+                    <Link
+                      key={round.id}
+                      href={`/resumen?round=${round.id}`}
+                      className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4] flex items-center gap-3 block active:opacity-80"
                     >
-                      {entry.pts} pts
-                    </span>
-                  </div>
-                ))}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[#0e1a16] text-[13px] font-semibold leading-tight">
+                          {round.courses?.name ?? 'Campo'}
+                        </p>
+                        <p className="text-[#6b7a72] text-[12px]">{formatDate(round.date)}</p>
+                      </div>
+                      {total != null && (
+                        <div className="text-right">
+                          <p className="text-[#0e1a16] text-[16px] font-bold leading-none">{total}</p>
+                          {delta != null && (
+                            <p className="text-[11px] font-medium mt-0.5" style={{ color: delta <= 0 ? '#1f8a5b' : '#9b6e1a' }}>
+                              {delta > 0 ? `+${delta}` : delta === 0 ? 'E' : `${delta}`}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      <ChevronRight size={16} color="#6b7a72" />
+                    </Link>
+                  )
+                })}
               </div>
             </div>
-          </Link>
+          )}
 
-          {/* Social feed */}
-          <div>
-            <h3 className="text-[#0e1a16] text-[14px] font-bold px-1 mb-2">Actividad reciente</h3>
-            <div className="space-y-2">
-              {FEED.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4] flex items-center gap-3"
-                >
-                  <Avatar name={item.player.name} color={item.player.color} size="sm" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[#0e1a16] text-[13px] font-semibold leading-tight">
-                      {item.player.name}
-                    </p>
-                    <p className="text-[#6b7a72] text-[12px] truncate">{item.action}</p>
-                    <p className="text-[#6b7a72] text-[11px]">{item.detail}</p>
-                  </div>
-                  <span className="text-[#6b7a72] text-[11px] flex-shrink-0">{item.time}</span>
-                </div>
-              ))}
+          {/* Liga shortcut */}
+          <Link
+            href="/liga"
+            className="bg-white rounded-[16px] p-4 border border-[#e5e0d4] flex items-center gap-3 block active:opacity-80"
+          >
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f6e6c4' }}>
+              <Trophy size={20} color="#9b6e1a" />
             </div>
-          </div>
-
+            <div className="flex-1">
+              <p className="text-[#0e1a16] text-[14px] font-bold leading-tight">
+                {activeLeague ? activeLeague.name : 'Mi Liga'}
+              </p>
+              <p className="text-[#6b7a72] text-[12px]">
+                {activeLeague ? 'Ver clasificación →' : 'Crear o unirte a una liga'}
+              </p>
+            </div>
+            <ChevronRight size={16} color="#6b7a72" />
+          </Link>
         </div>
       </div>
 

@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, ClipboardList, BarChart2, User } from 'lucide-react'
+import { Home, ClipboardList, BarChart2, Trophy, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TABS = [
   { href: '/',        label: 'Inicio',   Icon: Home },
   { href: '/tarjeta', label: 'Tarjeta',  Icon: ClipboardList },
   { href: '/stats',   label: 'Stats',    Icon: BarChart2 },
+  { href: '/liga',    label: 'Liga',     Icon: Trophy },
   { href: '/carnet',  label: 'Carnet',   Icon: User },
 ]
 
@@ -16,7 +17,8 @@ export function TabBar() {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-[#e5e0d4] z-50"
+    <nav
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-[#e5e0d4] z-50"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="flex items-stretch">
