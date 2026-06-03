@@ -12,32 +12,28 @@
   --c-blue: #2a6fdb;
   --c-blue-light: #dde7fb;
   --c-amber: #e8b75a;
+  --c-red: #c6432d;
   --c-radius: 22px;
+  --c-rule: #e5e0d4;
+  --c-rule-soft: #efebe1;
 }
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  background-color: var(--c-bg);
-}
-
-body {
-  background-color: var(--c-bg);
-  color: var(--c-ink);
-  font-family: var(--font-geist), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Safe area utilities */
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+html, body {
+  background-color: var(--c-bg);
+  color: var(--c-ink);
+  overscroll-behavior: none;
 }
 
-.pt-safe {
-  padding-top: env(safe-area-inset-top, 0px);
-}
+/* Hide scrollbars but keep scroll */
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
+
+/* Safe area */
+.safe-top { padding-top: max(54px, env(safe-area-inset-top)); }
+.safe-bottom { padding-bottom: max(24px, env(safe-area-inset-bottom)); }

@@ -1,151 +1,126 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { formatHandicap } from '@/lib/golf'
 
-function getHandicapLabel(value: number): { label: string; sub: string } {
-  if (value <= 5) return { label: 'Jugador avanzado', sub: 'Índice WHS bajo' }
-  if (value <= 18) return { label: 'Amateur', sub: 'Índice WHS estándar' }
-  if (value <= 36) return { label: 'Principiante', sub: 'Índice WHS alto' }
-  return { label: 'Iniciación', sub: 'Sin índice oficial aún' }
+function hcpLabel(v: number) {
+  if (v <= 5)  return { level: 'Jugador avanzado', sub: 'Índice WHS bajo' }
+  if (v <= 18) return { level: 'Amateur',          sub: 'Índice WHS estándar' }
+  if (v <= 36) return { level: 'Principiante',     sub: 'Índice WHS alto' }
+  return { level: 'Iniciación', sub: 'Sin índice oficial aún' }
 }
 
 export default function OnboardingPage() {
-  const router = useRouter()
-  const [handicap, setHandicap] = useState('18.0')
+  const [hcp, setHcp]       = useState('18.0')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const numericValue = parseFloat(handicap) || 0
+  const [error, setError]   = useState('')
+  const supabase = createClient()
+  const num = parseFloat(hcp) || 0
 
   function adjust(delta: number) {
-    const current = parseFloat(handicap) || 0
-    const next = Math.min(54, Math.max(0, Math.round((current + delta) * 10) / 10))
-    setHandicap(next.toFixed(1))
+    const next = Math.min(54, Math.max(0, Math.round((num + delta) * 10) / 10))
+    setHcp(next.toFixed(1))
   }
 
   async function handleStart() {
-    const value = parseFloat(handicap)
+    const value = parseFloat(hcp)
     if (isNaN(value) || value < 0 || value > 54) {
       setError('Introduce un hándicap válido entre 0 y 54.')
       return
     }
-
     setLoading(true)
     setError('')
-    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      router.push('/login')
-      return
-    }
+    if (!user) { window.location.href = '/login'; return }
 
     const { error: dbError } = await supabase
       .from('profiles')
       .update({ handicap_index: value })
       .eq('id', user.id)
 
-    if (dbError) {
-      setError('Error al guardar el hándicap. Inténtalo de nuevo.')
-      setLoading(false)
-      return
-    }
-
+    if (dbError) { setError('Error al guardar. Inténtalo de nuevo.'); setLoading(false); return }
     window.location.href = '/'
   }
 
-  const { label, sub } = getHandicapLabel(numericValue)
+  const { level, sub } = hcpLabel(num)
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center px-4">
-      <div className="w-full max-w-[430px]">
+    <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center px-[14px]">
+      <div className="w-full max-w-[400px]">
+
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
-          <div className="w-16 h-16 rounded-full bg-[#1f8a5b] flex items-center justify-center mb-4 shadow-md">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="13" r="5" fill="white" />
-              <path d="M16 18 L16 30" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          <div className="text-2xl font-black tracking-tight text-[#0e1a16]">
+          <svg width="56" height="56" viewBox="0 0 64 64" fill="none" className="mb-3">
+            <circle cx="32" cy="32" r="30" fill="#9bc9a3"/>
+            <path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.2" strokeLinecap="round"/>
+            <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16"/>
+            <circle cx="24" cy="50" r="2.6" fill="#0e1a16"/>
+          </svg>
+          <div className="text-[22px] font-black tracking-tight text-[#0e1a16]">
             bogey<span className="text-[#1f8a5b]">club</span>
           </div>
         </div>
 
-        <div className="bg-white rounded-[20px] shadow-sm border border-[#e5e0d4] px-8 py-10 text-center">
-          <h1 className="text-2xl font-bold text-[#0e1a16] mb-3">
+        <div className="bg-white rounded-[22px] border border-[#e5e0d4] px-6 py-8 text-center">
+          <h1 className="text-[24px] font-black text-[#0e1a16] tracking-tight mb-2">
             ¿Cuál es tu hándicap?
           </h1>
-          <p className="text-sm text-[#6b7280] leading-relaxed mb-8 px-2">
-            Si no sabes tu índice exacto, pon tu mejor estimación.
+          <p className="text-[13px] text-[#6b7a72] mb-8 leading-relaxed">
+            Si no sabes tu índice exacto, pon tu estimación.
             Lo iremos ajustando con cada ronda.
           </p>
 
-          {/* Stepper con input editable */}
-          <div className="flex items-center justify-center gap-4 mb-6">
+          {/* Stepper */}
+          <div className="flex items-center justify-center gap-5 mb-5">
             <button
               onClick={() => adjust(-0.1)}
-              className="w-12 h-12 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-2xl font-light text-[#4a5568] hover:border-[#1f8a5b] hover:text-[#1f8a5b] active:scale-95 transition"
-            >
-              −
-            </button>
+              className="w-12 h-12 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-[22px] text-[#6b7a72] font-light hover:border-[#1f8a5b] hover:text-[#1f8a5b] transition active:scale-95"
+            >−</button>
 
             <input
-              type="number"
-              min={0}
-              max={54}
-              step={0.1}
-              value={handicap}
-              onChange={e => setHandicap(e.target.value)}
-              className="w-28 text-center text-5xl font-black text-[#0e1a16] bg-transparent border-b-2 border-[#1f8a5b] focus:outline-none tabular-nums py-1"
+              type="number" min={0} max={54} step={0.1}
+              value={hcp}
+              onChange={e => setHcp(e.target.value)}
+              className="w-28 text-center text-[52px] font-black text-[#0e1a16] bg-transparent border-b-2 border-[#1f8a5b] focus:outline-none tabular-nums py-1"
             />
 
             <button
               onClick={() => adjust(0.1)}
-              className="w-12 h-12 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-2xl font-light text-[#4a5568] hover:border-[#1f8a5b] hover:text-[#1f8a5b] active:scale-95 transition"
-            >
-              +
-            </button>
+              className="w-12 h-12 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-[22px] text-[#6b7a72] font-light hover:border-[#1f8a5b] hover:text-[#1f8a5b] transition active:scale-95"
+            >+</button>
           </div>
 
           {/* Slider */}
-          <div className="px-4 mb-6">
+          <div className="px-2 mb-6">
             <input
-              type="range"
-              min={0}
-              max={54}
-              step={0.1}
-              value={numericValue}
-              onChange={e => setHandicap(parseFloat(e.target.value).toFixed(1))}
+              type="range" min={0} max={54} step={0.1} value={num}
+              onChange={e => setHcp(parseFloat(e.target.value).toFixed(1))}
               className="w-full accent-[#1f8a5b]"
             />
-            <div className="flex justify-between text-xs text-[#a0aec0] mt-1">
-              <span>0</span>
-              <span>27</span>
-              <span>54</span>
+            <div className="flex justify-between text-[11px] text-[#a09a90] mt-1 font-mono">
+              <span>0</span><span>27</span><span>54</span>
             </div>
           </div>
 
-          {/* Helper */}
-          <div className="bg-[#f4f1e9] rounded-[12px] px-4 py-3 mb-8 w-full">
-            <p className="text-sm font-semibold text-[#0e1a16]">{label}</p>
-            <p className="text-xs text-[#6b7280] mt-0.5">{sub}</p>
+          {/* Label */}
+          <div className="bg-[#f4f1e9] rounded-[14px] px-4 py-3 mb-7">
+            <p className="text-[13px] font-bold text-[#0e1a16]">{level}</p>
+            <p className="text-[12px] text-[#6b7a72] mt-0.5">{sub}</p>
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-[10px] px-4 py-2.5 mb-4">
+            <p className="text-[13px] text-[#c6432d] bg-[#fadcd6] rounded-[10px] px-4 py-2.5 mb-4">
               {error}
             </p>
           )}
 
           <button
-            onClick={handleStart}
-            disabled={loading}
-            className="w-full bg-[#1f8a5b] text-white font-semibold py-3.5 rounded-[14px] hover:bg-[#186f4a] active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={handleStart} disabled={loading}
+            className="w-full py-3.5 rounded-[14px] font-semibold text-[15px] text-white transition active:scale-[0.98] disabled:opacity-60"
+            style={{ backgroundColor: '#1f8a5b' }}
           >
-            {loading ? 'Guardando...' : 'Empezar a jugar →'}
+            {loading ? 'Guardando…' : 'Empezar a jugar →'}
           </button>
         </div>
       </div>
