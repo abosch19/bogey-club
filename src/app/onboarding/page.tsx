@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+// Note: no supabase client needed here — profile saved via /api/profile
 
 function hcpLabel(v: number) {
   if (v <= 5)  return { level: 'Jugador avanzado', sub: 'Índice WHS bajo' }
@@ -13,7 +14,6 @@ export default function OnboardingPage() {
   const [hcp, setHcp]       = useState('18.0')
   const [loading, setLoading] = useState(false)
   const [error, setError]   = useState('')
-  const supabase = createClient()
   const num = parseFloat(hcp) || 0
 
   function adjust(delta: number) {
