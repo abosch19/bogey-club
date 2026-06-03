@@ -5,51 +5,58 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 function getHandicapLabel(value: number): { label: string; sub: string } {
-  if (value <= 5) return { label: 'Índice WHS oficial', sub: 'Jugador avanzado' }
-  if (value <= 18) return { label: 'Índice WHS oficial', sub: 'Amateur' }
-  if (value <= 36) return { label: 'Índice WHS oficial', sub: 'Principiante' }
-  return { label: 'Índice WHS oficial', sub: 'Iniciación' }
+  if (value <= 5) return { label: 'Jugador avanzado', sub: 'Índice WHS bajo' }
+  if (value <= 18) return { label: 'Amateur', sub: 'Índice WHS estándar' }
+  if (value <= 36) return { label: 'Principiante', sub: 'Índice WHS alto' }
+  return { label: 'Iniciación', sub: 'Sin índice oficial aún' }
 }
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [handicap, setHandicap] = useState(18)
+  const [handicap, setHandicap] = useState('18.0')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  function increment() {
-    setHandicap(v => Math.min(54, v + 1))
-  }
-  function decrement() {
-    setHandicap(v => Math.max(0, v - 1))
+  const numericValue = parseFloat(handicap) || 0
+
+  function adjust(delta: number) {
+    const current = parseFloat(handicap) || 0
+    const next = Math.min(54, Math.max(0, Math.round((current + delta) * 10) / 10))
+    setHandicap(next.toFixed(1))
   }
 
   async function handleStart() {
+    const value = parseFloat(handicap)
+    if (isNaN(value) || value < 0 || value > 54) {
+      setError('Introduce un hándicap válido entre 0 y 54.')
+      return
+    }
+
     setLoading(true)
     setError('')
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
+
     if (!user) {
       router.push('/login')
       return
     }
 
-    const { error } = await supabase
+    const { error: dbError } = await supabase
       .from('profiles')
-      .update({ handicap_index: handicap })
+      .update({ handicap_index: value })
       .eq('id', user.id)
 
-    if (error) {
+    if (dbError) {
       setError('Error al guardar el hándicap. Inténtalo de nuevo.')
       setLoading(false)
       return
     }
 
-    router.push('/')
-    router.refresh()
+    window.location.href = '/'
   }
 
-  const { label, sub } = getHandicapLabel(handicap)
+  const { label, sub } = getHandicapLabel(numericValue)
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center px-4">
@@ -71,28 +78,32 @@ export default function OnboardingPage() {
           <h1 className="text-2xl font-bold text-[#0e1a16] mb-3">
             ¿Cuál es tu hándicap?
           </h1>
-          <p className="text-sm text-[#6b7280] leading-relaxed mb-10 px-2">
+          <p className="text-sm text-[#6b7280] leading-relaxed mb-8 px-2">
             Si no sabes tu índice exacto, pon tu mejor estimación.
             Lo iremos ajustando con cada ronda.
           </p>
 
-          {/* Handicap stepper */}
-          <div className="flex items-center justify-center gap-6 mb-4">
+          {/* Stepper con input editable */}
+          <div className="flex items-center justify-center gap-4 mb-6">
             <button
-              onClick={decrement}
+              onClick={() => adjust(-0.1)}
               className="w-12 h-12 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-2xl font-light text-[#4a5568] hover:border-[#1f8a5b] hover:text-[#1f8a5b] active:scale-95 transition"
             >
               −
             </button>
 
-            <div className="flex flex-col items-center min-w-[80px]">
-              <span className="text-6xl font-black text-[#0e1a16] leading-none tabular-nums">
-                {handicap}
-              </span>
-            </div>
+            <input
+              type="number"
+              min={0}
+              max={54}
+              step={0.1}
+              value={handicap}
+              onChange={e => setHandicap(e.target.value)}
+              className="w-28 text-center text-5xl font-black text-[#0e1a16] bg-transparent border-b-2 border-[#1f8a5b] focus:outline-none tabular-nums py-1"
+            />
 
             <button
-              onClick={increment}
+              onClick={() => adjust(0.1)}
               className="w-12 h-12 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-2xl font-light text-[#4a5568] hover:border-[#1f8a5b] hover:text-[#1f8a5b] active:scale-95 transition"
             >
               +
@@ -105,8 +116,9 @@ export default function OnboardingPage() {
               type="range"
               min={0}
               max={54}
-              value={handicap}
-              onChange={e => setHandicap(Number(e.target.value))}
+              step={0.1}
+              value={numericValue}
+              onChange={e => setHandicap(parseFloat(e.target.value).toFixed(1))}
               className="w-full accent-[#1f8a5b]"
             />
             <div className="flex justify-between text-xs text-[#a0aec0] mt-1">
@@ -116,10 +128,10 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          {/* Helper text */}
-          <div className="bg-[#f4f1e9] rounded-[12px] px-4 py-3 mb-8 inline-block w-full">
-            <p className="text-xs font-semibold text-[#1f8a5b] uppercase tracking-wide">{label}</p>
-            <p className="text-sm font-medium text-[#0e1a16] mt-0.5">{sub}</p>
+          {/* Helper */}
+          <div className="bg-[#f4f1e9] rounded-[12px] px-4 py-3 mb-8 w-full">
+            <p className="text-sm font-semibold text-[#0e1a16]">{label}</p>
+            <p className="text-xs text-[#6b7280] mt-0.5">{sub}</p>
           </div>
 
           {error && (
@@ -131,7 +143,7 @@ export default function OnboardingPage() {
           <button
             onClick={handleStart}
             disabled={loading}
-            className="w-full bg-[#1f8a5b] text-white font-semibold py-3.5 rounded-[14px] hover:bg-[#186f4a] active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-[#1f8a5b] text-white font-semibold py-3.5 rounded-[14px] hover:bg-[#186f4a] active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? 'Guardando...' : 'Empezar a jugar →'}
           </button>
