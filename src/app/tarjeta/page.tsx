@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { scoreChipClass } from '@/lib/golf'
 import Link from 'next/link'
@@ -10,7 +10,7 @@ type HoleScore = { hole_number: number; strokes: number | null }
 type Player = { id: string; name: string; avatar_color: string; course_handicap: number; is_guest: boolean }
 type Hole = { hole_number: number; par: number; stroke_index: number }
 
-export default function TarjetaPage() {
+function TarjetaPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const roundId = searchParams.get('round') ?? ''
@@ -211,4 +211,8 @@ export default function TarjetaPage() {
       </div>
     </div>
   )
+}
+
+export default function Page() {
+  return <Suspense fallback={<div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>}><TarjetaPage /></Suspense>
 }

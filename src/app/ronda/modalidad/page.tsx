@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { GAME_MODES, type GameMode } from '@/lib/types'
 
-export default function SeleccionarModalidadPage() {
+function SeleccionarModalidadPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const courseId   = searchParams.get('course') ?? ''
@@ -158,4 +158,8 @@ export default function SeleccionarModalidadPage() {
       </div>
     </div>
   )
+}
+
+export default function Page() {
+  return <Suspense fallback={<div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>}><SeleccionarModalidadPage /></Suspense>
 }

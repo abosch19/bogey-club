@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getInitials, avatarColor } from '@/lib/golf'
 
 type Player = { id: string; name: string; handicap_index: number; avatar_color: string; isGuest?: boolean }
 
-export default function SeleccionarJugadoresPage() {
+function SeleccionarJugadoresPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const courseId = searchParams.get('course') ?? ''
@@ -198,4 +198,8 @@ export default function SeleccionarJugadoresPage() {
       </div>
     </div>
   )
+}
+
+export default function Page() {
+  return <Suspense fallback={<div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>}><SeleccionarJugadoresPage /></Suspense>
 }

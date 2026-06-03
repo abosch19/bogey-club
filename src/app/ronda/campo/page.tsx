@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -14,7 +14,7 @@ type Course = {
   record_score: number | null
 }
 
-export default function SeleccionarCampoPage() {
+function SeleccionarCampoPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isPractice = searchParams.get('practice') === 'true'
@@ -141,4 +141,8 @@ export default function SeleccionarCampoPage() {
       )}
     </div>
   )
+}
+
+export default function Page() {
+  return <Suspense fallback={<div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>}><SeleccionarCampoPage /></Suspense>
 }
