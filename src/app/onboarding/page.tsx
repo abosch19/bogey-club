@@ -38,7 +38,7 @@ export default function OnboardingPage() {
       .from('profiles')
       .upsert({ id: user.id, name: user.user_metadata?.name ?? user.email?.split('@')[0] ?? 'Jugador', handicap_index: value, avatar_color: '#2a6fdb' })
 
-    if (dbError) { setError('Error al guardar. Inténtalo de nuevo.'); setLoading(false); return }
+    if (dbError) { setError(dbError.message || 'Error al guardar.'); setLoading(false); return }
     window.location.href = '/'
   }
 
