@@ -7,18 +7,25 @@ import { formatDate, formatHandicap } from '@/lib/golf'
 
 function TabBar({ active }: { active: string }) {
   const tabs = [
-    { key: 'inicio',  href: '/',        label: 'Inicio',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 11L12 3l9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-9z" stroke="currentColor" strokeWidth={active==='inicio'?2.2:1.7}/></svg> },
-    { key: 'tarjeta', href: '/tarjeta', label: 'Tarjeta', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth={active==='tarjeta'?2.2:1.7}/><path d="M3 10h18M9 5v14" stroke="currentColor" strokeWidth={active==='tarjeta'?2.2:1.7}/></svg> },
-    { key: 'stats',   href: '/stats',   label: 'Stats',   icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 19V9m6 10V5m6 14v-7" stroke="currentColor" strokeWidth={active==='stats'?2.2:1.7} strokeLinecap="round"/></svg> },
-    { key: 'liga',    href: '/liga',    label: 'Liga',    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z" stroke="currentColor" strokeWidth={active==='liga'?2.2:1.7} strokeLinecap="round"/><path d="M5 7H2v3a3 3 0 0 0 3 3M19 7h3v3a3 3 0 0 1-3 3" stroke="currentColor" strokeWidth={active==='liga'?2.2:1.7} strokeLinecap="round"/></svg> },
-    { key: 'perfil',  href: '/perfil',  label: 'Perfil',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth={active==='perfil'?2.2:1.7}/><path d="M4 21c0-4 4-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth={active==='perfil'?2.2:1.7} strokeLinecap="round"/></svg> },
+    { key: 'inicio',  href: '/',        label: 'Inicio' },
+    { key: 'tarjeta', href: '/tarjeta', label: 'Tarjeta' },
+    { key: 'stats',   href: '/stats',   label: 'Stats' },
+    { key: 'liga',    href: '/liga',    label: 'Liga' },
+    { key: 'perfil',  href: '/perfil',  label: 'Perfil' },
   ]
+  const icons: Record<string, JSX.Element> = {
+    inicio:  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 11L12 3l9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-9z" stroke="currentColor" strokeWidth={active==='inicio'?2.2:1.7}/></svg>,
+    tarjeta: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth={active==='tarjeta'?2.2:1.7}/><path d="M3 10h18M9 5v14" stroke="currentColor" strokeWidth={active==='tarjeta'?2.2:1.7}/></svg>,
+    stats:   <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 19V9m6 10V5m6 14v-7" stroke="currentColor" strokeWidth={active==='stats'?2.2:1.7} strokeLinecap="round"/></svg>,
+    liga:    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z" stroke="currentColor" strokeWidth={active==='liga'?2.2:1.7} strokeLinecap="round"/><path d="M5 7H2v3a3 3 0 0 0 3 3M19 7h3v3a3 3 0 0 1-3 3" stroke="currentColor" strokeWidth={active==='liga'?2.2:1.7} strokeLinecap="round"/></svg>,
+    perfil:  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth={active==='perfil'?2.2:1.7}/><path d="M4 21c0-4 4-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth={active==='perfil'?2.2:1.7} strokeLinecap="round"/></svg>,
+  }
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-[#e5e0d4] z-50 safe-bottom">
       <div className="flex items-stretch">
         {tabs.map(t => (
           <Link key={t.key} href={t.href} className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 ${t.key===active?'text-[#1f8a5b]':'text-[#6b7a72]'}`}>
-            {t.icon}
+            {icons[t.key]}
             <span className="text-[10px] font-semibold">{t.label}</span>
           </Link>
         ))}
@@ -27,160 +34,105 @@ function TabBar({ active }: { active: string }) {
   )
 }
 
-// Simple SVG sparkline
 function Sparkline({ values, color = '#1f8a5b' }: { values: number[]; color?: string }) {
   if (values.length < 2) return null
   const w = 200, h = 40, pad = 4
   const min = Math.min(...values), max = Math.max(...values)
   const range = max - min || 1
-  const pts = values.map((v, i) => {
-    const x = pad + (i / (values.length - 1)) * (w - pad * 2)
-    const y = pad + ((max - v) / range) * (h - pad * 2)
-    return `${x},${y}`
-  }).join(' ')
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
+  const pts = values.map((v, i) => `${pad + (i / (values.length - 1)) * (w - pad * 2)},${pad + ((max - v) / range) * (h - pad * 2)}`).join(' ')
+  return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full"><polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
 }
 
+// ── Types ─────────────────────────────────────────────────────
 type RoundStat = {
   id: string; date: string; course_id: string; course_name: string
-  total: number; par: number; real_par: number
-  putts: number; gir: number; gir_total: number
-  fairways: number; fairways_total: number
-  penalties: number; bunkers: number
-  players: string[] // profile_ids of co-players
-  won: boolean // did current user have lowest score
+  total: number; real_par: number; putts: number
+  gir: number; gir_total: number; fairways: number; fairways_total: number
+  penalties: number; bunkers: number; players: string[]; won: boolean
+  scores: { hole_number: number; strokes: number; par: number }[]
 }
-type HoleStat = { hole_number: number; birdies: number; pars: number; bogeys: number; doubles: number; avg: number; rounds: number }
+type OtherPlayer = { id: string; name: string; avatar_color: string }
 
 export default function StatsPage() {
-  const [rounds, setRounds]     = useState<RoundStat[]>([])
-  const [hcpIndex, setHcp]      = useState<number | null>(null)
-  const [hcpHistory, setHcpHist] = useState<number[]>([])
-  const [holestats, setHolestats] = useState<HoleStat[]>([])
-  const [companions, setCompanions] = useState<{ id: string; name: string; avatar_color: string; rounds: number; wins: number }[]>([])
-  const [courseStats, setCourseStats] = useState<{ name: string; best: number; avg: number; par: number; rounds: number; record: number | null }[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [section, setSection]   = useState<'general'|'hoyos'|'social'|'campos'>('general')
+  const [rounds, setRounds]       = useState<RoundStat[]>([])
+  const [hcpIndex, setHcp]        = useState<number | null>(null)
+  const [hcpHistory, setHcpHist]  = useState<number[]>([])
+  const [allPlayers, setAllPlayers] = useState<OtherPlayer[]>([])
+  const [courseStats, setCourseStats] = useState<{ name: string; best: number; avg: number; par: number; rounds: number; record: number | null; last3: number[] }[]>([])
+  const [myId, setMyId]           = useState('')
+  const [loading, setLoading]     = useState(true)
+  const [section, setSection]     = useState<'general'|'hoyos'|'social'|'campos'>('general')
   const supabase = createClient()
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
+      setMyId(user.id)
 
-      const { data: prof } = await supabase.from('profiles').select('handicap_index').eq('id', user.id).single()
-      setHcp(prof?.handicap_index ?? null)
+      // Parallel: profile, differentials, all profiles
+      const [profRes, diffsRes, allProfilesRes] = await Promise.all([
+        supabase.from('profiles').select('handicap_index').eq('id', user.id).single(),
+        supabase.from('whs_differentials').select('differential, played_at').eq('profile_id', user.id).order('played_at', { ascending: true }).limit(20),
+        supabase.from('profiles').select('id, name, avatar_color').neq('id', user.id),
+      ])
+      setHcp(profRes.data?.handicap_index ?? null)
+      setHcpHist((diffsRes.data ?? []).map(d => parseFloat(d.differential.toFixed(1))))
+      setAllPlayers(allProfilesRes.data ?? [])
 
-      // Handicap history from differentials
-      const { data: diffsData } = await supabase.from('whs_differentials').select('differential, played_at').eq('profile_id', user.id).order('played_at', { ascending: true }).limit(20)
-      if (diffsData?.length) {
-        // Running index simulation (simplified)
-        setHcpHist(diffsData.map(d => parseFloat(d.differential.toFixed(1))))
-      }
-
-      // My rounds
+      // My round IDs
       const { data: rps } = await supabase.from('round_players').select('round_id').eq('profile_id', user.id)
       if (!rps?.length) { setLoading(false); return }
       const roundIds = rps.map(r => r.round_id)
 
-      // Rounds data
-      const { data: roundsData } = await supabase
-        .from('rounds').select('id, date, course_id, status, courses(name, par)')
-        .in('id', roundIds).eq('status', 'completed').order('date', { ascending: false }).limit(30)
-      if (!roundsData?.length) { setLoading(false); return }
+      // Parallel: rounds + all scores + all round_players + courses
+      const [roundsRes, scoresRes, allRPsRes] = await Promise.all([
+        supabase.from('rounds').select('id, date, course_id, status, courses(name, par)').in('id', roundIds).eq('status', 'completed').order('date', { ascending: false }).limit(30),
+        supabase.from('scores').select('round_id, profile_id, hole_number, strokes, putts, gir, fairway, penalties, in_bunker').in('round_id', roundIds),
+        supabase.from('round_players').select('round_id, profile_id').in('round_id', roundIds).neq('profile_id', user.id),
+      ])
 
-      // All scores for my rounds
-      const { data: allScores } = await supabase.from('scores')
-        .select('round_id, profile_id, hole_number, strokes, putts, gir, fairway, penalties, in_bunker')
-        .in('round_id', roundIds)
+      if (!roundsRes.data?.length) { setLoading(false); return }
 
-      // All co-players
-      const { data: allRPs } = await supabase.from('round_players')
-        .select('round_id, profile_id, profiles(name, avatar_color)')
-        .in('round_id', roundIds).neq('profile_id', user.id)
-
-      // All holes for courses
-      const courseIds = Array.from(new Set(roundsData.map((r: any) => r.course_id)))
-      const { data: allHoles } = await supabase.from('holes').select('course_id, hole_number, par, stroke_index').in('course_id', courseIds)
-
-      // Courses for record
-      const { data: coursesData } = await supabase.from('courses').select('id, name, par, record_score').in('id', courseIds)
+      const courseIds = Array.from(new Set(roundsRes.data.map((r: any) => r.course_id)))
+      const [holesRes, coursesRes] = await Promise.all([
+        supabase.from('holes').select('course_id, hole_number, par, stroke_index').in('course_id', courseIds),
+        supabase.from('courses').select('id, par, record_score').in('id', courseIds),
+      ])
 
       // Build round stats
-      const statsArr: RoundStat[] = roundsData.map((r: any) => {
+      const statsArr: RoundStat[] = roundsRes.data.map((r: any) => {
         const course = Array.isArray(r.courses) ? r.courses[0] : r.courses
-        const myS = (allScores ?? []).filter(s => s.round_id === r.id && s.profile_id === user.id)
-        const allS = (allScores ?? []).filter(s => s.round_id === r.id)
-        const courseHoles = (allHoles ?? []).filter(h => h.course_id === r.course_id)
+        const myS  = (scoresRes.data ?? []).filter(s => s.round_id === r.id && s.profile_id === user.id)
+        const allS = (scoresRes.data ?? []).filter(s => s.round_id === r.id)
+        const courseHoles = (holesRes.data ?? []).filter(h => h.course_id === r.course_id)
         const realPar = courseHoles.reduce((a, h) => a + h.par, 0) || course?.par || 72
-
-        // Who played
-        const coPlayers = (allRPs ?? []).filter(rp => rp.round_id === r.id).map((rp: any) => rp.profile_id)
-
-        // Did I win? (lowest total among players who completed all holes)
-        const myTotal = myS.reduce((a, s) => a + (s.strokes ?? 0), 0)
-        const allTotals = Array.from(new Set(allS.map(s => s.profile_id))).map(pid => ({
-          pid, total: allS.filter(s => s.profile_id === pid).reduce((a, s) => a + (s.strokes ?? 0), 0)
-        })).filter(p => p.total > 0)
+        const coPlayers = (allRPsRes.data ?? []).filter(rp => rp.round_id === r.id).map((rp: any) => rp.profile_id)
+        const myTotal  = myS.reduce((a, s) => a + (s.strokes ?? 0), 0)
+        const allTotals = Array.from(new Set(allS.map(s => s.profile_id))).map(pid => ({ pid, total: allS.filter(s => s.profile_id === pid).reduce((a, s) => a + (s.strokes ?? 0), 0) })).filter(p => p.total > 0)
         const won = allTotals.length > 0 && myTotal === Math.min(...allTotals.map(p => p.total)) && myTotal > 0
-
+        const holeScores = myS.filter(s => s.strokes != null).map(s => {
+          const h = courseHoles.find(h => h.hole_number === s.hole_number)
+          return { hole_number: s.hole_number, strokes: s.strokes!, par: h?.par ?? 4 }
+        })
         return {
-          id: r.id, date: r.date, course_id: r.course_id,
-          course_name: course?.name ?? 'Campo',
-          total: myTotal, par: course?.par ?? 72, real_par: realPar,
+          id: r.id, date: r.date, course_id: r.course_id, course_name: course?.name ?? 'Campo',
+          total: myTotal, real_par: realPar,
           putts: myS.reduce((a, s) => a + (s.putts ?? 0), 0),
           gir: myS.filter(s => s.gir).length, gir_total: myS.length,
-          fairways: myS.filter(s => s.fairway === true).length,
-          fairways_total: myS.filter(s => s.fairway !== null).length,
+          fairways: myS.filter(s => s.fairway === true).length, fairways_total: myS.filter(s => s.fairway !== null).length,
           penalties: myS.reduce((a, s) => a + (s.penalties ?? 0), 0),
           bunkers: myS.filter(s => s.in_bunker).length,
-          players: coPlayers, won,
+          players: coPlayers, won, scores: holeScores,
         }
       }).filter(r => r.total > 0)
       setRounds(statsArr)
-
-      // Hole stats
-      const myAllScores = (allScores ?? []).filter(s => s.profile_id === user.id)
-      const holeNums = Array.from(new Set(myAllScores.map(s => s.hole_number))).sort((a, b) => a - b)
-      const hStats: HoleStat[] = holeNums.map(hn => {
-        const hScores = myAllScores.filter(s => s.hole_number === hn && s.strokes)
-        // Get par for this hole (use most common)
-        const parForHole = (allHoles ?? []).find(h => h.hole_number === hn)?.par ?? 4
-        const deltas = hScores.map(s => (s.strokes ?? 0) - parForHole)
-        return {
-          hole_number: hn,
-          birdies: deltas.filter(d => d <= -1).length,
-          pars: deltas.filter(d => d === 0).length,
-          bogeys: deltas.filter(d => d === 1).length,
-          doubles: deltas.filter(d => d >= 2).length,
-          avg: hScores.length ? parseFloat((hScores.reduce((a, s) => a + (s.strokes ?? 0), 0) / hScores.length).toFixed(1)) : 0,
-          rounds: hScores.length,
-        }
-      })
-      setHolestats(hStats)
-
-      // Companions stats
-      const compMap: Record<string, { name: string; avatar_color: string; rounds: number; wins: number }> = {}
-      for (const rp of (allRPs ?? [])) {
-        const pid = (rp as any).profile_id
-        if (!pid) continue
-        if (!compMap[pid]) compMap[pid] = { name: (rp as any).profiles?.name ?? 'Jugador', avatar_color: (rp as any).profiles?.avatar_color ?? '#6b7a72', rounds: 0, wins: 0 }
-        compMap[pid].rounds++
-        // Check if this companion won this round
-        const rStat = statsArr.find(r => r.players.includes(pid) && r.id === (rp as any).round_id)
-        if (rStat && !rStat.won) compMap[pid].wins++ // they won (I didn't)
-      }
-      setCompanions(Object.entries(compMap).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.rounds - a.rounds))
 
       // Course stats
       const cMap: Record<string, { name: string; scores: number[]; par: number; record: number | null }> = {}
       for (const r of statsArr) {
         if (!cMap[r.course_id]) {
-          const cd = (coursesData ?? []).find((c: any) => c.id === r.course_id)
+          const cd = (coursesRes.data ?? []).find((c: any) => c.id === r.course_id)
           cMap[r.course_id] = { name: r.course_name, scores: [], par: r.real_par, record: cd?.record_score ?? null }
         }
         if (r.total > 0) cMap[r.course_id].scores.push(r.total)
@@ -188,8 +140,9 @@ export default function StatsPage() {
       setCourseStats(Object.values(cMap).map(c => ({
         name: c.name, par: c.par, record: c.record,
         best: c.scores.length ? Math.min(...c.scores) : 0,
-        avg: c.scores.length ? Math.round(c.scores.reduce((a, b) => a + b, 0) / c.scores.length) : 0,
+        avg:  c.scores.length ? Math.round(c.scores.reduce((a, b) => a + b, 0) / c.scores.length) : 0,
         rounds: c.scores.length,
+        last3: c.scores.slice(0, 3),
       })).sort((a, b) => b.rounds - a.rounds))
 
       setLoading(false)
@@ -199,18 +152,79 @@ export default function StatsPage() {
 
   if (loading) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
-  const n          = rounds.length
-  const avgScore   = n ? Math.round(rounds.reduce((a, r) => a + r.total, 0) / n) : null
-  const avgDelta   = n ? Math.round(rounds.reduce((a, r) => a + (r.total - r.real_par), 0) / n) : null
-  const bestScore  = n ? Math.min(...rounds.map(r => r.total)) : null
-  const avgPutts   = n ? (rounds.reduce((a, r) => a + r.putts, 0) / n).toFixed(1) : null
-  const girPct     = n ? Math.round(rounds.reduce((a, r) => a + (r.gir_total > 0 ? r.gir / r.gir_total * 100 : 0), 0) / n) : null
-  const fwPct      = n ? Math.round(rounds.reduce((a, r) => a + (r.fairways_total > 0 ? r.fairways / r.fairways_total * 100 : 0), 0) / n) : null
-  const avgPen     = n ? (rounds.reduce((a, r) => a + r.penalties, 0) / n).toFixed(1) : null
-  const avgBunkers = n ? (rounds.reduce((a, r) => a + r.bunkers, 0) / n).toFixed(1) : null
-  const totalWins  = rounds.filter(r => r.won).length
-  const bestHole   = holestats.length ? [...holestats].sort((a, b) => (b.birdies + b.pars) / (b.rounds || 1) - (a.birdies + a.pars) / (a.rounds || 1))[0] : null
-  const worstHole  = holestats.length ? [...holestats].sort((a, b) => (b.bogeys + b.doubles) / (b.rounds || 1) - (a.bogeys + a.doubles) / (a.rounds || 1))[0] : null
+  const n = rounds.length
+  const avgScore  = n ? Math.round(rounds.reduce((a, r) => a + r.total, 0) / n) : null
+  const avgDelta  = n ? Math.round(rounds.reduce((a, r) => a + (r.total - r.real_par), 0) / n) : null
+  const bestScore = n ? Math.min(...rounds.map(r => r.total)) : null
+  const avgPutts  = n ? (rounds.reduce((a, r) => a + r.putts, 0) / n).toFixed(1) : null
+  const girPct    = n ? Math.round(rounds.reduce((a, r) => a + (r.gir_total > 0 ? r.gir / r.gir_total * 100 : 0), 0) / n) : null
+  const fwPct     = n ? Math.round(rounds.reduce((a, r) => a + (r.fairways_total > 0 ? r.fairways / r.fairways_total * 100 : 0), 0) / n) : null
+  const totalWins = rounds.filter(r => r.won).length
+
+  // All scores flat
+  const allScores = rounds.flatMap(r => r.scores)
+  // Totals by result
+  const totalBirdies  = allScores.filter(s => s.strokes - s.par <= -1).length
+  const totalPars     = allScores.filter(s => s.strokes - s.par === 0).length
+  const totalBogeys   = allScores.filter(s => s.strokes - s.par === 1).length
+  const totalDoubles  = allScores.filter(s => s.strokes - s.par >= 2).length
+  const totalHolesP   = allScores.length || 1
+
+  // Best streak (consecutive rounds under avgScore+2)
+  let bestStreak = 0, curStreak = 0
+  const threshold = (avgScore ?? 100) + 2
+  for (const r of [...rounds].reverse()) {
+    if (r.total <= threshold) { curStreak++; bestStreak = Math.max(bestStreak, curStreak) } else curStreak = 0
+
+  }
+
+  // Par type stats
+  const parTypes = [3, 4, 5]
+  const parStats = parTypes.map(par => {
+    const s = allScores.filter(h => h.par === par)
+    if (!s.length) return null
+    const avg = s.reduce((a, h) => a + h.strokes, 0) / s.length
+    const birdies = s.filter(h => h.strokes - h.par <= -1).length
+    const pars    = s.filter(h => h.strokes - h.par === 0).length
+    const bogeys  = s.filter(h => h.strokes - h.par === 1).length
+    const doubles = s.filter(h => h.strokes - h.par >= 2).length
+    return { par, avg: parseFloat(avg.toFixed(2)), birdies, pars, bogeys, doubles, total: s.length }
+  }).filter(Boolean) as { par: number; avg: number; birdies: number; pars: number; bogeys: number; doubles: number; total: number }[]
+
+  // Best/worst hole
+  const holeAvgs: Record<number, number[]> = {}
+  for (const s of allScores) {
+    if (!holeAvgs[s.hole_number]) holeAvgs[s.hole_number] = []
+    holeAvgs[s.hole_number].push(s.strokes - s.par)
+  }
+  const holeAvgList = Object.entries(holeAvgs).map(([h, ds]) => ({ hole: parseInt(h), avg: ds.reduce((a, b) => a + b, 0) / ds.length }))
+  const bestHole  = holeAvgList.sort((a, b) => a.avg - b.avg)[0]
+  const worstHole = holeAvgList.sort((a, b) => b.avg - a.avg)[0]
+
+  // Social: head-to-head
+  const playerMap: Record<string, { name: string; avatar_color: string; wins: number; draws: number; losses: number; rounds: number }> = {}
+  for (const r of rounds) {
+    for (const pid of r.players) {
+      if (!playerMap[pid]) {
+        const p = allPlayers.find(x => x.id === pid)
+        playerMap[pid] = { name: p?.name ?? 'Jugador', avatar_color: p?.avatar_color ?? '#6b7a72', wins: 0, draws: 0, losses: 0, rounds: 0 }
+      }
+      playerMap[pid].rounds++
+      if (r.won) playerMap[pid].wins++
+      else playerMap[pid].losses++
+    }
+  }
+  const companions = Object.entries(playerMap).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.rounds - a.rounds)
+  const nemesis    = companions.length ? companions.reduce((a, b) => b.losses > a.losses ? b : a) : null
+
+  // Club avg (others avg score)
+  const otherRounds: Record<string, number[]> = {}
+  for (const r of rounds) {
+    for (const pid of r.players) {
+      if (!otherRounds[pid]) otherRounds[pid] = []
+      // We don't have their scores directly — skip for now
+    }
+  }
 
   const SECTIONS = [
     { key: 'general', label: 'General' },
@@ -219,13 +233,20 @@ export default function StatsPage() {
     { key: 'campos',  label: 'Campos' },
   ] as const
 
+  const emptyState = (text: string) => (
+    <div className="bg-white rounded-[16px] p-6 border border-[#e5e0d4] text-center">
+      <p className="text-[#6b7a72] text-[14px]">{text}</p>
+      <Link href="/ronda/campo" className="mt-3 inline-block text-[#1f8a5b] font-semibold text-[13px]">Empezar ronda →</Link>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16] mb-3">Stats</h1>
 
         {/* Section tabs */}
-        <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4] mb-4">
+        <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] mb-4">
           {SECTIONS.map(s => (
             <button key={s.key} onClick={() => setSection(s.key)}
               className="flex-1 py-1.5 rounded-full text-[11px] font-bold transition"
@@ -235,157 +256,180 @@ export default function StatsPage() {
           ))}
         </div>
 
-        {/* GENERAL */}
+        {/* ── GENERAL ── */}
         {section === 'general' && (
           <div className="space-y-3">
-            {/* HCP card */}
+            {/* HCP hero */}
             <div className="rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
               <div className="absolute right-[-30px] top-[-30px] w-[120px] h-[120px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.85 }}/>
               <div className="relative">
-                <div className="flex items-end justify-between mb-3">
+                <div className="flex items-end justify-between mb-2">
                   <div>
                     <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">ÍNDICE WHS</p>
                     <p className="text-[52px] font-black text-white leading-none">{hcpIndex != null ? formatHandicap(hcpIndex) : '–'}</p>
                   </div>
-                  <div className="text-right pb-1 space-y-1">
-                    {bestScore && <div><p className="font-mono text-[9px] text-white/50 uppercase">MEJOR</p><p className="text-white font-black text-[18px]">{bestScore}</p></div>}
-                    <div><p className="font-mono text-[9px] text-white/50 uppercase">RONDAS</p><p className="text-white font-black text-[18px]">{n}</p></div>
-                    <div><p className="font-mono text-[9px] text-white/50 uppercase">VICTORIAS</p><p className="text-[#1f8a5b] font-black text-[18px]">{totalWins}</p></div>
+                  <div className="text-right space-y-1.5 pb-1">
+                    {[['MEJOR', bestScore ?? '–'], ['RONDAS', n], ['VICTORIAS', totalWins]].map(([l, v]) => (
+                      <div key={String(l)}>
+                        <p className="font-mono text-[8px] text-white/50 uppercase">{l}</p>
+                        <p className="text-white font-black text-[16px] leading-none">{v}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                {/* Sparkline */}
-                {hcpHistory.length >= 3 && (
-                  <div className="opacity-60">
-                    <Sparkline values={hcpHistory} color="#1f8a5b" />
-                  </div>
-                )}
+                {hcpHistory.length >= 3 && <div className="opacity-60"><Sparkline values={hcpHistory} color="#1f8a5b"/></div>}
               </div>
             </div>
 
-            {/* Stats grid */}
-            {n > 0 && (
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { label: 'Media golpes', value: avgScore ? `${avgScore}` : '–', sub: avgDelta != null ? (avgDelta > 0 ? `+${avgDelta}` : avgDelta === 0 ? 'E' : `${avgDelta}`) + ' vs par' : '' },
-                  { label: 'Putts / ronda', value: avgPutts ?? '–', sub: '' },
-                  { label: 'GIR %', value: girPct != null ? `${girPct}%` : '–', sub: 'greens en reg.' },
-                  { label: 'Calles %', value: fwPct != null ? `${fwPct}%` : '–', sub: 'fairways' },
-                  { label: 'Penalizaciones', value: avgPen ?? '–', sub: 'media/ronda' },
-                  { label: 'Búnkers', value: avgBunkers ?? '–', sub: 'media/ronda' },
-                ].map(s => (
-                  <div key={s.label} className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
-                    <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide">{s.label}</p>
-                    <p className="text-[22px] font-black text-[#0e1a16] mt-1 leading-none">{s.value}</p>
-                    {s.sub && <p className="text-[10px] text-[#6b7a72] mt-0.5">{s.sub}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Recent rounds */}
-            {n > 0 && (
-              <div>
-                <h2 className="text-[14px] font-bold text-[#0e1a16] mb-2">Historial</h2>
-                <div className="space-y-2">
-                  {rounds.slice(0, 8).map(r => {
-                    const delta = r.total - r.real_par
-                    const isBest = r.total === bestScore
-                    return (
-                      <Link key={r.id} href={`/resumen?round=${r.id}`}
-                        className="bg-white rounded-[16px] p-3.5 border flex items-center gap-3 block"
-                        style={{ borderColor: isBest ? '#e8b75a' : '#e5e0d4', borderWidth: isBest ? '1.5px' : '1px' }}>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-[13px] text-[#0e1a16] truncate">{r.course_name}</p>
-                            {isBest && <span className="font-mono text-[8px] bg-[#f6e6c4] text-[#9b6e1a] px-1.5 py-0.5 rounded-full">PB</span>}
-                            {r.won && <span className="font-mono text-[8px] bg-[#d9eedd] text-[#1f8a5b] px-1.5 py-0.5 rounded-full">WIN</span>}
-                          </div>
-                          <p className="text-[11px] text-[#6b7a72]">{formatDate(r.date)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-mono text-[18px] font-black text-[#0e1a16]">{r.total}</p>
-                          <p className="font-mono text-[10px] font-bold" style={{ color: delta <= 0 ? '#1f8a5b' : '#9b6e1a' }}>
-                            {delta > 0 ? `+${delta}` : delta === 0 ? 'E' : delta}
-                          </p>
-                        </div>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
-                      </Link>
-                    )
-                  })}
+            {n > 0 ? (
+              <>
+                {/* KPIs grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: 'Media golpes', value: avgScore ? String(avgScore) : '–', sub: avgDelta != null ? `${avgDelta > 0 ? '+' : ''}${avgDelta} vs par` : '' },
+                    { label: 'Putts / ronda', value: avgPutts ?? '–', sub: '' },
+                    { label: 'GIR %',         value: girPct != null ? `${girPct}%` : '–', sub: 'greens en reg.' },
+                    { label: 'Calles %',      value: fwPct != null ? `${fwPct}%` : '–', sub: 'fairways' },
+                  ].map(s => (
+                    <div key={s.label} className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
+                      <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide">{s.label}</p>
+                      <p className="text-[22px] font-black text-[#0e1a16] mt-1 leading-none">{s.value}</p>
+                      {s.sub && <p className="text-[10px] text-[#6b7a72] mt-0.5">{s.sub}</p>}
+                    </div>
+                  ))}
                 </div>
-              </div>
-            )}
 
-            {n === 0 && (
-              <div className="bg-white rounded-[16px] p-6 border border-[#e5e0d4] text-center">
-                <p className="text-[#6b7a72] text-[14px]">Completa tu primera ronda para ver estadísticas.</p>
-                <Link href="/ronda/campo" className="mt-3 inline-block text-[#1f8a5b] font-semibold text-[13px]">Empezar ronda →</Link>
-              </div>
-            )}
+                {/* Score distribution bars */}
+                <div className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
+                  <p className="font-bold text-[14px] text-[#0e1a16] mb-3">Distribución de resultados</p>
+                  {[
+                    { label: 'Birdie o mejor', count: totalBirdies, color: '#2a6fdb', bg: '#dde7fb' },
+                    { label: 'Par',            count: totalPars,    color: '#1f8a5b', bg: '#d9eedd' },
+                    { label: 'Bogey',          count: totalBogeys,  color: '#9b6e1a', bg: '#f6e6c4' },
+                    { label: 'Doble +',        count: totalDoubles, color: '#a83a25', bg: '#fadcd6' },
+                  ].map(s => (
+                    <div key={s.label} className="flex items-center gap-3 mb-2">
+                      <p className="text-[12px] text-[#6b7a72] w-28 flex-shrink-0">{s.label}</p>
+                      <div className="flex-1 h-5 rounded-full overflow-hidden" style={{ backgroundColor: '#f4f1e9' }}>
+                        <div className="h-full rounded-full transition-all" style={{ width: `${Math.round(s.count / totalHolesP * 100)}%`, backgroundColor: s.bg, border: `1px solid ${s.color}22` }}/>
+                      </div>
+                      <p className="font-mono text-[11px] font-bold w-8 text-right" style={{ color: s.color }}>{Math.round(s.count / totalHolesP * 100)}%</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Extra stats */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
+                    <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide">Mejor racha</p>
+                    <p className="text-[22px] font-black text-[#0e1a16] mt-1 leading-none">{bestStreak}</p>
+                    <p className="text-[10px] text-[#6b7a72] mt-0.5">rondas consecutivas</p>
+                  </div>
+                  <div className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
+                    <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide">Total golpes</p>
+                    <p className="text-[22px] font-black text-[#0e1a16] mt-1 leading-none">{rounds.reduce((a, r) => a + r.total, 0).toLocaleString()}</p>
+                    <p className="text-[10px] text-[#6b7a72] mt-0.5">en toda tu carrera</p>
+                  </div>
+                </div>
+
+                {/* Recent rounds */}
+                <div>
+                  <h2 className="text-[14px] font-bold text-[#0e1a16] mb-2">Historial reciente</h2>
+                  <div className="space-y-2">
+                    {rounds.slice(0, 6).map(r => {
+                      const delta = r.total - r.real_par
+                      return (
+                        <Link key={r.id} href={`/resumen?round=${r.id}`}
+                          className="bg-white rounded-[16px] p-3.5 border flex items-center gap-3 block"
+                          style={{ borderColor: r.total === bestScore ? '#e8b75a' : '#e5e0d4' }}>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-[13px] text-[#0e1a16] truncate">{r.course_name}</p>
+                              {r.total === bestScore && <span className="font-mono text-[8px] bg-[#f6e6c4] text-[#9b6e1a] px-1.5 py-0.5 rounded-full">PB</span>}
+                              {r.won && <span className="font-mono text-[8px] bg-[#d9eedd] text-[#1f8a5b] px-1.5 py-0.5 rounded-full">WIN</span>}
+                            </div>
+                            <p className="text-[11px] text-[#6b7a72]">{formatDate(r.date)}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-mono text-[18px] font-black text-[#0e1a16]">{r.total}</p>
+                            <p className="font-mono text-[10px] font-bold" style={{ color: delta <= 0 ? '#1f8a5b' : '#9b6e1a' }}>{delta > 0 ? `+${delta}` : delta === 0 ? 'E' : delta}</p>
+                          </div>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
+            ) : emptyState('Completa tu primera ronda para ver estadísticas.')}
           </div>
         )}
 
-        {/* HOYOS */}
+        {/* ── HOYOS ── */}
         {section === 'hoyos' && (
           <div className="space-y-3">
-            {/* Best / worst hole */}
-            {bestHole && worstHole && (
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
-                  <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-1">Mejor hoyo</p>
-                  <p className="text-[32px] font-black text-[#1f8a5b] leading-none">#{bestHole.hole_number}</p>
-                  <p className="text-[11px] text-[#6b7a72] mt-1">{bestHole.birdies} birdies · {bestHole.pars} pares</p>
-                  <p className="font-mono text-[10px] text-[#6b7a72]">Media {bestHole.avg}</p>
-                </div>
-                <div className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
-                  <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-1">Peor hoyo</p>
-                  <p className="text-[32px] font-black text-[#a83a25] leading-none">#{worstHole.hole_number}</p>
-                  <p className="text-[11px] text-[#6b7a72] mt-1">{worstHole.bogeys} bogeys · {worstHole.doubles} dobles+</p>
-                  <p className="font-mono text-[10px] text-[#6b7a72]">Media {worstHole.avg}</p>
-                </div>
-              </div>
-            )}
+            {parStats.length > 0 ? (
+              <>
+                {/* Best / worst hole */}
+                {bestHole && worstHole && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
+                      <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-1">Mejor hoyo</p>
+                      <p className="text-[32px] font-black text-[#1f8a5b] leading-none">#{bestHole.hole}</p>
+                      <p className="font-mono text-[11px] text-[#6b7a72] mt-1">{bestHole.avg > 0 ? '+' : ''}{bestHole.avg.toFixed(2)} vs par</p>
+                    </div>
+                    <div className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
+                      <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-1">Peor hoyo</p>
+                      <p className="text-[32px] font-black text-[#a83a25] leading-none">#{worstHole.hole}</p>
+                      <p className="font-mono text-[11px] text-[#6b7a72] mt-1">+{worstHole.avg.toFixed(2)} vs par</p>
+                    </div>
+                  </div>
+                )}
 
-            {/* Hole by hole breakdown */}
-            {holestats.length > 0 && (
-              <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
-                <div className="px-4 py-3 border-b border-[#efebe1]">
-                  <p className="font-bold text-[14px] text-[#0e1a16]">Desglose por hoyo</p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-center" style={{ minWidth: '380px' }}>
-                    <thead>
-                      <tr className="border-b border-[#efebe1]">
-                        <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-3 text-left">H</td>
-                        <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2">Media</td>
-                        <td className="font-mono text-[9px] text-[#2a6fdb] py-2 px-2">Birdie-</td>
-                        <td className="font-mono text-[9px] text-[#1f8a5b] py-2 px-2">Par</td>
-                        <td className="font-mono text-[9px] text-[#9b6e1a] py-2 px-2">Bogey</td>
-                        <td className="font-mono text-[9px] text-[#a83a25] py-2 px-2">Dbl+</td>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {holestats.map(h => (
-                        <tr key={h.hole_number} className="border-t border-[#efebe1]">
-                          <td className="font-mono text-[12px] font-bold text-[#0e1a16] py-2 px-3 text-left">{h.hole_number}</td>
-                          <td className="font-mono text-[12px] font-bold text-[#0e1a16] py-2 px-2">{h.avg}</td>
-                          <td className="font-mono text-[11px] text-[#2a6fdb] py-2 px-2">{h.birdies || '–'}</td>
-                          <td className="font-mono text-[11px] text-[#1f8a5b] py-2 px-2">{h.pars || '–'}</td>
-                          <td className="font-mono text-[11px] text-[#9b6e1a] py-2 px-2">{h.bogeys || '–'}</td>
-                          <td className="font-mono text-[11px] text-[#a83a25] py-2 px-2">{h.doubles || '–'}</td>
-                        </tr>
+                {/* Par type breakdown */}
+                {parStats.map(ps => (
+                  <div key={ps.par} className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-[#efebe1]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-[16px] text-white" style={{ backgroundColor: ps.par === 3 ? '#2a6fdb' : ps.par === 4 ? '#1f8a5b' : '#d4a24a' }}>
+                          P{ps.par}
+                        </div>
+                        <div>
+                          <p className="font-bold text-[14px] text-[#0e1a16]">Par {ps.par}</p>
+                          <p className="font-mono text-[10px] text-[#6b7a72]">{ps.total} hoyos jugados</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Media</p>
+                        <p className="font-mono text-[24px] font-black text-[#0e1a16] leading-none">{ps.avg.toFixed(1)}</p>
+                        <p className="font-mono text-[10px] font-bold" style={{ color: ps.avg - ps.par <= 0 ? '#1f8a5b' : '#9b6e1a' }}>
+                          {(ps.avg - ps.par) > 0 ? '+' : ''}{(ps.avg - ps.par).toFixed(2)} vs par
+                        </p>
+                      </div>
+                    </div>
+                    {/* Distribution */}
+                    <div className="grid grid-cols-4 divide-x divide-[#efebe1]">
+                      {[
+                        { label: 'Birdie-', count: ps.birdies, color: '#2a6fdb' },
+                        { label: 'Par',     count: ps.pars,    color: '#1f8a5b' },
+                        { label: 'Bogey',   count: ps.bogeys,  color: '#9b6e1a' },
+                        { label: 'Dbl+',    count: ps.doubles, color: '#a83a25' },
+                      ].map(d => (
+                        <div key={d.label} className="py-3 text-center">
+                          <p className="font-mono text-[9px] text-[#6b7a72] uppercase">{d.label}</p>
+                          <p className="font-mono text-[18px] font-black mt-0.5 leading-none" style={{ color: d.color }}>{d.count}</p>
+                          <p className="font-mono text-[9px] text-[#6b7a72] mt-0.5">{Math.round(d.count / ps.total * 100)}%</p>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {holestats.length === 0 && <div className="bg-white rounded-[16px] p-6 border border-[#e5e0d4] text-center"><p className="text-[#6b7a72] text-[14px]">Sin datos de hoyos todavía.</p></div>}
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : emptyState('Necesitas más rondas para ver estadísticas por tipo de hoyo.')}
           </div>
         )}
 
-        {/* SOCIAL */}
+        {/* ── SOCIAL ── */}
         {section === 'social' && (
           <div className="space-y-3">
             {/* Win summary */}
@@ -395,64 +439,108 @@ export default function StatsPage() {
                 <div>
                   <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">VICTORIAS</p>
                   <p className="text-[52px] font-black text-white leading-none">{totalWins}</p>
-                  <p className="text-[12px] text-white/60 mt-1">de {n} rondas competitivas</p>
+                  <p className="text-[12px] text-white/60 mt-1">de {n} rondas con otros</p>
                 </div>
                 {n > 0 && (
                   <div>
                     <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">WIN RATE</p>
-                    <p className="text-[28px] font-black text-[#1f8a5b] leading-none">{Math.round(totalWins / n * 100)}%</p>
+                    <p className="text-[28px] font-black text-[#1f8a5b] leading-none">{Math.round(totalWins / Math.max(n, 1) * 100)}%</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Companions */}
-            {companions.length > 0 ? (
-              <div>
-                <h2 className="text-[14px] font-bold text-[#0e1a16] mb-2">Con quién más juegas</h2>
-                <div className="space-y-2">
-                  {companions.slice(0, 8).map((c, i) => (
-                    <div key={c.id} className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4] flex items-center gap-3">
-                      <span className="font-mono text-[12px] font-bold text-[#6b7a72] w-5 text-center">{i + 1}</span>
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold" style={{ backgroundColor: c.avatar_color }}>
-                        {c.name[0].toUpperCase()}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-[14px] text-[#0e1a16]">{c.name}</p>
-                        <p className="text-[11px] text-[#6b7a72]">{c.rounds} ronda{c.rounds !== 1 ? 's' : ''} juntos</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-mono text-[11px] text-[#6b7a72]">te ganó</p>
-                        <p className="font-mono text-[16px] font-black" style={{ color: c.wins > 0 ? '#a83a25' : '#1f8a5b' }}>{c.wins}×</p>
-                      </div>
-                    </div>
-                  ))}
+            {/* Nemesis */}
+            {nemesis && (
+              <div className="bg-white rounded-[16px] p-4 border border-[#fadcd6]">
+                <p className="font-mono text-[9px] text-[#a83a25] uppercase tracking-wide mb-2">Tu némesis</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-white text-[15px] font-bold" style={{ backgroundColor: nemesis.avatar_color }}>
+                    {nemesis.name[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-[15px] text-[#0e1a16]">{nemesis.name}</p>
+                    <p className="text-[12px] text-[#6b7a72]">{nemesis.rounds} rondas juntos</p>
+                  </div>
+                  <p className="text-[13px] text-[#a83a25] font-semibold">te ganó {nemesis.losses}×</p>
                 </div>
               </div>
-            ) : (
-              <div className="bg-white rounded-[16px] p-6 border border-[#e5e0d4] text-center">
-                <p className="text-[#6b7a72] text-[14px]">Juega rondas con amigos para ver las comparativas.</p>
+            )}
+
+            {/* Head-to-head con V-E-D */}
+            {companions.length > 0 && (
+              <div>
+                <h2 className="text-[14px] font-bold text-[#0e1a16] mb-2">Head-to-head</h2>
+                <div className="space-y-2">
+                  {companions.map(c => {
+                    const total = c.wins + c.draws + c.losses
+                    return (
+                      <div key={c.id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold" style={{ backgroundColor: c.avatar_color }}>
+                            {c.name[0].toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-bold text-[14px] text-[#0e1a16]">{c.name}</p>
+                            <p className="text-[11px] text-[#6b7a72]">{c.rounds} ronda{c.rounds !== 1 ? 's' : ''} juntos</p>
+                          </div>
+                        </div>
+                        {/* V-E-D */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { label: 'V', count: c.wins,   color: '#1f8a5b', bg: '#d9eedd' },
+                            { label: 'E', count: c.draws,  color: '#6b7a72', bg: '#f4f1e9' },
+                            { label: 'D', count: c.losses, color: '#a83a25', bg: '#fadcd6' },
+                          ].map(d => (
+                            <div key={d.label} className="rounded-[12px] py-2.5 text-center" style={{ backgroundColor: d.bg }}>
+                              <p className="font-mono text-[9px] uppercase tracking-wide font-bold" style={{ color: d.color }}>{d.label}</p>
+                              <p className="font-mono text-[22px] font-black leading-none mt-0.5" style={{ color: d.color }}>{d.count}</p>
+                            </div>
+                          ))}
+                        </div>
+                        {/* Bar */}
+                        {total > 0 && (
+                          <div className="flex h-2 rounded-full overflow-hidden mt-2 gap-px">
+                            {c.wins   > 0 && <div style={{ flex: c.wins,   backgroundColor: '#1f8a5b' }}/>}
+                            {c.draws  > 0 && <div style={{ flex: c.draws,  backgroundColor: '#e5e0d4' }}/>}
+                            {c.losses > 0 && <div style={{ flex: c.losses, backgroundColor: '#fadcd6' }}/>}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
+
+            {companions.length === 0 && emptyState('Juega rondas con amigos para ver comparativas.')}
           </div>
         )}
 
-        {/* CAMPOS */}
+        {/* ── CAMPOS ── */}
         {section === 'campos' && (
           <div className="space-y-2">
             {courseStats.length > 0 ? courseStats.map(c => {
               const deltaBest = c.best ? c.best - c.par : null
-              const vsRecord = c.record && c.best ? c.best - c.record : null
+              const vsRecord  = c.record && c.best ? c.best - c.record : null
+              // Evolution: is last score better than avg?
+              const lastScore = c.last3[0]
+              const trend = lastScore && c.avg ? (lastScore < c.avg ? 'up' : lastScore > c.avg ? 'down' : 'same') : 'same'
+
               return (
                 <div key={c.name} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
                   <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-bold text-[14px] text-[#0e1a16] leading-tight">{c.name}</p>
+                    <div className="flex-1 min-w-0 pr-3">
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-[14px] text-[#0e1a16] leading-tight truncate">{c.name}</p>
+                        {trend === 'up'   && <span className="text-[#1f8a5b] text-[14px]">↑</span>}
+                        {trend === 'down' && <span className="text-[#a83a25] text-[14px]">↓</span>}
+                      </div>
                       <p className="font-mono text-[10px] text-[#6b7a72] mt-0.5">{c.rounds} ronda{c.rounds !== 1 ? 's' : ''} · Par {c.par}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex-shrink-0">
                       <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Mejor</p>
-                      <p className="font-mono text-[20px] font-black text-[#0e1a16] leading-none">{c.best}</p>
+                      <p className="font-mono text-[22px] font-black text-[#0e1a16] leading-none">{c.best}</p>
                       {deltaBest !== null && (
                         <p className="font-mono text-[10px] font-bold" style={{ color: deltaBest <= 0 ? '#1f8a5b' : '#9b6e1a' }}>
                           {deltaBest > 0 ? `+${deltaBest}` : deltaBest === 0 ? 'E' : deltaBest}
@@ -460,14 +548,15 @@ export default function StatsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-4 pt-2 border-t border-[#efebe1]">
+
+                  <div className="flex gap-3 pt-2 border-t border-[#efebe1]">
                     <div>
                       <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Media</p>
                       <p className="font-mono text-[14px] font-bold text-[#0e1a16]">{c.avg}</p>
                     </div>
                     {c.record && (
                       <div>
-                        <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Récord campo</p>
+                        <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Récord</p>
                         <p className="font-mono text-[14px] font-bold text-[#e8b75a]">{c.record}</p>
                       </div>
                     )}
@@ -475,18 +564,25 @@ export default function StatsPage() {
                       <div>
                         <p className="font-mono text-[9px] text-[#6b7a72] uppercase">vs Récord</p>
                         <p className="font-mono text-[14px] font-bold" style={{ color: vsRecord === 0 ? '#1f8a5b' : '#6b7a72' }}>
-                          {vsRecord > 0 ? `+${vsRecord}` : vsRecord === 0 ? '= RÉCORD' : vsRecord}
+                          {vsRecord === 0 ? '= RÉCORD' : `+${vsRecord}`}
                         </p>
+                      </div>
+                    )}
+                    {/* Last 3 scores trend */}
+                    {c.last3.length >= 2 && (
+                      <div className="ml-auto">
+                        <p className="font-mono text-[9px] text-[#6b7a72] uppercase mb-1">Últimas</p>
+                        <div className="flex gap-1 items-end">
+                          {c.last3.slice(0, 3).reverse().map((s, i) => (
+                            <span key={i} className="font-mono text-[11px] font-bold text-[#0e1a16]">{s}</span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
               )
-            }) : (
-              <div className="bg-white rounded-[16px] p-6 border border-[#e5e0d4] text-center">
-                <p className="text-[#6b7a72] text-[14px]">Completa rondas para ver estadísticas por campo.</p>
-              </div>
-            )}
+            }) : emptyState('Completa rondas en distintos campos para ver comparativas.')}
           </div>
         )}
       </div>
