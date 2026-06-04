@@ -21,8 +21,9 @@ function SeleccionarCampoPage() {
   const leagueId   = searchParams.get('league') ?? ''
 
   const [courses, setCourses] = useState<Course[]>([])
-  const [search, setSearch] = useState('')
+  const [search, setSearch]   = useState('')
   const [selected, setSelected] = useState<Course | null>(null)
+  const [tab, setTab]         = useState<'golf' | 'pp'>('golf')
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -31,9 +32,11 @@ function SeleccionarCampoPage() {
       .then(({ data }) => { setCourses(data ?? []); setLoading(false) })
   }, [])
 
-  const filtered = courses.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase())
-  )
+  const isPP = (name: string) => name.startsWith('P&P')
+
+  const filtered = courses
+    .filter(c => tab === 'pp' ? isPP(c.name) : !isPP(c.name))
+    .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
 
   function handleNext() {
     if (!selected) return
@@ -59,8 +62,19 @@ function SeleccionarCampoPage() {
           ¿Dónde<br/><span className="text-[#1f8a5b]">jugamos hoy?</span>
         </h1>
 
+        {/* Golf / P&P tabs */}
+        <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4] mt-4 mb-3">
+          {([['golf', 'Golf'], ['pp', 'Pitch & Putt']] as const).map(([key, label]) => (
+            <button key={key} onClick={() => { setTab(key); setSelected(null) }}
+              className="flex-1 py-2 rounded-full text-[13px] font-bold transition"
+              style={{ backgroundColor: tab === key ? '#0e1a16' : 'transparent', color: tab === key ? '#fff' : '#6b7a72' }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
         {/* Search */}
-        <div className="flex items-center gap-3 bg-white rounded-full px-4 py-3 border border-[#e5e0d4] mt-4">
+        <div className="flex items-center gap-3 bg-white rounded-full px-4 py-3 border border-[#e5e0d4]">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#6b7a72" strokeWidth="1.8"/><path d="M16 16L21 21" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round"/></svg>
           <input
             value={search} onChange={e => setSearch(e.target.value)}
@@ -101,12 +115,17 @@ function SeleccionarCampoPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-[15px] leading-tight" style={{ color: isSel ? '#fff' : '#0e1a16' }}>
-                    {course.name}
-                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-bold text-[15px] leading-tight" style={{ color: isSel ? '#fff' : '#0e1a16' }}>
+                      {course.name}
+                    </p>
+                    <span className="font-mono text-[9px] px-2 py-0.5 rounded-full font-bold"
+                      style={{ backgroundColor: isSel ? 'rgba(255,255,255,0.18)' : '#f4f1e9', color: isSel ? '#fff' : '#6b7a72' }}>
+                      {course.holes_count} hoyos
+                    </span>
+                  </div>
                   <p className="font-mono text-[10px] mt-0.5 uppercase tracking-wide" style={{ color: isSel ? 'rgba(255,255,255,0.55)' : '#6b7a72' }}>
-                    Par {course.par} · {course.holes_count} hoyos
-                    {course.record_score ? ` · Récord ${course.record_score}` : ''}
+                    Par {course.par}{course.record_score ? ` · Récord ${course.record_score}` : ''}
                   </p>
                 </div>
 
