@@ -4,35 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate, formatHandicap } from '@/lib/golf'
-
-function TabBar({ active }: { active: string }) {
-  const tabs = [
-    { key: 'inicio',  href: '/',        label: 'Inicio' },
-    { key: 'tarjeta', href: '/tarjeta', label: 'Tarjeta' },
-    { key: 'stats',   href: '/stats',   label: 'Stats' },
-    { key: 'liga',    href: '/liga',    label: 'Liga' },
-    { key: 'perfil',  href: '/perfil',  label: 'Perfil' },
-  ]
-  const icons: Record<string, JSX.Element> = {
-    inicio:  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 11L12 3l9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-9z" stroke="currentColor" strokeWidth={active==='inicio'?2.2:1.7}/></svg>,
-    tarjeta: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth={active==='tarjeta'?2.2:1.7}/><path d="M3 10h18M9 5v14" stroke="currentColor" strokeWidth={active==='tarjeta'?2.2:1.7}/></svg>,
-    stats:   <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 19V9m6 10V5m6 14v-7" stroke="currentColor" strokeWidth={active==='stats'?2.2:1.7} strokeLinecap="round"/></svg>,
-    liga:    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z" stroke="currentColor" strokeWidth={active==='liga'?2.2:1.7} strokeLinecap="round"/><path d="M5 7H2v3a3 3 0 0 0 3 3M19 7h3v3a3 3 0 0 1-3 3" stroke="currentColor" strokeWidth={active==='liga'?2.2:1.7} strokeLinecap="round"/></svg>,
-    perfil:  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth={active==='perfil'?2.2:1.7}/><path d="M4 21c0-4 4-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth={active==='perfil'?2.2:1.7} strokeLinecap="round"/></svg>,
-  }
-  return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-[#e5e0d4] z-50 safe-bottom">
-      <div className="flex items-stretch">
-        {tabs.map(t => (
-          <Link key={t.key} href={t.href} className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 ${t.key===active?'text-[#1f8a5b]':'text-[#6b7a72]'}`}>
-            {icons[t.key]}
-            <span className="text-[10px] font-semibold">{t.label}</span>
-          </Link>
-        ))}
-      </div>
-    </nav>
-  )
-}
+import { TabBar } from '@/components/ui/tab-bar'
 
 function Sparkline({ values, color = '#1f8a5b' }: { values: number[]; color?: string }) {
   if (values.length < 2) return null
@@ -586,7 +558,7 @@ export default function StatsPage() {
           </div>
         )}
       </div>
-      <TabBar active="stats" />
+      <TabBar />
     </div>
   )
 }
