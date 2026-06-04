@@ -38,6 +38,7 @@ export default function StatsPage() {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
   const [courseHoleData, setCourseHoleData] = useState<{ hole_number: number; par: number; my_last: number | null; my_best: number | null }[]>([])
   const [comparePlayerId, setComparePlayerId] = useState<string | null>(null)
+  const [socialPeriod, setSocialPeriod]       = useState<'all'|'10'|'5'|'3'>('all')
   const supabase = createClient()
 
   useEffect(() => {
@@ -224,6 +225,16 @@ export default function StatsPage() {
   const winPhrase = winRate >= 70 ? '¡Eres el terror del campo!' : winRate >= 50 ? 'Ganando más que perdiendo, no está mal.' : winRate >= 30 ? 'Queda algo de margen de mejora... bastante.' : '¡Ni te rindas, ni te lo tomes tan en serio!'
   const lossPhrase = winRate >= 70 ? 'Los demás te deben mucho dinero.' : winRate >= 50 ? 'Al menos no eres el último... todavía.' : winRate >= 30 ? 'El golf te está enseñando humildad gratis.' : '¡El récord de derrotas también es un récord!'
 
+  // Social filtered rounds
+  const socialRounds = socialPeriod === 'all' ? rounds : rounds.slice(0, parseInt(socialPeriod))
+  const sAvgScore = socialRounds.length ? Math.round(socialRounds.reduce((a, r) => a + r.total, 0) / socialRounds.length) : null
+  const sAvgDelta = socialRounds.length ? Math.round(socialRounds.reduce((a, r) => a + (r.total - r.real_par), 0) / socialRounds.length) : null
+  const sGirPct   = socialRounds.length ? Math.round(socialRounds.reduce((a, r) => a + (r.gir_total > 0 ? r.gir / r.gir_total * 100 : 0), 0) / socialRounds.length) : null
+  const sFwPct    = socialRounds.length ? Math.round(socialRounds.reduce((a, r) => a + (r.fairways_total > 0 ? r.fairways / r.fairways_total * 100 : 0), 0) / socialRounds.length) : null
+  const sPutts    = socialRounds.length ? parseFloat((socialRounds.reduce((a, r) => a + r.putts, 0) / socialRounds.length).toFixed(1)) : null
+  const sPen      = socialRounds.length ? parseFloat((socialRounds.reduce((a, r) => a + r.penalties, 0) / socialRounds.length).toFixed(1)) : null
+  const sBunkers  = socialRounds.length ? parseFloat((socialRounds.reduce((a, r) => a + r.bunkers, 0) / socialRounds.length).toFixed(1)) : null
+
   // Social: club averages for comparison
   const clubAvgGIR  = rounds.length ? Math.round(rounds.reduce((a, r) => a + (r.gir_total > 0 ? r.gir / r.gir_total * 100 : 0), 0) / rounds.length) : 0
   const clubAvgPutts = rounds.length ? parseFloat((rounds.reduce((a, r) => a + r.putts, 0) / rounds.length).toFixed(1)) : 0
@@ -322,19 +333,6 @@ export default function StatsPage() {
                   ))}
                 </div>
 
-                {/* Extra stats */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
-                    <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide">Mejor racha</p>
-                    <p className="text-[22px] font-black text-[#0e1a16] mt-1 leading-none">{bestStreak}</p>
-                    <p className="text-[10px] text-[#6b7a72] mt-0.5">rondas consecutivas</p>
-                  </div>
-                  <div className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
-                    <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide">Total golpes</p>
-                    <p className="text-[22px] font-black text-[#0e1a16] mt-1 leading-none">{rounds.reduce((a, r) => a + r.total, 0).toLocaleString()}</p>
-                    <p className="text-[10px] text-[#6b7a72] mt-0.5">en toda tu carrera</p>
-                  </div>
-                </div>
 
                 {/* Recent rounds */}
                 <div>
@@ -472,26 +470,92 @@ export default function StatsPage() {
               </div>
             </div>
 
-            {/* My metrics vs all rounds */}
-            <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
-              <div className="px-4 py-3 border-b border-[#efebe1]">
-                <p className="font-bold text-[14px] text-[#0e1a16]">Mis métricas</p>
-              </div>
-              <div className="divide-y divide-[#efebe1]">
-                {[
-                  { label: 'Media golpes', value: avgScore ? `${avgScore} (${avgDelta! > 0 ? '+' : ''}${avgDelta})` : '–', icon: '⛳' },
-                  { label: 'GIR %',        value: girPct != null ? `${girPct}%` : '–', icon: '🟩' },
-                  { label: 'Calles %',     value: fwPct != null ? `${fwPct}%` : '–', icon: '🌿' },
-                  { label: 'Putts / ronda',value: avgPutts ?? '–', icon: '🏌️' },
-                  { label: 'Penalizaciones',value: rounds.length ? (rounds.reduce((a,r)=>a+r.penalties,0)/rounds.length).toFixed(1) : '–', icon: '⚠️' },
-                  { label: 'Búnkers',      value: rounds.length ? (rounds.reduce((a,r)=>a+r.bunkers,0)/rounds.length).toFixed(1) : '–', icon: '🏖' },
-                ].map(m => (
-                  <div key={m.label} className="flex items-center justify-between px-4 py-2.5">
-                    <p className="text-[13px] text-[#0e1a16]">{m.label}</p>
-                    <p className="font-mono text-[14px] font-black text-[#0e1a16]">{m.value}</p>
-                  </div>
+            {/* Period + player selector */}
+            <div className="flex gap-2">
+              <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] flex-1">
+                {([['all','Todas'],['10','Últ. 10'],['5','Últ. 5'],['3','Últ. 3']] as const).map(([key, label]) => (
+                  <button key={key} onClick={() => setSocialPeriod(key)}
+                    className="flex-1 py-1.5 rounded-full text-[10px] font-bold transition"
+                    style={{ backgroundColor: socialPeriod === key ? '#0e1a16' : 'transparent', color: socialPeriod === key ? '#fff' : '#6b7a72' }}>
+                    {label}
+                  </button>
                 ))}
               </div>
+            </div>
+
+            {/* Métricas con selector de jugador integrado */}
+            <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+              {/* Header con selector */}
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-[#efebe1]">
+                <p className="font-bold text-[14px] text-[#0e1a16] flex-1">Métricas</p>
+                <select value={comparePlayerId ?? ''} onChange={e => setComparePlayerId(e.target.value || null)}
+                  className="text-[12px] font-semibold text-[#0e1a16] bg-[#f4f1e9] border border-[#e5e0d4] rounded-full px-3 py-1.5 outline-none max-w-[140px]">
+                  <option value="">Solo yo</option>
+                  {companions.map(c => <option key={c.id} value={c.id}>{c.name.split(' ')[0]}</option>)}
+                </select>
+              </div>
+              {/* Column headers if comparing */}
+              {comparePlayerId && (() => {
+                const other = companions.find(c => c.id === comparePlayerId)
+                return other ? (
+                  <div className="grid grid-cols-3 border-b border-[#efebe1] bg-[#f4f1e9]">
+                    <div className="py-2 px-4"/>
+                    <div className="py-2 px-2 text-center">
+                      <p className="font-mono text-[9px] text-[#1f8a5b] font-bold uppercase">Tú</p>
+                    </div>
+                    <div className="py-2 px-2 text-center">
+                      <p className="font-mono text-[9px] font-bold uppercase truncate" style={{ color: other.avatar_color }}>{other.name.split(' ')[0]}</p>
+                    </div>
+                  </div>
+                ) : null
+              })()}
+              {/* Rows */}
+              {(() => {
+                const other = comparePlayerId ? companions.find(c => c.id === comparePlayerId) : null
+                const otherRounds = other ? rounds.filter(r => r.players.includes(other.id)) : []
+                const oSocialR = socialPeriod === 'all' ? otherRounds : otherRounds.slice(0, parseInt(socialPeriod))
+                const oAvg  = oSocialR.length ? Math.round(oSocialR.reduce((a,r)=>a+r.total,0)/oSocialR.length) : null
+                const oGir  = oSocialR.length ? Math.round(oSocialR.reduce((a,r)=>a+(r.gir_total>0?r.gir/r.gir_total*100:0),0)/oSocialR.length) : null
+                const oFw   = oSocialR.length ? Math.round(oSocialR.reduce((a,r)=>a+(r.fairways_total>0?r.fairways/r.fairways_total*100:0),0)/oSocialR.length) : null
+                const oPutt = oSocialR.length ? parseFloat((oSocialR.reduce((a,r)=>a+r.putts,0)/oSocialR.length).toFixed(1)) : null
+                const oPen  = oSocialR.length ? parseFloat((oSocialR.reduce((a,r)=>a+r.penalties,0)/oSocialR.length).toFixed(1)) : null
+                const oBunk = oSocialR.length ? parseFloat((oSocialR.reduce((a,r)=>a+r.bunkers,0)/oSocialR.length).toFixed(1)) : null
+
+                const rows = [
+                  { label: 'Media golpes', mine: sAvgScore ? `${sAvgScore} (${sAvgDelta!=null&&sAvgDelta>0?'+':''}${sAvgDelta})` : '–', theirs: oAvg ? `${oAvg}` : '–', mineN: sAvgScore, theirN: oAvg, lower: true },
+                  { label: 'GIR %',        mine: sGirPct!=null?`${sGirPct}%`:'–', theirs: oGir!=null?`${oGir}%`:'–', mineN: sGirPct, theirN: oGir, lower: false },
+                  { label: 'Calles %',     mine: sFwPct!=null?`${sFwPct}%`:'–',  theirs: oFw!=null?`${oFw}%`:'–',   mineN: sFwPct,  theirN: oFw,   lower: false },
+                  { label: 'Putts/ronda',  mine: sPutts??'–',   theirs: oPutt??'–',  mineN: sPutts?parseFloat(String(sPutts)):null,  theirN: oPutt, lower: true },
+                  { label: 'Penalizaciones', mine: sPen??'–',   theirs: oPen??'–',   mineN: sPen?parseFloat(String(sPen)):null,    theirN: oPen,  lower: true },
+                  { label: 'Búnkers',      mine: sBunkers??'–', theirs: oBunk??'–',  mineN: sBunkers?parseFloat(String(sBunkers)):null, theirN: oBunk, lower: true },
+                ]
+
+                return (
+                  <div className="divide-y divide-[#efebe1]">
+                    {rows.map(row => {
+                      const mineWins  = other && row.mineN!=null && row.theirN!=null && (row.lower ? row.mineN < row.theirN : row.mineN > row.theirN)
+                      const theirWins = other && row.mineN!=null && row.theirN!=null && (row.lower ? row.theirN < row.mineN : row.theirN > row.mineN)
+                      return (
+                        <div key={row.label} className={`${other ? 'grid grid-cols-3' : 'flex items-center justify-between'} px-4 py-2.5`}>
+                          <p className="text-[12px] text-[#6b7a72] py-0.5">{row.label}</p>
+                          {other ? (
+                            <>
+                              <div className="text-center py-0.5 rounded-[6px] mx-1" style={{ backgroundColor: mineWins ? '#d9eedd' : 'transparent' }}>
+                                <p className="font-mono text-[14px] font-black" style={{ color: mineWins ? '#1f8a5b' : '#0e1a16' }}>{row.mine}</p>
+                              </div>
+                              <div className="text-center py-0.5 rounded-[6px] mx-1" style={{ backgroundColor: theirWins ? '#fadcd6' : 'transparent' }}>
+                                <p className="font-mono text-[14px] font-black" style={{ color: theirWins ? '#a83a25' : '#0e1a16' }}>{row.theirs}</p>
+                              </div>
+                            </>
+                          ) : (
+                            <p className="font-mono text-[14px] font-black text-[#0e1a16]">{row.mine}</p>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Nemesis — solo si te han ganado alguna vez */}

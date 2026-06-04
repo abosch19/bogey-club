@@ -78,31 +78,70 @@ export default function PerfilPage() {
           </div>
         </div>
 
-        {/* WHS differentials */}
+        {/* Handicap evolution + WHS rounds */}
         {diffs.length > 0 && (
           <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4 mb-3">
             <div className="flex items-baseline justify-between mb-3">
-              <h2 className="text-[15px] font-bold text-[#0e1a16]">Diferenciales WHS</h2>
-              <span className="font-mono text-[10px] text-[#6b7a72]">Cuentan {nCount} de {diffs.length}</span>
+              <h2 className="text-[15px] font-bold text-[#0e1a16]">Evolución hándicap</h2>
+              <span className="font-mono text-[10px] text-[#6b7a72]">Últimas {diffs.length} rondas</span>
+            </div>
+
+            {/* Sparkline chart */}
+            {diffs.length >= 2 && (() => {
+              const vals = [...diffs].reverse().map(d => d.diff)
+              const min = Math.min(...vals), max = Math.max(...vals)
+              const range = max - min || 1
+              const w = 320, h = 56, pad = 6
+              const pts = vals.map((v, i) => `${pad + (i/(vals.length-1))*(w-pad*2)},${pad + ((max-v)/range)*(h-pad*2)}`).join(' ')
+              const current = profile.handicap_index
+              return (
+                <div className="mb-4 relative">
+                  <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
+                    {/* Fill area */}
+                    <polygon points={`${pts} ${pad+(vals.length-1)/(vals.length-1)*(w-pad*2)},${h} ${pad},${h}`} fill="#d9eedd" opacity="0.5"/>
+                    <polyline points={pts} fill="none" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    {/* Last point dot */}
+                    {vals.length > 0 && (() => {
+                      const lx = pad + (vals.length-1)/(vals.length-1)*(w-pad*2)
+                      const ly = pad + ((max-vals[vals.length-1])/range)*(h-pad*2)
+                      return <circle cx={lx} cy={ly} r="4" fill="#1f8a5b"/>
+                    })()}
+                  </svg>
+                  <div className="flex justify-between mt-1">
+                    <span className="font-mono text-[9px] text-[#6b7a72]">{formatDate(diffs[diffs.length-1]?.played_at)}</span>
+                    <span className="font-mono text-[10px] font-bold text-[#1f8a5b]">Actual: {formatHandicap(current)}</span>
+                    <span className="font-mono text-[9px] text-[#6b7a72]">{formatDate(diffs[0]?.played_at)}</span>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Rounds that make up the calculation */}
+            <div className="flex items-baseline justify-between mb-2">
+              <p className="font-bold text-[13px] text-[#0e1a16]">Rondas del cálculo</p>
+              <span className="font-mono text-[10px] text-[#6b7a72]">{nCount} de {diffs.length} cuentan</span>
             </div>
             <div className="space-y-1.5">
               {diffs.map((d, i) => (
-                <div key={i} className="flex items-center justify-between py-1 border-b border-[#efebe1] last:border-0">
-                  <div className="flex items-center gap-2">
-                    {/* Green dot if counting */}
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.counting ? '#1f8a5b' : '#e5e0d4' }}/>
-                    <span className="text-[12px] text-[#6b7a72]">{formatDate(d.played_at)}</span>
+                <div key={i} className="flex items-center gap-3 py-1.5 border-b border-[#efebe1] last:border-0">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: d.counting ? '#1f8a5b' : '#f4f1e9' }}>
+                    {d.counting
+                      ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      : <span className="font-mono text-[9px] text-[#6b7a72]">{i+1}</span>
+                    }
                   </div>
-                  <span className={`font-mono text-[13px] font-bold ${d.counting ? 'text-[#1f8a5b]' : 'text-[#0e1a16]'}`}>
+                  <span className="text-[12px] text-[#6b7a72] flex-1">{formatDate(d.played_at)}</span>
+                  <span className={`font-mono text-[14px] font-black ${d.counting ? 'text-[#1f8a5b]' : 'text-[#0e1a16]'}`}>
                     {d.diff.toFixed(1)}
                   </span>
+                  {d.counting && <span className="font-mono text-[9px] text-[#1f8a5b] bg-[#d9eedd] px-1.5 py-0.5 rounded-full">cuenta</span>}
                 </div>
               ))}
             </div>
             {nCount > 0 && (
-              <p className="text-[11px] text-[#6b7a72] mt-3">
-                <span className="inline-block w-2 h-2 rounded-full bg-[#1f8a5b] mr-1.5"/>
-                Los {nCount} mejores cuentan para tu índice
+              <p className="text-[11px] text-[#6b7a72] mt-3 bg-[#f4f1e9] rounded-[10px] px-3 py-2">
+                El índice WHS es la media de los <strong className="text-[#0e1a16]">{nCount} diferenciales más bajos</strong> de tus últimas {diffs.length} rondas.
               </p>
             )}
           </div>
