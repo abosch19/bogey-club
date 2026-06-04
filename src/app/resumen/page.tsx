@@ -17,7 +17,8 @@ type Tab = 'stroke' | 'stableford' | 'clasificacion'
 function ResumenPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const roundId = searchParams.get('round') ?? ''
+  const roundId  = searchParams.get('round') ?? ''
+  const readonly = searchParams.get('readonly') === 'true'
 
   const [round, setRound]     = useState<any>(null)
   const [course, setCourse]   = useState<any>(null)
@@ -307,7 +308,16 @@ function ResumenPage() {
       </div>
 
       {/* Sign CTA */}
-      {round?.status !== 'completed' && !signed && (
+      {readonly && (
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
+          <Link href="/"
+            className="flex items-center justify-center w-full py-3.5 rounded-full font-bold text-[14px] text-white transition active:scale-[0.98]"
+            style={{ backgroundColor: '#0e1a16' }}>
+            ← Volver al inicio
+          </Link>
+        </div>
+      )}
+      {!readonly && round?.status !== 'completed' && !signed && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
           <button onClick={handleSign} disabled={saving}
             className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-60"
@@ -319,7 +329,7 @@ function ResumenPage() {
       )}
 
       {/* After signing — navigation options */}
-      {(signed || round?.status === 'completed') && (
+      {!readonly && (signed || round?.status === 'completed') && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
           {signed && (
             <div className="bg-[#d9eedd] rounded-[14px] px-4 py-3 mb-3 flex items-center gap-2">

@@ -15,7 +15,7 @@ type ActiveRound = {
 }
 type LeagueStanding = { profile_id: string; name: string; avatar_color: string; total_points: number }
 type ActiveLeague = { id: string; name: string; round_played: number; total_rounds: number; my_position: number; my_points: number; top3: LeagueStanding[] }
-type FeedItem = { id: string; name: string; avatar_color: string; action: string; detail: string; time: string }
+type FeedItem = { id: string; round_id: string; name: string; avatar_color: string; action: string; detail: string; time: string }
 
 function holeBarColor(delta: number | null): string {
   if (delta === null) return '#ece8db'
@@ -130,7 +130,7 @@ export default function HomePage() {
           const name = rp.profiles?.name ?? 'Jugador'
           const days = Math.floor((Date.now() - new Date(r.date).getTime()) / 86400000)
           const timeStr = days === 0 ? 'hoy' : days === 1 ? 'ayer' : `hace ${days} días`
-          feedItems.push({ id: r.id + rp.profile_id, name, avatar_color: rp.profiles?.avatar_color ?? '#6b7a72', action: 'completó una ronda', detail: `${course?.name ?? 'Campo'} · ${timeStr}`, time: timeStr })
+          feedItems.push({ id: r.id + rp.profile_id, round_id: r.id, name, avatar_color: rp.profiles?.avatar_color ?? '#6b7a72', action: 'completó una ronda', detail: `${course?.name ?? 'Campo'} · ${timeStr}`, time: timeStr })
         }
       }
       setFeed(feedItems.slice(0, 4))
@@ -305,7 +305,8 @@ export default function HomePage() {
               </div>
               <div className="space-y-0">
                 {feed.map((item, i) => (
-                  <div key={item.id} className={`flex items-center gap-3 py-2.5 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
+                  <Link key={item.id} href={`/resumen?round=${item.round_id}&readonly=true`}
+                    className={`flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0" style={{ backgroundColor: item.avatar_color }}>
                       {item.name[0].toUpperCase()}
                     </div>
@@ -315,7 +316,8 @@ export default function HomePage() {
                       </p>
                       <p className="text-[11px] text-[#6b7a72] mt-0.5">{item.detail}</p>
                     </div>
-                  </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
+                  </Link>
                 ))}
               </div>
             </div>
