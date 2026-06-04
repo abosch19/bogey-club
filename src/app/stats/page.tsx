@@ -34,6 +34,9 @@ export default function StatsPage() {
   const [myId, setMyId]           = useState('')
   const [loading, setLoading]     = useState(true)
   const [section, setSection]     = useState<'general'|'hoyos'|'social'|'campos'>('general')
+  const [hoyosPeriod, setHoyosPeriod] = useState<'all'|'10'|'5'|'3'>('all')
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
+  const [courseHoleData, setCourseHoleData] = useState<{ hole_number: number; par: number; my_last: number | null; my_best: number | null }[]>([])
   const supabase = createClient()
 
   useEffect(() => {
@@ -198,6 +201,34 @@ export default function StatsPage() {
     }
   }
 
+  // Filtered rounds for hoyos section
+  const filteredRounds = hoyosPeriod === 'all' ? rounds : rounds.slice(0, parseInt(hoyosPeriod))
+  const filteredScores = filteredRounds.flatMap(r => r.scores)
+
+  const filteredParStats = [3, 4, 5].map(par => {
+    const s = filteredScores.filter(h => h.par === par)
+    if (!s.length) return null
+    const avg = s.reduce((a, h) => a + h.strokes, 0) / s.length
+    return {
+      par, avg: parseFloat(avg.toFixed(2)), total: s.length,
+      birdies: s.filter(h => h.strokes - h.par <= -1).length,
+      pars:    s.filter(h => h.strokes - h.par === 0).length,
+      bogeys:  s.filter(h => h.strokes - h.par === 1).length,
+      doubles: s.filter(h => h.strokes - h.par >= 2).length,
+    }
+  }).filter(Boolean) as { par: number; avg: number; total: number; birdies: number; pars: number; bogeys: number; doubles: number }[]
+
+  // Funny phrases based on win rate
+  const winRate = n > 0 ? Math.round(totalWins / n * 100) : 0
+  const winPhrase = winRate >= 70 ? '¡Eres el terror del campo!' : winRate >= 50 ? 'Ganando más que perdiendo, no está mal.' : winRate >= 30 ? 'Queda algo de margen de mejora... bastante.' : '¡Ni te rindas, ni te lo tomes tan en serio!'
+  const lossPhrase = winRate >= 70 ? 'Los demás te deben mucho dinero.' : winRate >= 50 ? 'Al menos no eres el último... todavía.' : winRate >= 30 ? 'El golf te está enseñando humildad gratis.' : '¡El récord de derrotas también es un récord!'
+
+  // Social: club averages for comparison
+  const clubAvgGIR  = rounds.length ? Math.round(rounds.reduce((a, r) => a + (r.gir_total > 0 ? r.gir / r.gir_total * 100 : 0), 0) / rounds.length) : 0
+  const clubAvgPutts = rounds.length ? parseFloat((rounds.reduce((a, r) => a + r.putts, 0) / rounds.length).toFixed(1)) : 0
+  const clubAvgFW   = rounds.length ? Math.round(rounds.reduce((a, r) => a + (r.fairways_total > 0 ? r.fairways / r.fairways_total * 100 : 0), 0) / rounds.length) : 0
+  const clubAvgPen  = rounds.length ? parseFloat((rounds.reduce((a, r) => a + r.penalties, 0) / rounds.length).toFixed(1)) : 0
+
   const SECTIONS = [
     { key: 'general', label: 'General' },
     { key: 'hoyos',   label: 'Hoyos' },
@@ -340,7 +371,17 @@ export default function StatsPage() {
         {/* ── HOYOS ── */}
         {section === 'hoyos' && (
           <div className="space-y-3">
-            {parStats.length > 0 ? (
+            {/* Period filter */}
+            <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4]">
+              {([['all','Todas'],['10','Últ. 10'],['5','Últ. 5'],['3','Últ. 3']] as const).map(([key, label]) => (
+                <button key={key} onClick={() => setHoyosPeriod(key)}
+                  className="flex-1 py-1.5 rounded-full text-[11px] font-bold transition"
+                  style={{ backgroundColor: hoyosPeriod === key ? '#0e1a16' : 'transparent', color: hoyosPeriod === key ? '#fff' : '#6b7a72' }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {filteredParStats.length > 0 ? (
               <>
                 {/* Best / worst hole */}
                 {bestHole && worstHole && (
@@ -359,7 +400,7 @@ export default function StatsPage() {
                 )}
 
                 {/* Par type breakdown */}
-                {parStats.map(ps => (
+                {filteredParStats.map(ps => (
                   <div key={ps.par} className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-[#efebe1]">
                       <div className="flex items-center gap-3">
@@ -398,27 +439,57 @@ export default function StatsPage() {
                 ))}
               </>
             ) : emptyState('Necesitas más rondas para ver estadísticas por tipo de hoyo.')}
+            <p className="font-mono text-[10px] text-[#6b7a72] text-center">
+              {filteredRounds.length} ronda{filteredRounds.length !== 1 ? 's' : ''} analizadas
+            </p>
           </div>
         )}
 
         {/* ── SOCIAL ── */}
         {section === 'social' && (
           <div className="space-y-3">
-            {/* Win summary */}
+            {/* Win summary with funny phrase */}
             <div className="rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-              <div className="absolute right-[-20px] top-[-20px] w-[100px] h-[100px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.85 }}/>
-              <div className="relative flex items-center gap-6">
-                <div>
-                  <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">VICTORIAS</p>
-                  <p className="text-[52px] font-black text-white leading-none">{totalWins}</p>
-                  <p className="text-[12px] text-white/60 mt-1">de {n} rondas con otros</p>
-                </div>
-                {n > 0 && (
+              <div className="absolute right-[-20px] top-[-20px] w-[100px] h-[100px] rounded-full" style={{ backgroundColor: winRate >= 50 ? '#1f8a5b' : '#c6432d', opacity: 0.85 }}/>
+              <div className="relative">
+                <div className="flex items-center gap-6 mb-3">
                   <div>
-                    <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">WIN RATE</p>
-                    <p className="text-[28px] font-black text-[#1f8a5b] leading-none">{Math.round(totalWins / Math.max(n, 1) * 100)}%</p>
+                    <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">VICTORIAS</p>
+                    <p className="text-[52px] font-black text-white leading-none">{totalWins}</p>
+                    <p className="text-[12px] text-white/60 mt-1">de {n} rondas</p>
                   </div>
-                )}
+                  {n > 0 && (
+                    <div>
+                      <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">WIN RATE</p>
+                      <p className="text-[28px] font-black leading-none" style={{ color: winRate >= 50 ? '#1f8a5b' : '#e8b75a' }}>{winRate}%</p>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-white/10 rounded-[12px] px-3 py-2">
+                  <p className="text-white text-[13px] font-semibold">{winRate >= 50 ? winPhrase : lossPhrase}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* My metrics vs all rounds */}
+            <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+              <div className="px-4 py-3 border-b border-[#efebe1]">
+                <p className="font-bold text-[14px] text-[#0e1a16]">Mis métricas</p>
+              </div>
+              <div className="divide-y divide-[#efebe1]">
+                {[
+                  { label: 'Media golpes', value: avgScore ? `${avgScore} (${avgDelta! > 0 ? '+' : ''}${avgDelta})` : '–', icon: '⛳' },
+                  { label: 'GIR %',        value: girPct != null ? `${girPct}%` : '–', icon: '🟩' },
+                  { label: 'Calles %',     value: fwPct != null ? `${fwPct}%` : '–', icon: '🌿' },
+                  { label: 'Putts / ronda',value: avgPutts ?? '–', icon: '🏌️' },
+                  { label: 'Penalizaciones',value: rounds.length ? (rounds.reduce((a,r)=>a+r.penalties,0)/rounds.length).toFixed(1) : '–', icon: '⚠️' },
+                  { label: 'Búnkers',      value: rounds.length ? (rounds.reduce((a,r)=>a+r.bunkers,0)/rounds.length).toFixed(1) : '–', icon: '🏖' },
+                ].map(m => (
+                  <div key={m.label} className="flex items-center justify-between px-4 py-2.5">
+                    <p className="text-[13px] text-[#0e1a16]">{m.label}</p>
+                    <p className="font-mono text-[14px] font-black text-[#0e1a16]">{m.value}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -492,7 +563,121 @@ export default function StatsPage() {
         {/* ── CAMPOS ── */}
         {section === 'campos' && (
           <div className="space-y-2">
-            {courseStats.length > 0 ? courseStats.map(c => {
+            {selectedCourse && (() => {
+              const c = courseStats.find(x => x.name === selectedCourse)
+              if (!c) return null
+              // Get rounds for this course
+              const cRounds = rounds.filter(r => r.course_name === selectedCourse)
+              const lastRound = cRounds[0]
+              const bestRound = cRounds.length ? cRounds.reduce((a, b) => a.total < b.total ? a : b) : null
+
+              // Get unique hole numbers from all scores in this course
+              const holeNums = Array.from(new Set(cRounds.flatMap(r => r.scores.map(s => s.hole_number)))).sort((a, b) => a - b)
+              // Per-hole: my last, my best
+              const holeRows = holeNums.map(hn => {
+                const lastS = lastRound?.scores.find(s => s.hole_number === hn)
+                const allS  = cRounds.flatMap(r => r.scores.filter(s => s.hole_number === hn))
+                const bestS = allS.length ? allS.reduce((a, b) => a.strokes < b.strokes ? a : b) : null
+                const par   = lastS?.par ?? bestS?.par ?? 4
+                return { hole_number: hn, par, my_last: lastS?.strokes ?? null, my_best: bestS?.strokes ?? null }
+              })
+
+              const scoreChip = (strokes: number | null, par: number) => {
+                if (!strokes) return <span className="text-[#c4bfb5]">–</span>
+                const d = strokes - par
+                const bg = d <= -1 ? '#dde7fb' : d === 0 ? '#d9eedd' : d === 1 ? '#f6e6c4' : '#fadcd6'
+                const tx = d <= -1 ? '#2a6fdb' : d === 0 ? '#1f8a5b' : d === 1 ? '#9b6e1a' : '#a83a25'
+                return <div className="mx-auto w-7 h-7 rounded-[6px] flex items-center justify-center font-mono text-[12px] font-black" style={{ backgroundColor: bg, color: tx }}>{strokes}</div>
+              }
+
+              // Distribution comparison: last vs best
+              const distFor = (r: typeof lastRound | null) => {
+                if (!r) return { birdies: 0, pars: 0, bogeys: 0, doubles: 0 }
+                return {
+                  birdies: r.scores.filter(s => s.strokes - s.par <= -1).length,
+                  pars:    r.scores.filter(s => s.strokes - s.par === 0).length,
+                  bogeys:  r.scores.filter(s => s.strokes - s.par === 1).length,
+                  doubles: r.scores.filter(s => s.strokes - s.par >= 2).length,
+                }
+              }
+              const lastDist = distFor(lastRound)
+              const bestDist = distFor(bestRound)
+
+              return (
+                <div className="space-y-3">
+                  <button onClick={() => setSelectedCourse(null)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    Todos los campos
+                  </button>
+
+                  {/* Course header */}
+                  <div className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
+                    <p className="font-black text-[17px] text-[#0e1a16]">{c.name}</p>
+                    <div className="flex gap-4 mt-2">
+                      {[['Mejor', c.best], ['Media', c.avg], ['Rondas', c.rounds], ...(c.record ? [['Récord', c.record]] : [])].map(([l, v]) => (
+                        <div key={String(l)}>
+                          <p className="font-mono text-[9px] text-[#6b7a72] uppercase">{l}</p>
+                          <p className="font-mono text-[16px] font-black text-[#0e1a16]">{v}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Distribution comparison */}
+                  {lastRound && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {[{ label: 'Última vuelta', dist: lastDist, score: lastRound.total }, { label: 'Mejor vuelta', dist: bestDist, score: bestRound?.total ?? c.best }].map(v => (
+                        <div key={v.label} className="bg-white rounded-[16px] p-3 border border-[#e5e0d4]">
+                          <p className="font-mono text-[9px] text-[#6b7a72] uppercase mb-1">{v.label}</p>
+                          <p className="font-mono text-[22px] font-black text-[#0e1a16] mb-2">{v.score}</p>
+                          {[
+                            { label: 'Birdie-', count: v.dist.birdies, color: '#2a6fdb' },
+                            { label: 'Par',     count: v.dist.pars,    color: '#1f8a5b' },
+                            { label: 'Bogey',   count: v.dist.bogeys,  color: '#9b6e1a' },
+                            { label: 'Dbl+',    count: v.dist.doubles, color: '#a83a25' },
+                          ].map(d => (
+                            <div key={d.label} className="flex items-center justify-between py-0.5">
+                              <span className="text-[10px] text-[#6b7a72]">{d.label}</span>
+                              <span className="font-mono text-[11px] font-bold" style={{ color: d.color }}>{d.count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Hole table: rows = holes, cols = my last / my best */}
+                  {holeRows.length > 0 && (
+                    <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+                      <table className="w-full text-center">
+                        <thead>
+                          <tr className="border-b border-[#efebe1] bg-[#f4f1e9]">
+                            <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-3 text-left uppercase">Hoyo</td>
+                            <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2 uppercase">Par</td>
+                            <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2 uppercase">Última</td>
+                            <td className="font-mono text-[9px] text-[#1f8a5b] py-2 px-2 uppercase">Mi mejor</td>
+                            {c.record && <td className="font-mono text-[9px] text-[#e8b75a] py-2 px-2 uppercase">Récord</td>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {holeRows.map(h => (
+                            <tr key={h.hole_number} className="border-t border-[#efebe1]">
+                              <td className="font-mono text-[12px] font-bold text-[#0e1a16] py-2 px-3 text-left">{h.hole_number}</td>
+                              <td className="font-mono text-[11px] text-[#6b7a72] py-2 px-2">{h.par}</td>
+                              <td className="py-2 px-2">{scoreChip(h.my_last, h.par)}</td>
+                              <td className="py-2 px-2">{scoreChip(h.my_best, h.par)}</td>
+                              {c.record && <td className="font-mono text-[11px] text-[#e8b75a] py-2 px-2 font-bold">–</td>}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            {!selectedCourse && courseStats.length > 0 ? courseStats.map(c => {
               const deltaBest = c.best ? c.best - c.par : null
               const vsRecord  = c.record && c.best ? c.best - c.record : null
               // Evolution: is last score better than avg?
@@ -500,7 +685,7 @@ export default function StatsPage() {
               const trend = lastScore && c.avg ? (lastScore < c.avg ? 'up' : lastScore > c.avg ? 'down' : 'same') : 'same'
 
               return (
-                <div key={c.name} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
+                <button key={c.name} onClick={() => setSelectedCourse(c.name)} className="w-full text-left bg-white rounded-[16px] p-4 border border-[#e5e0d4] active:scale-[0.99] transition block">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0 pr-3">
                       <div className="flex items-center gap-2">
@@ -552,7 +737,8 @@ export default function StatsPage() {
                       </div>
                     )}
                   </div>
-                </div>
+                  <p className="font-mono text-[9px] text-[#1f8a5b] mt-2">Ver detalle →</p>
+                </button>
               )
             }) : emptyState('Completa rondas en distintos campos para ver comparativas.')}
           </div>
