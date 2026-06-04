@@ -119,16 +119,16 @@ export default function LigaPage() {
                         </p>
                         <p className="text-white text-[20px] font-black tracking-tight mt-1">{league.name}</p>
                       </div>
-                      {/* Delete — only creator */}
-                      {league.created_by === myId && (
-                        <button
-                          onClick={() => handleDelete(league.id)}
-                          disabled={deleting === league.id}
-                          className="mt-1 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition disabled:opacity-50"
-                          title="Borrar liga">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleDelete(league.id)}
+                        disabled={deleting === league.id}
+                        className="mt-1 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition disabled:opacity-50"
+                        title="Borrar liga">
+                        {deleting === league.id
+                          ? <div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"/>
+                          : <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        }
+                      </button>
                     </div>
                   </div>
 
