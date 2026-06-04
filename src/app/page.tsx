@@ -208,7 +208,7 @@ export default function HomePage() {
               </div>
               <h1 className="text-white text-[28px] font-black tracking-tight leading-tight mb-5">
                 Buenas, {firstName}.<br/>
-                Toca <span style={{ color: '#1f8a5b' }}>perder bolas</span> con la cuadrilla.
+                Toca <span style={{ color: '#1f8a5b' }}>perder bolas.</span><br/>con la cuadrilla.
               </h1>
               <div className="flex gap-2">
                 <Link href="/ronda/campo" className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full font-bold text-[14px] text-[#0e1a16] transition active:scale-[0.98]" style={{ backgroundColor: '#1f8a5b' }}>
