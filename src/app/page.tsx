@@ -11,6 +11,7 @@ type ActiveRound = { id: string; course_name: string; current_hole: number; tota
 export default function HomePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [activeRound, setActiveRound] = useState<ActiveRound | null>(null)
+  const [activeLeague, setActiveLeague] = useState<{ id: string; name: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -60,6 +61,11 @@ export default function HomePage() {
           })
         }
       }
+      // Fetch active league
+      const { data: lp } = await supabase.from('league_players').select('league_id, leagues(id, name, active)').eq('profile_id', user.id).limit(5)
+      const leagues = (lp ?? []).map((x: any) => Array.isArray(x.leagues) ? x.leagues[0] : x.leagues).filter((l: any) => l?.active)
+      if (leagues.length > 0) setActiveLeague({ id: leagues[0].id, name: leagues[0].name })
+
       setLoading(false)
     }
     load()
