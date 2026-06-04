@@ -362,6 +362,18 @@ function TarjetaPage() {
                 </button>
               ))}
             </div>
+
+            {/* Danger zone */}
+            <div className="mt-5 pt-4 border-t border-[#efebe1]">
+              <button onClick={async () => {
+                if (!confirm('¿Borrar esta ronda completa? Se eliminarán todos los golpes. Esta acción no se puede deshacer.')) return
+                await fetch('/api/ronda/borrar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId }) })
+                router.push('/')
+              }}
+                className="w-full py-3 rounded-full border-2 border-[#c6432d] text-[#c6432d] font-bold text-[14px] transition active:opacity-80">
+                Borrar partida completa
+              </button>
+            </div>
           </div>
         </div>
       )}
