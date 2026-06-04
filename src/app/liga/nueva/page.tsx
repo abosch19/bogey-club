@@ -26,9 +26,11 @@ export default function NuevaLigaPage() {
   }
 
   const MODES = [
-    { id: 'stroke', name: 'Stroke Play' },
-    { id: 'stableford', name: 'Stableford' },
-    { id: 'matchplay_hcp', name: 'Matchplay' },
+    { id: 'stroke',        name: 'Stroke Play',         desc: 'Menos golpes gana. El clásico.' },
+    { id: 'stableford',    name: 'Stableford',           desc: 'Puntos por hoyo. Premia la regularidad.' },
+    { id: 'matchplay',     name: 'Matchplay',            desc: 'Gana hoyos, sin handicap. Solo 2 jugadores.' },
+    { id: 'matchplay_hcp', name: 'Matchplay c/ Hcp',    desc: 'Matchplay con golpes de ventaja por handicap.' },
+    { id: 'bbb',           name: 'Bingo Bango Bongo',   desc: '3 puntos por hoyo: 1º en green, más cerca, 1º en meter.' },
   ]
 
   return (
@@ -69,11 +71,14 @@ export default function NuevaLigaPage() {
             <div className="space-y-2">
               {MODES.map(m => (
                 <button key={m.id} onClick={() => setMode(m.id)}
-                  className="w-full flex items-center justify-between p-3 rounded-[12px] border transition"
+                  className="w-full flex items-center justify-between p-3 rounded-[12px] border transition text-left"
                   style={{ backgroundColor: mode === m.id ? '#0e1a16' : '#fff', borderColor: mode === m.id ? '#0e1a16' : '#e5e0d4' }}>
-                  <span className="font-semibold text-[14px]" style={{ color: mode === m.id ? '#fff' : '#0e1a16' }}>{m.name}</span>
+                  <div>
+                    <p className="font-semibold text-[14px]" style={{ color: mode === m.id ? '#fff' : '#0e1a16' }}>{m.name}</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: mode === m.id ? 'rgba(255,255,255,0.55)' : '#6b7a72' }}>{m.desc}</p>
+                  </div>
                   {mode === m.id && (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 ml-2"><path d="M5 13l4 4L19 7" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   )}
                 </button>
               ))}

@@ -30,12 +30,15 @@ export default function LigaPage() {
   const [leagues, setLeagues] = useState<any[]>([])
   const [standings, setStandings] = useState<Record<string, any[]>>({})
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [myId, setMyId] = useState('')
   const supabase = createClient()
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
+      setMyId(user.id)
 
       const { data: lps } = await supabase.from('league_players').select('league_id').eq('profile_id', user.id)
       if (!lps?.length) { setLoading(false); return }
@@ -59,6 +62,18 @@ export default function LigaPage() {
     }
     load()
   }, [])
+
+  async function handleDelete(leagueId: string) {
+    if (!confirm('¿Seguro que quieres borrar esta liga? Esta acción no se puede deshacer.')) return
+    setDeleting(leagueId)
+    await fetch('/api/liga/borrar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ league_id: leagueId }),
+    })
+    setLeagues(prev => prev.filter(l => l.id !== leagueId))
+    setDeleting(null)
+  }
 
   if (loading) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
@@ -97,11 +112,23 @@ export default function LigaPage() {
                   {/* League header */}
                   <div className="p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
                     <div className="absolute right-[-20px] top-[-20px] w-[100px] h-[100px] rounded-full" style={{ backgroundColor: '#e8b75a', opacity: 0.9 }}/>
-                    <div className="relative">
-                      <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">
-                        {league.mode?.toUpperCase()} · {league.total_rounds} JORNADAS
-                      </p>
-                      <p className="text-white text-[20px] font-black tracking-tight mt-1">{league.name}</p>
+                    <div className="relative flex items-start justify-between">
+                      <div>
+                        <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">
+                          {league.mode?.toUpperCase()} · {league.total_rounds} JORNADAS
+                        </p>
+                        <p className="text-white text-[20px] font-black tracking-tight mt-1">{league.name}</p>
+                      </div>
+                      {/* Delete — only creator */}
+                      {league.created_by === myId && (
+                        <button
+                          onClick={() => handleDelete(league.id)}
+                          disabled={deleting === league.id}
+                          className="mt-1 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition disabled:opacity-50"
+                          title="Borrar liga">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
+                      )}
                     </div>
                   </div>
 
