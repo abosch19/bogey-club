@@ -128,9 +128,12 @@ function TarjetaPage() {
                         const d = s != null ? s - h.par : null
                         return (
                           <td key={h.hole_number} className="py-1.5 px-0.5">
-                            {s != null
-                              ? <div className={`mx-auto w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
-                              : <span className="text-[#c4bfb5] text-[13px]">·</span>}
+                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)}
+                              className="mx-auto block active:scale-95 transition">
+                              {s != null
+                                ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
+                                : <span className="text-[#c4bfb5] text-[13px]">·</span>}
+                            </button>
                           </td>
                         )
                       })}
