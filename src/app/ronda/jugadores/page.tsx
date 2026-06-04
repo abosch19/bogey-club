@@ -13,6 +13,7 @@ function SeleccionarJugadoresPage() {
   const courseId = searchParams.get('course') ?? ''
   const isPractice = searchParams.get('practice') === 'true'
   const leagueId   = searchParams.get('league') ?? ''
+  const holeMode   = searchParams.get('hole_mode') ?? 'all'
 
   const [allPlayers, setAllPlayers] = useState<Player[]>([])
   const [selected, setSelected] = useState<Player[]>([])
@@ -81,6 +82,7 @@ function SeleccionarJugadoresPage() {
       course: courseId,
       practice: String(isPractice),
       players: playerIds,
+      hole_mode: holeMode,
       ...(guestData ? { guests: guestData } : {}),
       ...(leagueId ? { league: leagueId } : {}),
     })

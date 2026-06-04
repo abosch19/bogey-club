@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
-  const { course_id, is_practice, player_ids, guests, modes, league_id } = await request.json()
+  const { course_id, is_practice, player_ids, guests, modes, league_id, hole_mode } = await request.json()
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,6 +32,7 @@ export async function POST(request: Request) {
       status: 'active',
       is_practice: is_practice ?? false,
       date: new Date().toISOString().split('T')[0],
+      notes: hole_mode ?? 'all',  // store hole_mode in notes field
     })
     .select('id')
     .single()

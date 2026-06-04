@@ -12,6 +12,7 @@ function SeleccionarModalidadPage() {
   const playerIds  = searchParams.get('players')?.split(',').filter(Boolean) ?? []
   const guests     = searchParams.get('guests')?.split('|').filter(Boolean) ?? []
   const leagueId   = searchParams.get('league') ?? ''
+  const holeMode   = searchParams.get('hole_mode') ?? 'all'
   const totalPlayers = playerIds.length + guests.length
 
   // Stroke is always active
@@ -46,6 +47,7 @@ function SeleccionarModalidadPage() {
           player_ids: playerIds,
           guests,
           modes: ['stroke', ...extras],
+          hole_mode: holeMode,
           ...(leagueId ? { league_id: leagueId } : {}),
         }),
       })

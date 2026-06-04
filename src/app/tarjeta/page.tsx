@@ -36,11 +36,15 @@ function TarjetaPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) setMyId(user.id)
 
-      const { data: round } = await supabase.from('rounds').select('course_id, courses(name, holes_count)').eq('id', roundId).single()
+      const { data: round } = await supabase.from('rounds').select('course_id, notes, courses(name, holes_count)').eq('id', roundId).single()
       if (!round) return
       const course = Array.isArray(round.courses) ? round.courses[0] : round.courses as any
+      const holeMode = (round as any).notes ?? 'all'
+      // Calculate effective total holes based on hole_mode
+      const baseHoles = course?.holes_count ?? 18
+      const effectiveTotal = holeMode === '9_twice' ? 18 : holeMode === 'front' || holeMode === 'back' ? 9 : baseHoles
       setCourse(course?.name ?? '')
-      setTotal(course?.holes_count ?? 18)
+      setTotal(effectiveTotal)
 
       const { data: h }   = await supabase.from('holes').select('hole_number, par, stroke_index').eq('course_id', round.course_id).order('hole_number')
       const { data: rps } = await supabase.from('round_players').select('profile_id, is_guest, course_handicap, profiles(name, avatar_color)').eq('round_id', roundId)
