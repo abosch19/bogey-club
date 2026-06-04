@@ -135,10 +135,20 @@ export default function PerfilPage() {
             <span className="text-[14px] font-semibold text-[#0e1a16]">Nueva ronda</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
           </Link>
-          <Link href="/stats" className="flex items-center justify-between px-4 py-3.5 active:opacity-70">
+          <Link href="/jugadores" className="flex items-center justify-between px-4 py-3.5 border-b border-[#efebe1] active:opacity-70">
+            <span className="text-[14px] font-semibold text-[#0e1a16]">El club · jugadores</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
+          </Link>
+          <Link href="/stats" className="flex items-center justify-between px-4 py-3.5 border-b border-[#efebe1] active:opacity-70">
             <span className="text-[14px] font-semibold text-[#0e1a16]">Mis estadísticas</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
           </Link>
+          {email === 's.vallve93@gmail.com' && (
+            <Link href="/admin" className="flex items-center justify-between px-4 py-3.5 active:opacity-70">
+              <span className="text-[14px] font-semibold text-[#c6432d]">Panel de administración</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#c6432d" strokeWidth="2" strokeLinecap="round"/></svg>
+            </Link>
+          )}
         </div>
 
         {/* Sign out */}
