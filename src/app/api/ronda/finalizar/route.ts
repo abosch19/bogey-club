@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import { scoreDifferential } from '@/lib/golf'
+import { scoreDifferential, countingRounds } from '@/lib/golf'
 
 export async function POST(request: Request) {
   const supabase = createClient()
@@ -42,7 +42,26 @@ export async function POST(request: Request) {
       slope: course.slope,
       differential: diff,
       played_at: round.date,
+      is_counting: false, // will be recalculated below
     })
+
+    // Recalculate which diffs count for this player
+    const { data: allDiffs } = await admin
+      .from('whs_differentials')
+      .select('id, differential')
+      .eq('profile_id', rp.profile_id)
+      .order('played_at', { ascending: false })
+      .limit(20)
+
+    if (allDiffs && allDiffs.length > 0) {
+      const nCount = countingRounds(allDiffs.length)
+      // Sort by differential ascending, mark best nCount as counting
+      const sorted = [...allDiffs].sort((a, b) => a.differential - b.differential)
+      const countingIds = new Set(sorted.slice(0, nCount).map(d => d.id))
+      for (const d of allDiffs) {
+        await admin.from('whs_differentials').update({ is_counting: countingIds.has(d.id) }).eq('id', d.id)
+      }
+    }
   }
 
   // Update course record if applicable

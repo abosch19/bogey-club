@@ -134,6 +134,11 @@ function SeleccionarCampoPage() {
                     <p className="font-bold text-[15px] leading-tight" style={{ color: isSel ? '#fff' : '#0e1a16' }}>
                       {course.name}
                     </p>
+                    <button onClick={e => { e.stopPropagation(); router.push(`/campo/${course.id}`) }}
+                      className="font-mono text-[9px] px-2 py-0.5 rounded-full font-bold transition"
+                      style={{ backgroundColor: isSel ? 'rgba(255,255,255,0.15)' : '#f4f1e9', color: isSel ? '#fff' : '#6b7a72' }}>
+                      Editar
+                    </button>
                     <span className="font-mono text-[9px] px-2 py-0.5 rounded-full font-bold"
                       style={{ backgroundColor: isSel ? 'rgba(255,255,255,0.18)' : '#f4f1e9', color: isSel ? '#fff' : '#6b7a72' }}>
                       {course.holes_count} hoyos
