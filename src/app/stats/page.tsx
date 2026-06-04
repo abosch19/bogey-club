@@ -104,7 +104,7 @@ export default function StatsPage() {
         .in('round_id', roundIds).neq('profile_id', user.id)
 
       // All holes for courses
-      const courseIds = [...new Set(roundsData.map((r: any) => r.course_id))]
+      const courseIds = Array.from(new Set(roundsData.map((r: any) => r.course_id)))
       const { data: allHoles } = await supabase.from('holes').select('course_id, hole_number, par, stroke_index').in('course_id', courseIds)
 
       // Courses for record
@@ -123,7 +123,7 @@ export default function StatsPage() {
 
         // Did I win? (lowest total among players who completed all holes)
         const myTotal = myS.reduce((a, s) => a + (s.strokes ?? 0), 0)
-        const allTotals = [...new Set(allS.map(s => s.profile_id))].map(pid => ({
+        const allTotals = Array.from(new Set(allS.map(s => s.profile_id))).map(pid => ({
           pid, total: allS.filter(s => s.profile_id === pid).reduce((a, s) => a + (s.strokes ?? 0), 0)
         })).filter(p => p.total > 0)
         const won = allTotals.length > 0 && myTotal === Math.min(...allTotals.map(p => p.total)) && myTotal > 0
@@ -145,7 +145,7 @@ export default function StatsPage() {
 
       // Hole stats
       const myAllScores = (allScores ?? []).filter(s => s.profile_id === user.id)
-      const holeNums = [...new Set(myAllScores.map(s => s.hole_number))].sort((a, b) => a - b)
+      const holeNums = Array.from(new Set(myAllScores.map(s => s.hole_number))).sort((a, b) => a - b)
       const hStats: HoleStat[] = holeNums.map(hn => {
         const hScores = myAllScores.filter(s => s.hole_number === hn && s.strokes)
         // Get par for this hole (use most common)
