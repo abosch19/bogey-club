@@ -12,7 +12,7 @@ type Score  = { profile_id: string; hole_number: number; strokes: number | null 
 
 const SPINNER = <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
-type ViewMode = 'stroke' | 'stableford'
+type ViewMode = 'stroke' | 'stableford' | 'matchplay_hcp' | 'matchplay' | 'bbb' | 'wolf'
 
 function TarjetaPage() {
   const searchParams = useSearchParams()
@@ -20,75 +20,133 @@ function TarjetaPage() {
   const roundId      = searchParams.get('round') ?? ''
 
   const [players, setPlayers]     = useState<Player[]>([])
-  const [holes, setHoles]         = useState<Hole[]>([])
+  const [allHoles, setAllHoles]   = useState<Hole[]>([])
   const [scores, setScores]       = useState<Score[]>([])
   const [courseName, setCourse]   = useState('')
   const [totalHoles, setTotal]    = useState(18)
+  const [holeMode, setHoleMode]   = useState('all')
   const [modes, setModes]         = useState<string[]>(['stroke'])
   const [viewMode, setViewMode]   = useState<ViewMode>('stroke')
   const [myId, setMyId]           = useState('')
   const [loading, setLoading]     = useState(true)
+  const [showEditPlayers, setShowEditPlayers] = useState(false)
+  const [allProfiles, setAllProfiles] = useState<{id:string;name:string;avatar_color:string;handicap_index:number}[]>([])
+  const [courseId, setCourseId]   = useState('')
   const supabase = createClient()
 
-  useEffect(() => {
-    if (!roundId) return
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) setMyId(user.id)
+  async function reload() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) setMyId(user.id)
 
-      const { data: round } = await supabase.from('rounds').select('course_id, notes, courses(name, holes_count)').eq('id', roundId).single()
-      if (!round) return
-      const course = Array.isArray(round.courses) ? round.courses[0] : round.courses as any
-      const holeMode = (round as any).notes ?? 'all'
-      // Calculate effective total holes based on hole_mode
-      const baseHoles = course?.holes_count ?? 18
-      const effectiveTotal = holeMode === '9_twice' ? 18 : holeMode === 'front' || holeMode === 'back' ? 9 : baseHoles
-      setCourse(course?.name ?? '')
-      setTotal(effectiveTotal)
+    const { data: round } = await supabase.from('rounds').select('course_id, notes, courses(name, holes_count)').eq('id', roundId).single()
+    if (!round) return
+    const course = Array.isArray(round.courses) ? round.courses[0] : round.courses as any
+    const hm = (round as any).notes ?? 'all'
+    setHoleMode(hm)
+    setCourseId((round as any).course_id)
+    setCourse(course?.name ?? '')
+    const base = course?.holes_count ?? 18
+    setTotal(hm === '9_twice' ? 18 : hm === 'front' || hm === 'back' ? 9 : base)
 
-      const { data: h }   = await supabase.from('holes').select('hole_number, par, stroke_index').eq('course_id', round.course_id).order('hole_number')
-      const { data: rps } = await supabase.from('round_players').select('profile_id, is_guest, course_handicap, profiles(name, avatar_color)').eq('round_id', roundId)
-      const { data: s }   = await supabase.from('scores').select('profile_id, hole_number, strokes').eq('round_id', roundId)
-      const { data: m }   = await supabase.from('round_modes').select('mode').eq('round_id', roundId)
+    const [hRes, rpsRes, sRes, mRes] = await Promise.all([
+      supabase.from('holes').select('hole_number, par, stroke_index').eq('course_id', (round as any).course_id).order('hole_number'),
+      supabase.from('round_players').select('profile_id, is_guest, course_handicap, profiles(name, avatar_color)').eq('round_id', roundId),
+      supabase.from('scores').select('profile_id, hole_number, strokes').eq('round_id', roundId),
+      supabase.from('round_modes').select('mode').eq('round_id', roundId),
+    ])
+    setAllHoles(hRes.data ?? [])
+    setPlayers((rpsRes.data ?? []).map((rp: any) => ({ id: rp.profile_id, name: rp.profiles?.name ?? 'Inv', avatar_color: rp.profiles?.avatar_color ?? '#6b7a72', course_handicap: rp.course_handicap ?? 0, is_guest: rp.is_guest })))
+    setScores(sRes.data ?? [])
+    const ml = (mRes.data ?? []).map((x: any) => x.mode as string)
+    setModes(ml.length ? ml : ['stroke'])
+    setLoading(false)
+  }
 
-      setHoles(h ?? [])
-      setPlayers((rps ?? []).map((rp: any) => ({ id: rp.profile_id, name: rp.profiles?.name ?? 'Inv', avatar_color: rp.profiles?.avatar_color ?? '#6b7a72', course_handicap: rp.course_handicap ?? 0, is_guest: rp.is_guest })))
-      setScores(s ?? [])
-      const modeList = (m ?? []).map((x: any) => x.mode as string)
-      setModes(modeList.length ? modeList : ['stroke'])
-      setLoading(false)
+  useEffect(() => { if (roundId) reload() }, [roundId])
+
+  // Filtered holes based on holeMode
+  const holes: Hole[] = (() => {
+    if (holeMode === 'front') return allHoles.filter(h => h.hole_number <= 9)
+    if (holeMode === 'back')  return allHoles.filter(h => h.hole_number >= 10)
+    if (holeMode === '9_once') return allHoles.filter(h => h.hole_number <= 9)
+    if (holeMode === '9_twice') {
+      // First 9 + second 9 mapped to same holes
+      const nine = allHoles.filter(h => h.hole_number <= 9)
+      return [
+        ...nine,
+        ...nine.map(h => ({ ...h, hole_number: h.hole_number + 9 }))
+      ]
     }
-    load()
-  }, [roundId])
+    return allHoles
+  })()
 
-  const getScore  = (pid: string, h: number) => scores.find(s => s.profile_id === pid && s.hole_number === h)?.strokes ?? null
-  const getTotal  = (pid: string) => scores.filter(s => s.profile_id === pid).reduce((a, s) => a + (s.strokes ?? 0), 0)
+  const getScore  = (pid: string, h: number) => {
+    // For 9_twice, holes 10-18 map to 1-9
+    const actualHole = (holeMode === '9_twice' && h > 9) ? h - 9 : h
+    return scores.find(s => s.profile_id === pid && s.hole_number === actualHole)?.strokes ?? null
+  }
+  const getTotal  = (pid: string) => holes.reduce((a, h) => { const s = getScore(pid, h.hole_number); return s ? a + s : a }, 0)
   const getRealPar = (group: Hole[]) => group.reduce((a, h) => a + h.par, 0)
 
-  const myScores   = scores.filter(s => s.profile_id === myId && s.strokes != null).map(s => s.hole_number)
-  const nextHole   = Array.from({ length: totalHoles }, (_, i) => i + 1).find(h => !myScores.includes(h)) ?? null
-  const allDone    = myScores.length >= totalHoles
+  const myScores   = holes.filter(h => getScore(myId, h.hole_number) != null).map(h => h.hole_number)
+  const nextHole   = holes.find(h => !myScores.includes(h.hole_number))
+  const allDone    = myScores.length >= holes.length
 
-  const front = holes.filter(h => h.hole_number <= 9)
-  const back  = holes.filter(h => h.hole_number > 9)
+  // Groups: for 9_twice split at 9, else split at 9
+  const front = holeMode === 'back' ? holes : holes.filter(h => h.hole_number <= 9)
+  const back  = holeMode === 'back' ? [] : holes.filter(h => h.hole_number > 9)
+  const groups = back.length > 0 ? [front, back] : [front]
 
-  const hasStableford = modes.includes('stableford')
+  // Mode tabs available
+  const availableModes: { key: ViewMode; label: string }[] = [
+    { key: 'stroke', label: 'Stroke' },
+    ...(modes.includes('stableford')    ? [{ key: 'stableford'    as ViewMode, label: 'Stableford' }] : []),
+    ...(modes.includes('matchplay_hcp') ? [{ key: 'matchplay_hcp' as ViewMode, label: 'Matchplay' }] : []),
+    ...(modes.includes('matchplay')     ? [{ key: 'matchplay'     as ViewMode, label: 'Matchplay' }] : []),
+    ...(modes.includes('bbb')           ? [{ key: 'bbb'           as ViewMode, label: 'BBB' }] : []),
+    ...(modes.includes('wolf')          ? [{ key: 'wolf'          as ViewMode, label: 'Wolf' }] : []),
+  ]
 
-  function getStablePts(pid: string, hcp: number, hole: Hole) {
-    const s = getScore(pid, hole.hole_number)
-    if (!s) return null
-    return stablefordPts(s, hole.par, strokesReceived(hcp, hole.stroke_index))
+  // Matchplay calculation
+  const matchplayResult = (() => {
+    if (players.length < 2) return null
+    const [a, b] = players
+    let state = 0
+    holes.forEach(h => {
+      const sa = getScore(a.id, h.hole_number)
+      const sb = getScore(b.id, h.hole_number)
+      if (!sa || !sb) return
+      const recA = modes.includes('matchplay_hcp') ? strokesReceived(Math.abs(a.course_handicap - b.course_handicap), h.stroke_index) : 0
+      const netA = sa - (a.course_handicap > b.course_handicap ? recA : 0)
+      const netB = sb - (b.course_handicap > a.course_handicap ? recA : 0)
+      if (netA < netB) state++
+      else if (netB < netA) state--
+    })
+    const label = state === 0 ? 'AS' : state > 0 ? `${state} UP` : `${-state} UP`
+    const leader = state === 0 ? null : state > 0 ? a : b
+    return { state, label, leader, a, b }
+  })()
+
+  // Add/remove player
+  async function addPlayer(profileId: string) {
+    const { data: prof } = await supabase.from('profiles').select('handicap_index').eq('id', profileId).single()
+    const { data: course } = await supabase.from('courses').select('slope, course_rating, par').eq('id', courseId).single()
+    const hcp = Math.round((prof?.handicap_index ?? 18) * ((course?.slope ?? 113) / 113) + ((course?.course_rating ?? 72) - (course?.par ?? 72)))
+    await fetch('/api/ronda/jugador/añadir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId, profile_id: profileId, course_handicap: hcp }) })
+    await reload()
   }
-  function getStableBlock(pid: string, hcp: number, group: Hole[]) {
-    return group.reduce((a, h) => { const s = getScore(pid, h.hole_number); return s ? a + stablefordPts(s, h.par, strokesReceived(hcp, h.stroke_index)) : a }, 0)
+
+  async function removePlayer(profileId: string) {
+    if (!confirm('¿Eliminar este jugador de la ronda?')) return
+    await fetch('/api/ronda/jugador/borrar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId, profile_id: profileId }) })
+    await reload()
   }
 
   if (loading) return SPINNER
 
   const ScoreTable = ({ group, gi }: { group: Hole[]; gi: number }) => {
     const blockPar = getRealPar(group)
-    const label    = gi === 0 ? 'OUT' : 'IN'
-
+    const label    = gi === 0 && groups.length > 1 ? 'OUT' : groups.length > 1 ? 'IN' : 'TOT'
     return (
       <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
         <div className="overflow-x-auto">
@@ -96,25 +154,17 @@ function TarjetaPage() {
             <thead>
               <tr className="border-b border-[#efebe1]">
                 <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2 text-left">H</td>
-                {group.map(h => (
-                  <td key={h.hole_number} className="font-mono text-[11px] font-bold text-[#0e1a16] py-2 px-0.5">
-                    {h.hole_number}
-                  </td>
-                ))}
+                {group.map(h => <td key={h.hole_number} className="font-mono text-[11px] font-bold text-[#0e1a16] py-2 px-0.5">{h.hole_number}</td>)}
                 <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2">{label}</td>
               </tr>
               <tr className="border-b border-[#efebe1]">
                 <td className="font-mono text-[9px] text-[#6b7a72] px-2 py-1 text-left">PAR</td>
-                {group.map(h => (
-                  <td key={h.hole_number} className="font-mono text-[10px] text-[#6b7a72] py-1 px-0.5">{h.par}</td>
-                ))}
+                {group.map(h => <td key={h.hole_number} className="font-mono text-[10px] text-[#6b7a72] py-1 px-0.5">{h.par}</td>)}
                 <td className="font-mono text-[11px] font-bold text-[#0e1a16] py-1 px-2">{blockPar}</td>
               </tr>
               <tr className="border-b border-[#efebe1]">
                 <td className="font-mono text-[9px] text-[#2a6fdb] px-2 py-1 text-left font-bold">HCP</td>
-                {group.map(h => (
-                  <td key={h.hole_number} className="font-mono text-[9px] text-[#2a6fdb] py-1 px-0.5">{h.stroke_index}</td>
-                ))}
+                {group.map(h => <td key={h.hole_number} className="font-mono text-[9px] text-[#2a6fdb] py-1 px-0.5">{h.stroke_index}</td>)}
                 <td/>
               </tr>
             </thead>
@@ -125,18 +175,14 @@ function TarjetaPage() {
                   const blockDelta = blockTotal ? blockTotal - blockPar : null
                   return (
                     <tr key={p.id} className="border-t border-[#efebe1]">
-                      <td className="px-2 py-1.5">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
-                      </td>
+                      <td className="px-2 py-1.5"><div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div></td>
                       {group.map(h => {
                         const s = getScore(p.id, h.hole_number)
                         const d = s != null ? s - h.par : null
                         return (
                           <td key={h.hole_number} className="py-1.5 px-0.5">
-                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)}
-                              className="mx-auto block active:scale-95 transition">
-                              {s != null
-                                ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
+                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block active:scale-95 transition">
+                              {s != null ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
                                 : <span className="text-[#c4bfb5] text-[13px]">·</span>}
                             </button>
                           </td>
@@ -146,31 +192,26 @@ function TarjetaPage() {
                         {blockTotal > 0 ? (
                           <div className="text-center">
                             <p className="font-mono text-[12px] font-black text-[#0e1a16] leading-none">{blockTotal}</p>
-                            {blockDelta !== null && (
-                              <p className="font-mono text-[9px] font-bold" style={{ color: blockDelta <= 0 ? '#1f8a5b' : '#9b6e1a' }}>
-                                {blockDelta > 0 ? `+${blockDelta}` : blockDelta === 0 ? 'E' : blockDelta}
-                              </p>
-                            )}
+                            {blockDelta !== null && <p className="font-mono text-[9px] font-bold" style={{ color: blockDelta <= 0 ? '#1f8a5b' : '#9b6e1a' }}>{blockDelta > 0 ? `+${blockDelta}` : blockDelta === 0 ? 'E' : blockDelta}</p>}
                           </div>
                         ) : <span className="text-[#c4bfb5]">–</span>}
                       </td>
                     </tr>
                   )
-                } else {
-                  // Stableford
-                  const blockPts = getStableBlock(p.id, p.course_handicap, group)
+                } else if (viewMode === 'stableford') {
+                  const blockPts = group.reduce((a, h) => { const s = getScore(p.id, h.hole_number); return s ? a + stablefordPts(s, h.par, strokesReceived(p.course_handicap, h.stroke_index)) : a }, 0)
                   return (
                     <tr key={p.id} className="border-t border-[#efebe1]">
-                      <td className="px-2 py-1.5">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
-                      </td>
+                      <td className="px-2 py-1.5"><div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div></td>
                       {group.map(h => {
-                        const pts = getStablePts(p.id, p.course_handicap, h)
+                        const s = getScore(p.id, h.hole_number)
+                        const pts = s ? stablefordPts(s, h.par, strokesReceived(p.course_handicap, h.stroke_index)) : null
                         return (
                           <td key={h.hole_number} className="py-1.5 px-0.5">
-                            {pts != null
-                              ? <div className={`mx-auto w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${pts >= 3 ? 'bg-[#dde7fb] text-[#2a6fdb]' : pts === 2 ? 'bg-[#d9eedd] text-[#1f8a5b]' : pts === 1 ? 'bg-[#f6e6c4] text-[#9b6e1a]' : 'bg-[#fadcd6] text-[#a83a25]'}`}>{pts}</div>
-                              : <span className="text-[#c4bfb5] text-[13px]">·</span>}
+                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block">
+                              {pts != null ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${pts>=3?'bg-[#dde7fb] text-[#2a6fdb]':pts===2?'bg-[#d9eedd] text-[#1f8a5b]':pts===1?'bg-[#f6e6c4] text-[#9b6e1a]':'bg-[#fadcd6] text-[#a83a25]'}`}>{pts}</div>
+                                : <span className="text-[#c4bfb5] text-[13px]">·</span>}
+                            </button>
                           </td>
                         )
                       })}
@@ -178,6 +219,7 @@ function TarjetaPage() {
                     </tr>
                   )
                 }
+                return null
               })}
             </tbody>
           </table>
@@ -188,15 +230,14 @@ function TarjetaPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-32">
-
-      {/* Compact header */}
+      {/* Header */}
       <div className="safe-top px-[14px] pt-3 pb-2">
         <div className="flex items-center justify-between mb-2">
           <Link href="/" className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Inicio
           </Link>
-          <span className="font-mono text-[10px] text-[#6b7a72]">{myScores.length} / {totalHoles} HOYOS</span>
+          <span className="font-mono text-[10px] text-[#6b7a72]">{myScores.length} / {holes.length} HOYOS</span>
         </div>
 
         {/* Mini info bar */}
@@ -204,15 +245,11 @@ function TarjetaPage() {
           <div>
             <p className="font-bold text-[13px] text-[#0e1a16] leading-tight">{courseName}</p>
             <div className="flex gap-1.5 mt-0.5 flex-wrap">
-              {modes.map(m => (
-                <span key={m} className="font-mono text-[9px] text-[#6b7a72] bg-[#f4f1e9] px-2 py-0.5 rounded-full uppercase tracking-wide">
-                  {m === 'stroke' ? 'Stroke' : m === 'stableford' ? 'Stableford' : m === 'matchplay_hcp' ? 'Matchplay' : m}
-                </span>
-              ))}
+              {modes.map(m => <span key={m} className="font-mono text-[9px] text-[#6b7a72] bg-[#f4f1e9] px-2 py-0.5 rounded-full uppercase">{m === 'stroke' ? 'Stroke' : m === 'stableford' ? 'Stableford' : m === 'matchplay_hcp' ? 'Matchplay Hcp' : m}</span>)}
             </div>
           </div>
-          {/* Player totals mini */}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {/* Player totals mini */}
             {players.map(p => {
               const total = getTotal(p.id)
               return (
@@ -222,17 +259,42 @@ function TarjetaPage() {
                 </div>
               )
             })}
+            {/* Edit players button */}
+            <button onClick={() => { setShowEditPlayers(true); supabase.from('profiles').select('id,name,avatar_color,handicap_index').order('name').then(r => setAllProfiles(r.data ?? [])) }}
+              className="w-8 h-8 rounded-full bg-[#f4f1e9] border border-[#e5e0d4] flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round"/><circle cx="9" cy="7" r="4" stroke="#6b7a72" strokeWidth="1.8"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round"/></svg>
+            </button>
           </div>
         </div>
 
-        {/* Mode tabs — only if stableford active */}
-        {hasStableford && (
-          <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4] mb-2">
-            {(['stroke', 'stableford'] as ViewMode[]).map(m => (
-              <button key={m} onClick={() => setViewMode(m)}
-                className="flex-1 py-1.5 rounded-full text-[12px] font-bold transition"
-                style={{ backgroundColor: viewMode === m ? '#0e1a16' : 'transparent', color: viewMode === m ? '#fff' : '#6b7a72' }}>
-                {m === 'stroke' ? 'Stroke' : 'Stableford'}
+        {/* Matchplay live result */}
+        {(viewMode === 'matchplay_hcp' || viewMode === 'matchplay') && matchplayResult && (
+          <div className="bg-white rounded-[14px] px-4 py-3 border border-[#e5e0d4] mb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: matchplayResult.a.avatar_color }}>{matchplayResult.a.name[0]}</div>
+                <span className="font-bold text-[13px] text-[#0e1a16]">{matchplayResult.a.name.split(' ')[0]}</span>
+              </div>
+              <div className="text-center px-4">
+                <p className="font-mono text-[20px] font-black text-[#0e1a16]">{matchplayResult.label}</p>
+                {matchplayResult.leader && <p className="font-mono text-[9px] text-[#6b7a72] uppercase">{matchplayResult.leader.name.split(' ')[0]} gana</p>}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[13px] text-[#0e1a16]">{matchplayResult.b.name.split(' ')[0]}</span>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: matchplayResult.b.avatar_color }}>{matchplayResult.b.name[0]}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mode tabs */}
+        {availableModes.length > 1 && (
+          <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] mb-2">
+            {availableModes.map(m => (
+              <button key={m.key} onClick={() => setViewMode(m.key)}
+                className="flex-1 py-1.5 rounded-full text-[11px] font-bold transition"
+                style={{ backgroundColor: viewMode === m.key ? '#0e1a16' : 'transparent', color: viewMode === m.key ? '#fff' : '#6b7a72' }}>
+                {m.label}
               </button>
             ))}
           </div>
@@ -241,28 +303,68 @@ function TarjetaPage() {
 
       {/* Scorecard */}
       <div className="px-[14px] space-y-2">
-        <ScoreTable group={front} gi={0} />
-        {back.length > 0 && <ScoreTable group={back} gi={1} />}
+        {groups.map((group, gi) => <ScoreTable key={gi} group={group} gi={gi} />)}
 
         {/* Legend */}
         <div className="flex items-center justify-center gap-3 py-2 flex-wrap">
           {viewMode === 'stroke' ? (
             <>
-              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#dde7fb]"/><span className="text-[10px] text-[#6b7a72] font-medium">Eagle/Birdie</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#d9eedd]"/><span className="text-[10px] text-[#6b7a72] font-medium">Par</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#f6e6c4]"/><span className="text-[10px] text-[#6b7a72] font-medium">Bogey</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#fadcd6]"/><span className="text-[10px] text-[#6b7a72] font-medium">Doble+</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#dde7fb]"/><span className="text-[10px] text-[#6b7a72]">Eagle/Birdie</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#d9eedd]"/><span className="text-[10px] text-[#6b7a72]">Par</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#f6e6c4]"/><span className="text-[10px] text-[#6b7a72]">Bogey</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#fadcd6]"/><span className="text-[10px] text-[#6b7a72]">Doble+</span></div>
             </>
-          ) : (
+          ) : viewMode === 'stableford' ? (
             <>
-              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#dde7fb]"/><span className="text-[10px] text-[#6b7a72] font-medium">3–4 pts</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#d9eedd]"/><span className="text-[10px] text-[#6b7a72] font-medium">2 pts (par)</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#f6e6c4]"/><span className="text-[10px] text-[#6b7a72] font-medium">1 pt</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#fadcd6]"/><span className="text-[10px] text-[#6b7a72] font-medium">0 pts</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#dde7fb]"/><span className="text-[10px] text-[#6b7a72]">3-4 pts</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#d9eedd]"/><span className="text-[10px] text-[#6b7a72]">2 pts</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#f6e6c4]"/><span className="text-[10px] text-[#6b7a72]">1 pt</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#fadcd6]"/><span className="text-[10px] text-[#6b7a72]">0 pts</span></div>
             </>
-          )}
+          ) : null}
         </div>
       </div>
+
+      {/* Edit players modal */}
+      {showEditPlayers && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }}>
+          <div className="w-full max-w-[430px] bg-white rounded-t-[28px] p-5 pb-10 max-h-[80vh] overflow-y-auto">
+            <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-4"/>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[18px] font-black text-[#0e1a16]">Jugadores</h2>
+              <button onClick={() => setShowEditPlayers(false)} className="text-[#6b7a72] text-[20px]">×</button>
+            </div>
+            {/* Current players */}
+            <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-2">En esta ronda</p>
+            <div className="space-y-2 mb-4">
+              {players.map(p => (
+                <div key={p.id} className="flex items-center gap-3 bg-[#f4f1e9] rounded-[12px] px-3 py-2.5">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                  <span className="flex-1 font-semibold text-[13px] text-[#0e1a16]">{p.name}</span>
+                  <span className="font-mono text-[10px] text-[#6b7a72]">hcp {p.course_handicap}</span>
+                  {p.id !== myId && (
+                    <button onClick={() => removePlayer(p.id)} className="text-[#c6432d] text-[11px] font-semibold px-2 py-1 rounded-full border border-[#c6432d] hover:bg-[#fadcd6] transition">
+                      Quitar
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* Add players */}
+            <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-2">Añadir jugador</p>
+            <div className="space-y-2">
+              {allProfiles.filter(p => !players.find(rp => rp.id === p.id)).map(p => (
+                <button key={p.id} onClick={() => addPlayer(p.id)}
+                  className="w-full flex items-center gap-3 bg-white rounded-[12px] px-3 py-2.5 border border-[#e5e0d4] text-left active:opacity-70">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                  <span className="flex-1 font-semibold text-[13px] text-[#0e1a16]">{p.name}</span>
+                  <span className="font-mono text-[10px] text-[#1f8a5b] font-bold">+ Añadir</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
@@ -274,12 +376,12 @@ function TarjetaPage() {
             <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">FIRMAR →</span>
           </Link>
         ) : nextHole ? (
-          <Link href={`/hoyo?round=${roundId}&hole=${nextHole}`}
+          <Link href={`/hoyo?round=${roundId}&hole=${nextHole.hole_number}`}
             className="flex items-center justify-between w-full px-5 py-4 rounded-full font-bold text-[14px] text-white"
             style={{ backgroundColor: '#0e1a16' }}>
             <div>
               <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Siguiente</p>
-              <p className="text-[15px] font-black">Hoyo {nextHole} · par {holes.find(h => h.hole_number === nextHole)?.par}</p>
+              <p className="text-[15px] font-black">Hoyo {nextHole.hole_number} · par {nextHole.par}</p>
             </div>
             <span className="text-[#0e1a16] text-[12px] font-black px-3 py-1.5 rounded-full" style={{ backgroundColor: '#1f8a5b' }}>+ ANOTAR</span>
           </Link>

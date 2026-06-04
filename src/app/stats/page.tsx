@@ -220,10 +220,19 @@ export default function StatsPage() {
     }
   }).filter(Boolean) as { par: number; avg: number; total: number; birdies: number; pars: number; bogeys: number; doubles: number }[]
 
-  // Funny phrases based on win rate
+  // Funny phrases — global (shown when no player selected)
   const winRate = n > 0 ? Math.round(totalWins / n * 100) : 0
   const winPhrase = winRate >= 70 ? '¡Eres el terror del campo!' : winRate >= 50 ? 'Ganando más que perdiendo, no está mal.' : winRate >= 30 ? 'Queda algo de margen de mejora... bastante.' : '¡Ni te rindas, ni te lo tomes tan en serio!'
   const lossPhrase = winRate >= 70 ? 'Los demás te deben mucho dinero.' : winRate >= 50 ? 'Al menos no eres el último... todavía.' : winRate >= 30 ? 'El golf te está enseñando humildad gratis.' : '¡El récord de derrotas también es un récord!'
+
+  // Per-player phrase (shown when comparing)
+  function playerPhrase(wins: number, losses: number): string {
+    const r = wins + losses > 0 ? Math.round(wins / (wins + losses) * 100) : 0
+    if (r >= 70) return '¡Le tienes tomada la medida!'
+    if (r >= 50) return 'Más victorias que derrotas. Por ahora.'
+    if (r >= 30) return 'Él te gana más de lo que quisieras.'
+    return 'Te tiene cogido el punto. Toca revancha.'
+  }
 
   // Social filtered rounds
   const socialRounds = socialPeriod === 'all' ? rounds : rounds.slice(0, parseInt(socialPeriod))
@@ -447,28 +456,46 @@ export default function StatsPage() {
         {/* ── SOCIAL ── */}
         {section === 'social' && (
           <div className="space-y-3">
-            {/* Win summary with funny phrase */}
-            <div className="rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-              <div className="absolute right-[-20px] top-[-20px] w-[100px] h-[100px] rounded-full" style={{ backgroundColor: winRate >= 50 ? '#1f8a5b' : '#c6432d', opacity: 0.85 }}/>
-              <div className="relative">
-                <div className="flex items-center gap-6 mb-3">
-                  <div>
-                    <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">VICTORIAS</p>
-                    <p className="text-[52px] font-black text-white leading-none">{totalWins}</p>
-                    <p className="text-[12px] text-white/60 mt-1">de {n} rondas</p>
-                  </div>
-                  {n > 0 && (
-                    <div>
-                      <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">WIN RATE</p>
-                      <p className="text-[28px] font-black leading-none" style={{ color: winRate >= 50 ? '#1f8a5b' : '#e8b75a' }}>{winRate}%</p>
+            {/* Win summary — changes based on selected player */}
+            {(() => {
+              const selPlayer = comparePlayerId ? companions.find(c => c.id === comparePlayerId) : null
+              const wins   = selPlayer ? selPlayer.wins   : totalWins
+              const losses = selPlayer ? selPlayer.losses : n - totalWins
+              const total  = selPlayer ? selPlayer.rounds : n
+              const rate   = total > 0 ? Math.round(wins / total * 100) : 0
+              const phrase = selPlayer ? playerPhrase(wins, losses) : (rate >= 50 ? winPhrase : lossPhrase)
+              return (
+                <div className="rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
+                  <div className="absolute right-[-20px] top-[-20px] w-[100px] h-[100px] rounded-full" style={{ backgroundColor: rate >= 50 ? '#1f8a5b' : '#c6432d', opacity: 0.85 }}/>
+                  <div className="relative">
+                    <div className="flex items-center gap-6 mb-3">
+                      <div>
+                        <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">
+                          {selPlayer ? `VS ${selPlayer.name.split(' ')[0].toUpperCase()}` : 'VICTORIAS TOTALES'}
+                        </p>
+                        <p className="text-[52px] font-black text-white leading-none">{wins}</p>
+                        <p className="text-[12px] text-white/60 mt-1">de {total} rondas{selPlayer ? ' juntos' : ''}</p>
+                      </div>
+                      {total > 0 && (
+                        <div>
+                          <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">WIN RATE</p>
+                          <p className="text-[28px] font-black leading-none" style={{ color: rate >= 50 ? '#1f8a5b' : '#e8b75a' }}>{rate}%</p>
+                          {selPlayer && (
+                            <div className="mt-1">
+                              <p className="font-mono text-[9px] text-white/50 uppercase">DERROTAS</p>
+                              <p className="text-[20px] font-black text-[#fadcd6] leading-none">{losses}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  )}
+                    <div className="bg-white/10 rounded-[12px] px-3 py-2">
+                      <p className="text-white text-[13px] font-semibold">{phrase}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-white/10 rounded-[12px] px-3 py-2">
-                  <p className="text-white text-[13px] font-semibold">{winRate >= 50 ? winPhrase : lossPhrase}</p>
-                </div>
-              </div>
-            </div>
+              )
+            })()}
 
             {/* Period + player selector */}
             <div className="flex gap-2">
