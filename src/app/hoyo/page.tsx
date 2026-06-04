@@ -140,14 +140,16 @@ function HoyoPage() {
             <span className="font-mono text-[10px] text-white/50">SI {hole.stroke_index}</span>
             {hole.distance_m && <span className="font-mono text-[10px] text-white/50">{hole.distance_m}m</span>}
           </div>
-          {/* Mini hole bars for handicap visualization */}
-          <div className="flex gap-0.5">
+          {/* Handicap strokes per player — highlighted if receiving on this hole */}
+          <div className="flex gap-2 flex-wrap mt-1">
             {players.map(p => {
               const rcv = strokesReceived(p.course_handicap, hole.stroke_index)
               return (
-                <div key={p.id} className="flex items-center gap-0.5">
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.short}</div>
-                  {rcv > 0 && <span className="font-mono text-[9px] text-[#1f8a5b]">+{rcv}</span>}
+                <div key={p.id} className="flex items-center gap-1 px-2 py-1 rounded-full"
+                  style={{ backgroundColor: rcv > 0 ? 'rgba(31,138,91,0.25)' : 'rgba(255,255,255,0.1)' }}>
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0" style={{ backgroundColor: p.avatar_color }}>{p.short}</div>
+                  <span className="font-mono text-[10px] text-white/70">h{p.course_handicap}</span>
+                  {rcv > 0 && <span className="font-mono text-[10px] font-black text-[#1f8a5b]">+{rcv}</span>}
                 </div>
               )
             })}
@@ -173,7 +175,13 @@ function HoyoPage() {
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0" style={{ backgroundColor: p.avatar_color }}>
                   {p.short}
                 </div>
-                <span className="text-[12px] font-semibold text-[#0e1a16] w-16 truncate">{p.name.split(' ')[0]}</span>
+                <div className="w-16">
+                  <p className="text-[12px] font-semibold text-[#0e1a16] truncate">{p.name.split(' ')[0]}</p>
+                  <p className="font-mono text-[9px] text-[#6b7a72]">
+                    h{p.course_handicap}
+                    {(() => { const rcv = strokesReceived(p.course_handicap, hole?.stroke_index ?? 18); return rcv > 0 ? <span className="text-[#1f8a5b] font-black"> +{rcv}</span> : null })()}
+                  </p>
+                </div>
                 <div className="flex gap-1 flex-1">
                   {scoreOpts.map(s => {
                     const d = s - par
