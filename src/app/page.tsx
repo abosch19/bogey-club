@@ -143,10 +143,10 @@ export default function HomePage() {
               <div className="flex gap-2">
                 <Link
                   href="/ronda/campo"
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full font-bold text-[14px] text-[#0e1a16] transition active:scale-[0.98]"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full font-bold text-[14px] transition active:scale-[0.98]"
                   style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}
                 >
-                  Empezar ronda →
+                  Competitivo →
                 </Link>
                 <Link
                   href="/ronda/campo?practice=true"
@@ -212,22 +212,36 @@ export default function HomePage() {
           )}
 
           {/* Liga card */}
-          <Link href="/liga" className="block">
-            <div className="rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-              <div className="absolute right-[-30px] top-[-30px] w-[120px] h-[120px] rounded-full" style={{ backgroundColor: '#e8b75a', opacity: 0.9 }} />
-              <div className="relative flex items-center justify-between">
+          <div className="rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#1a2a4a' }}>
+            <div className="absolute right-[-30px] top-[-30px] w-[120px] h-[120px] rounded-full" style={{ backgroundColor: '#2a6fdb', opacity: 0.6 }} />
+            <div className="relative">
+              <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-[0.18em] mb-1">LIGA · JORNADA</p>
-                  <p className="text-white text-[18px] font-black tracking-tight">Mi Liga</p>
-                  <p className="text-[12px] text-[#6b7a72] mt-1">Ver clasificación →</p>
+                  <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em] mb-1">LIGA</p>
+                  <p className="text-white text-[18px] font-black tracking-tight">
+                    {activeLeague ? activeLeague.name : 'Sin liga activa'}
+                  </p>
                 </div>
-                <div className="text-right">
-                  <div className="text-[32px] font-black text-white leading-none">–</div>
-                  <p className="font-mono text-[9px] text-[#6b7a72] mt-1">SIN DATOS</p>
-                </div>
+                <Link href="/liga"
+                  className="font-mono text-[9px] text-white/60 uppercase tracking-wide mt-1 hover:text-white">
+                  Ver →
+                </Link>
               </div>
+              {activeLeague ? (
+                <Link href={`/ronda/campo?league=${activeLeague.id}`}
+                  className="flex items-center justify-between w-full px-4 py-2.5 rounded-full font-bold text-[13px] transition active:scale-[0.98]"
+                  style={{ backgroundColor: '#2a6fdb', color: '#fff' }}>
+                  <span>Iniciar ronda de liga</span>
+                  <span className="bg-white/20 px-2 py-0.5 rounded-full text-[11px]">→</span>
+                </Link>
+              ) : (
+                <Link href="/liga/nueva"
+                  className="flex items-center justify-center w-full px-4 py-2.5 rounded-full font-bold text-[13px] text-white/70 border border-white/20 transition active:opacity-80">
+                  Crear liga →
+                </Link>
+              )}
             </div>
-          </Link>
+          </div>
 
         </div>
       </div>

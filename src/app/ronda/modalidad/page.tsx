@@ -11,6 +11,7 @@ function SeleccionarModalidadPage() {
   const isPractice = searchParams.get('practice') === 'true'
   const playerIds  = searchParams.get('players')?.split(',').filter(Boolean) ?? []
   const guests     = searchParams.get('guests')?.split('|').filter(Boolean) ?? []
+  const leagueId   = searchParams.get('league') ?? ''
   const totalPlayers = playerIds.length + guests.length
 
   // Stroke is always active
@@ -45,6 +46,7 @@ function SeleccionarModalidadPage() {
           player_ids: playerIds,
           guests,
           modes: ['stroke', ...extras],
+          ...(leagueId ? { league_id: leagueId } : {}),
         }),
       })
       const data = await res.json()
@@ -73,7 +75,10 @@ function SeleccionarModalidadPage() {
         <h1 className="text-[28px] font-black tracking-tight text-[#0e1a16] leading-tight">
           ¿A qué<br/><span className="text-[#1f8a5b]">jugamos?</span>
         </h1>
-        <p className="text-[13px] text-[#6b7a72] mt-1">Stroke Play siempre activo. Añade hasta 2 más.</p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-[13px] text-[#6b7a72]">Stroke Play siempre activo. Añade hasta 2 más.</p>
+          {leagueId && <span className="font-mono text-[9px] bg-[#dde7fb] text-[#2a6fdb] px-2 py-0.5 rounded-full uppercase font-bold">LIGA</span>}
+        </div>
       </div>
 
       <div className="flex-1 px-[14px] pb-32 space-y-2 overflow-y-auto">

@@ -12,6 +12,7 @@ function SeleccionarJugadoresPage() {
   const searchParams = useSearchParams()
   const courseId = searchParams.get('course') ?? ''
   const isPractice = searchParams.get('practice') === 'true'
+  const leagueId   = searchParams.get('league') ?? ''
 
   const [allPlayers, setAllPlayers] = useState<Player[]>([])
   const [selected, setSelected] = useState<Player[]>([])
@@ -81,6 +82,7 @@ function SeleccionarJugadoresPage() {
       practice: String(isPractice),
       players: playerIds,
       ...(guestData ? { guests: guestData } : {}),
+      ...(leagueId ? { league: leagueId } : {}),
     })
     router.push(`/ronda/modalidad?${params}`)
   }

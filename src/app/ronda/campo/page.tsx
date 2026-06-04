@@ -18,6 +18,7 @@ function SeleccionarCampoPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isPractice = searchParams.get('practice') === 'true'
+  const leagueId   = searchParams.get('league') ?? ''
 
   const [courses, setCourses] = useState<Course[]>([])
   const [search, setSearch] = useState('')
@@ -36,7 +37,7 @@ function SeleccionarCampoPage() {
 
   function handleNext() {
     if (!selected) return
-    const params = new URLSearchParams({ course: selected.id, practice: String(isPractice) })
+    const params = new URLSearchParams({ course: selected.id, practice: String(isPractice), ...(leagueId ? { league: leagueId } : {}) })
     router.push(`/ronda/jugadores?${params}`)
   }
 

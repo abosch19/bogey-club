@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
-  const { course_id, is_practice, player_ids, guests, modes } = await request.json()
+  const { course_id, is_practice, player_ids, guests, modes, league_id } = await request.json()
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -101,6 +101,13 @@ export async function POST(request: Request) {
     is_primary: i === 0,
   }))
   await admin.from('round_modes').insert(modeInserts)
+
+  // Link to league if provided
+  if (league_id) {
+    const { data: lastLR } = await admin.from('league_rounds').select('round_number').eq('league_id', league_id).order('round_number', { ascending: false }).limit(1).maybeSingle()
+    const nextNum = (lastLR?.round_number ?? 0) + 1
+    await admin.from('league_rounds').insert({ league_id, round_id: round.id, round_number: nextNum, played_at: new Date().toISOString().split('T')[0] })
+  }
 
   return NextResponse.json({ round_id: round.id })
 }
