@@ -39,6 +39,7 @@ export default function StatsPage() {
   const [courseHoleData, setCourseHoleData] = useState<{ hole_number: number; par: number; my_last: number | null; my_best: number | null }[]>([])
   const [comparePlayerId, setComparePlayerId] = useState<string | null>(null)
   const [socialPeriod, setSocialPeriod]       = useState<'all'|'10'|'5'|'3'>('all')
+  const [camposTab, setCamposTab]             = useState<'golf'|'pp'>('golf')
   const supabase = createClient()
 
   useEffect(() => {
@@ -743,6 +744,18 @@ export default function StatsPage() {
         {/* ── CAMPOS ── */}
         {section === 'campos' && (
           <div className="space-y-2">
+            {/* Golf / P&P filter */}
+            {!selectedCourse && (
+              <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4]">
+                {([['golf','Golf'],['pp','Pitch & Putt']] as const).map(([key, label]) => (
+                  <button key={key} onClick={() => { setCamposTab(key); setSelectedCourse(null) }}
+                    className="flex-1 py-1.5 rounded-full text-[12px] font-bold transition"
+                    style={{ backgroundColor: camposTab === key ? '#0e1a16' : 'transparent', color: camposTab === key ? '#fff' : '#6b7a72' }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
             {selectedCourse && (() => {
               const c = courseStats.find(x => x.name === selectedCourse)
               if (!c) return null
@@ -857,7 +870,9 @@ export default function StatsPage() {
               )
             })()}
 
-            {!selectedCourse && courseStats.length > 0 ? courseStats.map(c => {
+            {!selectedCourse && courseStats.length > 0 ? courseStats
+              .filter(c => camposTab === 'pp' ? c.name.startsWith('P&P') : !c.name.startsWith('P&P'))
+              .map(c => {
               const deltaBest = c.best ? c.best - c.par : null
               const vsRecord  = c.record && c.best ? c.best - c.record : null
               // Evolution: is last score better than avg?
