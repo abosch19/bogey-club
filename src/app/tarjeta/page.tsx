@@ -104,17 +104,18 @@ function TarjetaPage() {
                 <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2">{label}</td>
               </tr>
               <tr className="border-b border-[#efebe1]">
-                <td className="font-mono text-[9px] text-[#6b7a72] px-2 py-1 text-left">
-                  {viewMode === 'stroke' ? 'PAR' : 'SI'}
-                </td>
+                <td className="font-mono text-[9px] text-[#6b7a72] px-2 py-1 text-left">PAR</td>
                 {group.map(h => (
-                  <td key={h.hole_number} className="font-mono text-[10px] text-[#6b7a72] py-1 px-0.5">
-                    {viewMode === 'stroke' ? h.par : h.stroke_index}
-                  </td>
+                  <td key={h.hole_number} className="font-mono text-[10px] text-[#6b7a72] py-1 px-0.5">{h.par}</td>
                 ))}
-                <td className="font-mono text-[11px] font-bold text-[#0e1a16] py-1 px-2">
-                  {viewMode === 'stroke' ? blockPar : ''}
-                </td>
+                <td className="font-mono text-[11px] font-bold text-[#0e1a16] py-1 px-2">{blockPar}</td>
+              </tr>
+              <tr className="border-b border-[#efebe1]">
+                <td className="font-mono text-[9px] text-[#2a6fdb] px-2 py-1 text-left font-bold">HCP</td>
+                {group.map(h => (
+                  <td key={h.hole_number} className="font-mono text-[9px] text-[#2a6fdb] py-1 px-0.5">{h.stroke_index}</td>
+                ))}
+                <td/>
               </tr>
             </thead>
             <tbody>

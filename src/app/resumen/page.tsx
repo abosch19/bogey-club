@@ -27,6 +27,7 @@ function ResumenPage() {
   const [modes, setModes]     = useState<string[]>(['stroke'])
   const [activeTab, setActiveTab] = useState<Tab>('stroke')
   const [saving, setSaving]   = useState(false)
+  const [signed, setSigned]   = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -76,7 +77,8 @@ function ResumenPage() {
   async function handleSign() {
     setSaving(true)
     await fetch('/api/ronda/finalizar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId }) })
-    router.push('/')
+    setSaving(false)
+    setSigned(true)
   }
 
   if (!round) return SPINNER
@@ -305,7 +307,7 @@ function ResumenPage() {
       </div>
 
       {/* Sign CTA */}
-      {round?.status !== 'completed' && (
+      {round?.status !== 'completed' && !signed && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
           <button onClick={handleSign} disabled={saving}
             className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-60"
@@ -313,6 +315,30 @@ function ResumenPage() {
             <span>Firmar y guardar ronda</span>
             <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">{saving ? '…' : '✓ FIRMAR'}</span>
           </button>
+        </div>
+      )}
+
+      {/* After signing — navigation options */}
+      {(signed || round?.status === 'completed') && (
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
+          {signed && (
+            <div className="bg-[#d9eedd] rounded-[14px] px-4 py-3 mb-3 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <span className="text-[#1f8a5b] font-semibold text-[13px]">Ronda firmada y guardada</span>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Link href="/"
+              className="flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[14px] text-white transition active:scale-[0.98]"
+              style={{ backgroundColor: '#0e1a16' }}>
+              Inicio
+            </Link>
+            <Link href="/stats"
+              className="flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[14px] transition active:scale-[0.98]"
+              style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}>
+              Ver stats
+            </Link>
+          </div>
         </div>
       )}
     </div>
