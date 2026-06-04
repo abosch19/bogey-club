@@ -37,6 +37,7 @@ export default function StatsPage() {
   const [hoyosPeriod, setHoyosPeriod] = useState<'all'|'10'|'5'|'3'>('all')
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
   const [courseHoleData, setCourseHoleData] = useState<{ hole_number: number; par: number; my_last: number | null; my_best: number | null }[]>([])
+  const [comparePlayerId, setComparePlayerId] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -493,8 +494,8 @@ export default function StatsPage() {
               </div>
             </div>
 
-            {/* Nemesis */}
-            {nemesis && (
+            {/* Nemesis — solo si te han ganado alguna vez */}
+            {nemesis && nemesis.losses > 0 && (
               <div className="bg-white rounded-[16px] p-4 border border-[#fadcd6]">
                 <p className="font-mono text-[9px] text-[#a83a25] uppercase tracking-wide mb-2">Tu némesis</p>
                 <div className="flex items-center gap-3">
@@ -507,6 +508,94 @@ export default function StatsPage() {
                   </div>
                   <p className="text-[13px] text-[#a83a25] font-semibold">te ganó {nemesis.losses}×</p>
                 </div>
+              </div>
+            )}
+
+            {/* Comparativa con usuario seleccionado */}
+            {companions.length > 0 && (
+              <div>
+                <h2 className="text-[14px] font-bold text-[#0e1a16] mb-2">Comparar métricas</h2>
+                {/* Player selector */}
+                <div className="flex gap-2 flex-wrap mb-3">
+                  {companions.map(c => (
+                    <button key={c.id} onClick={() => setComparePlayerId(comparePlayerId === c.id ? null : c.id)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-full border transition text-[12px] font-bold"
+                      style={{ backgroundColor: comparePlayerId === c.id ? c.avatar_color : '#fff', borderColor: comparePlayerId === c.id ? c.avatar_color : '#e5e0d4', color: comparePlayerId === c.id ? '#fff' : '#0e1a16' }}>
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: comparePlayerId === c.id ? 'rgba(255,255,255,0.3)' : c.avatar_color }}>
+                        {c.name[0]}
+                      </div>
+                      {c.name.split(' ')[0]}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Side-by-side comparison */}
+                {comparePlayerId && (() => {
+                  const other = companions.find(c => c.id === comparePlayerId)
+                  if (!other) return null
+                  // Get other's rounds stats
+                  const otherRounds = rounds.filter(r => r.players.includes(comparePlayerId))
+                  const oAvgScore = otherRounds.length ? Math.round(otherRounds.reduce((a, r) => a + r.total, 0) / otherRounds.length) : null
+                  const oGirPct   = otherRounds.length ? Math.round(otherRounds.reduce((a, r) => a + (r.gir_total > 0 ? r.gir / r.gir_total * 100 : 0), 0) / otherRounds.length) : null
+                  const oFwPct    = otherRounds.length ? Math.round(otherRounds.reduce((a, r) => a + (r.fairways_total > 0 ? r.fairways / r.fairways_total * 100 : 0), 0) / otherRounds.length) : null
+                  const oPutts    = otherRounds.length ? parseFloat((otherRounds.reduce((a, r) => a + r.putts, 0) / otherRounds.length).toFixed(1)) : null
+
+                  const rows = [
+                    { label: 'Media golpes', mine: avgScore, theirs: oAvgScore, lower: true },
+                    { label: 'GIR %',         mine: girPct != null ? `${girPct}%` : null, theirs: oGirPct != null ? `${oGirPct}%` : null, lower: false },
+                    { label: 'Calles %',      mine: fwPct != null ? `${fwPct}%` : null,  theirs: oFwPct != null ? `${oFwPct}%` : null,  lower: false },
+                    { label: 'Putts / ronda', mine: avgPutts, theirs: oPutts, lower: true },
+                  ]
+
+                  return (
+                    <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+                      {/* Header */}
+                      <div className="grid grid-cols-3 border-b border-[#efebe1]">
+                        <div className="py-3 px-3"/>
+                        <div className="py-3 px-3 text-center border-l border-[#efebe1]">
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold mx-auto mb-0.5" style={{ backgroundColor: '#1f8a5b' }}>
+                            {(allPlayers.find(p => p.id === myId) as any)?.name?.[0] ?? 'T'}
+                          </div>
+                          <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Tú</p>
+                        </div>
+                        <div className="py-3 px-3 text-center border-l border-[#efebe1]">
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold mx-auto mb-0.5" style={{ backgroundColor: other.avatar_color }}>
+                            {other.name[0]}
+                          </div>
+                          <p className="font-mono text-[9px] text-[#6b7a72] uppercase truncate">{other.name.split(' ')[0]}</p>
+                        </div>
+                      </div>
+                      {rows.map(row => {
+                        const mineN = typeof row.mine === 'number' ? row.mine : null
+                        const theirN = typeof row.theirs === 'number' ? row.theirs : null
+                        const mineWins  = mineN !== null && theirN !== null && (row.lower ? mineN < theirN : mineN > theirN)
+                        const theirWins = mineN !== null && theirN !== null && (row.lower ? theirN < mineN : theirN > mineN)
+                        return (
+                          <div key={row.label} className="grid grid-cols-3 border-t border-[#efebe1]">
+                            <div className="py-2.5 px-3 flex items-center">
+                              <p className="text-[11px] text-[#6b7a72]">{row.label}</p>
+                            </div>
+                            <div className="py-2.5 px-3 text-center border-l border-[#efebe1]" style={{ backgroundColor: mineWins ? '#d9eedd' : 'transparent' }}>
+                              <p className="font-mono text-[14px] font-black" style={{ color: mineWins ? '#1f8a5b' : '#0e1a16' }}>{row.mine ?? '–'}</p>
+                            </div>
+                            <div className="py-2.5 px-3 text-center border-l border-[#efebe1]" style={{ backgroundColor: theirWins ? '#fadcd6' : 'transparent' }}>
+                              <p className="font-mono text-[14px] font-black" style={{ color: theirWins ? '#a83a25' : '#0e1a16' }}>{row.theirs ?? '–'}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      <div className="grid grid-cols-3 border-t border-[#e5e0d4] bg-[#f4f1e9]">
+                        <div className="py-2 px-3"><p className="text-[10px] text-[#6b7a72]">Victorias juntos</p></div>
+                        <div className="py-2 px-3 text-center border-l border-[#efebe1]">
+                          <p className="font-mono text-[13px] font-black text-[#1f8a5b]">{other.wins}</p>
+                        </div>
+                        <div className="py-2 px-3 text-center border-l border-[#efebe1]">
+                          <p className="font-mono text-[13px] font-black text-[#a83a25]">{other.losses}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             )}
 
