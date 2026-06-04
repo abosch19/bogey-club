@@ -114,6 +114,6 @@ export const GAME_MODES: { id: GameMode; name: string; desc: string; players: st
   { id: 'matchplay',    name: 'Matchplay',           desc: 'Gana el hoyo quien menos golpes haga. Sin hándicap.',           players: '2',   icon: 'swords', color: '#2a6fdb' },
   { id: 'matchplay_hcp',name: 'Matchplay c/ Hcp',   desc: 'Como matchplay pero con golpes de ventaja por hándicap.',       players: '2',   icon: 'swords', color: '#7a3fc4' },
   { id: 'stableford',   name: 'Stableford',          desc: 'Puntos por hoyo según tu neto. Premia la regularidad.',         players: '1–4', icon: 'star',   color: '#d4a24a' },
-  { id: 'wolf',         name: 'Wolf',                desc: 'Cada hoyo un lobo elige pareja o va solo a por todas.',         players: '4',   icon: 'wolf',   color: '#c6432d' },
-  { id: 'bbb',          name: 'Bingo Bango Bongo',   desc: '3 puntos por hoyo: 1º en green, más cerca, 1º en meter.',       players: '3–4', icon: 'target', color: '#0f9c7a' },
+  { id: 'wolf',         name: 'Wolf',                desc: 'Cada hoyo un lobo elige pareja o va solo. Adapta con 3+ jugadores.',  players: '3+',  icon: 'wolf',   color: '#c6432d' },
+  { id: 'bbb',          name: 'Bingo Bango Bongo',   desc: '3 puntos por hoyo: 1º en green, más cerca, 1º en meter.',            players: '2+',  icon: 'target', color: '#0f9c7a' },
 ]
