@@ -211,7 +211,7 @@ function HoyoPage() {
                 <button onClick={() => update(p.id, 'gir', !sc.gir)}
                   className="flex items-center justify-between rounded-[14px] px-3 py-2.5 border transition"
                   style={{ backgroundColor: sc.gir ? '#d9eedd' : '#fff', borderColor: sc.gir ? '#1f8a5b' : '#e5e0d4' }}>
-                  <span className="text-[13px] font-semibold" style={{ color: sc.gir ? '#1f8a5b' : '#0e1a16' }}>Green</span>
+                  <span className="text-[13px] font-semibold" style={{ color: sc.gir ? '#1f8a5b' : '#0e1a16' }}>GIR</span>
                   <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: sc.gir ? '#1f8a5b' : 'transparent', border: sc.gir ? 'none' : '1.5px solid #e5e0d4' }}>
                     {sc.gir && <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                   </div>
