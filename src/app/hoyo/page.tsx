@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { strokesReceived } from '@/lib/golf'
+import { strokesReceived, stablefordPts } from '@/lib/golf'
 
 type Hole   = { hole_number: number; par: number; stroke_index: number; distance_m: number | null }
 type Player = { id: string; name: string; short: string; avatar_color: string; course_handicap: number }
@@ -37,15 +37,18 @@ function HoyoPage() {
   const [saving, setSaving]     = useState(false)
   const [totalHoles, setTotal]  = useState(18)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [roundModes, setRoundModes] = useState<string[]>([])
   const supabase = createClient()
 
   useEffect(() => {
     if (!roundId) return
     async function load() {
-      const [roundRes, playersRes] = await Promise.all([
+      const [roundRes, playersRes, modesRes] = await Promise.all([
         supabase.from('rounds').select('course_id, courses(holes_count)').eq('id', roundId).single(),
         supabase.from('round_players').select('profile_id, is_guest, course_handicap, profiles(name, avatar_color)').eq('round_id', roundId),
+        supabase.from('round_modes').select('mode').eq('round_id', roundId),
       ])
+      setRoundModes((modesRes.data ?? []).map((m: any) => m.mode))
 
       const course = Array.isArray(roundRes.data?.courses) ? roundRes.data!.courses[0] : roundRes.data?.courses as any
       setTotal(course?.holes_count ?? 18)
@@ -186,16 +189,21 @@ function HoyoPage() {
                     const d = s - par
                     const c = scoreColor(d)
                     const isSelected = sc.strokes === s
+                    const isStableford = roundModes.includes('stableford')
+                    const rcv = strokesReceived(p.course_handicap, hole?.stroke_index ?? 18)
+                    const pts = isStableford ? stablefordPts(s, par, rcv) : null
                     return (
                       <button key={s} onClick={() => setScore(p.id, s)}
-                        className="flex-1 h-12 rounded-[12px] font-mono text-[16px] font-black transition active:scale-95"
+                        className="flex-1 h-12 rounded-[12px] transition active:scale-95 flex flex-col items-center justify-center"
                         style={{
                           backgroundColor: isSelected ? c.bg : '#f4f1e9',
                           color: isSelected ? c.text : '#9b9b8a',
                           border: isSelected ? `2px solid ${c.text}55` : '2px solid transparent',
-                          fontSize: isSelected ? 18 : 16,
                         }}>
-                        {s}
+                        <span className="font-mono font-black leading-none" style={{ fontSize: isSelected ? 18 : 16 }}>{s}</span>
+                        {isStableford && pts !== null && (
+                          <span className="font-mono leading-none mt-0.5" style={{ fontSize: 9, color: isSelected ? c.text : '#6b7a72', opacity: 0.8 }}>{pts}pt</span>
+                        )}
                       </button>
                     )
                   })}
