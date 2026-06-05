@@ -6,6 +6,21 @@ import { createClient } from '@/lib/supabase/client'
 import { formatHandicap, formatDate, countingRounds } from '@/lib/golf'
 import { TabBar } from '@/components/ui/tab-bar'
 
+function Sparkline({ diffs }: { diffs: { diff: number }[] }) {
+  if (diffs.length < 2) return null
+  const vals = [...diffs].reverse().map(d => d.diff)
+  const min = Math.min(...vals), max = Math.max(...vals)
+  const range = max - min || 1
+  const w = 300, h = 60, pad = 6
+  const pts = vals.map((v, i) => `${pad + (i/(vals.length-1))*(w-pad*2)},${pad + ((max-v)/range)*(h-pad*2)}`).join(' ')
+  return (
+    <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`}>
+      <polygon points={`${pts} ${w-pad},${h} ${pad},${h}`} fill="#d9eedd" opacity="0.6"/>
+      <polyline points={pts} fill="none" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
 export default function PerfilPage() {
   const [profile, setProfile]   = useState<any>(null)
   const [email, setEmail]       = useState('')
@@ -18,11 +33,9 @@ export default function PerfilPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       setEmail(user.email ?? '')
-
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       if (!prof) { window.location.href = '/onboarding'; return }
       setProfile(prof)
-
       const { data: d } = await supabase.from('whs_differentials').select('differential, played_at, is_counting').eq('profile_id', user.id).order('played_at', { ascending: false }).limit(20)
       setDiffs((d ?? []).map(x => ({ diff: x.differential, played_at: x.played_at, counting: x.is_counting })))
       setLoading(false)
@@ -57,9 +70,7 @@ export default function PerfilPage() {
               <span className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Socio</span>
             </div>
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-[20px] font-bold" style={{ backgroundColor: profile.avatar_color ?? '#1f8a5b' }}>
-                {initials}
-              </div>
+              <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-[20px] font-bold" style={{ backgroundColor: profile.avatar_color ?? '#1f8a5b' }}>{initials}</div>
               <div>
                 <p className="text-white text-[20px] font-bold leading-tight">{profile.name}</p>
                 <p className="text-white/50 text-[12px] mt-0.5">{email}</p>
@@ -78,93 +89,94 @@ export default function PerfilPage() {
           </div>
         </div>
 
-        {/* Handicap evolution + WHS rounds */}
-        {diffs.length > 0 && (
-          <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4 mb-3">
-            <div className="flex items-baseline justify-between mb-3">
-              <h2 className="text-[15px] font-bold text-[#0e1a16]">Evolución hándicap</h2>
-              <span className="font-mono text-[10px] text-[#6b7a72]">Últimas {diffs.length} rondas</span>
-            </div>
-
-            {/* Sparkline chart */}
-            {diffs.length >= 2 && (() => {
-              const vals = [...diffs].reverse().map(d => d.diff)
-              const min = Math.min(...vals), max = Math.max(...vals)
-              const range = max - min || 1
-              const w = 320, h = 56, pad = 6
-              const pts = vals.map((v, i) => `${pad + (i/(vals.length-1))*(w-pad*2)},${pad + ((max-v)/range)*(h-pad*2)}`).join(' ')
-              const current = profile.handicap_index
-              return (
-                <div className="mb-4 relative">
-                  <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
-                    {/* Fill area */}
-                    <polygon points={`${pts} ${pad+(vals.length-1)/(vals.length-1)*(w-pad*2)},${h} ${pad},${h}`} fill="#d9eedd" opacity="0.5"/>
-                    <polyline points={pts} fill="none" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    {/* Last point dot */}
-                    {vals.length > 0 && (() => {
-                      const lx = pad + (vals.length-1)/(vals.length-1)*(w-pad*2)
-                      const ly = pad + ((max-vals[vals.length-1])/range)*(h-pad*2)
-                      return <circle cx={lx} cy={ly} r="4" fill="#1f8a5b"/>
-                    })()}
-                  </svg>
-                  <div className="flex justify-between mt-1">
-                    <span className="font-mono text-[9px] text-[#6b7a72]">{formatDate(diffs[diffs.length-1]?.played_at)}</span>
-                    <span className="font-mono text-[10px] font-bold text-[#1f8a5b]">Actual: {formatHandicap(current)}</span>
-                    <span className="font-mono text-[9px] text-[#6b7a72]">{formatDate(diffs[0]?.played_at)}</span>
-                  </div>
-                </div>
-              )
-            })()}
-
-            {/* Rounds that make up the calculation */}
-            <div className="flex items-baseline justify-between mb-2">
-              <p className="font-bold text-[13px] text-[#0e1a16]">Rondas del cálculo</p>
-              <span className="font-mono text-[10px] text-[#6b7a72]">{nCount} de {diffs.length} cuentan</span>
-            </div>
-            <div className="space-y-1.5">
-              {diffs.map((d, i) => (
-                <div key={i} className="flex items-center gap-3 py-1.5 border-b border-[#efebe1] last:border-0">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: d.counting ? '#1f8a5b' : '#f4f1e9' }}>
-                    {d.counting
-                      ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      : <span className="font-mono text-[9px] text-[#6b7a72]">{i+1}</span>
-                    }
-                  </div>
-                  <span className="text-[12px] text-[#6b7a72] flex-1">{formatDate(d.played_at)}</span>
-                  <span className={`font-mono text-[14px] font-black ${d.counting ? 'text-[#1f8a5b]' : 'text-[#0e1a16]'}`}>
-                    {d.diff.toFixed(1)}
-                  </span>
-                  {d.counting && <span className="font-mono text-[9px] text-[#1f8a5b] bg-[#d9eedd] px-1.5 py-0.5 rounded-full">cuenta</span>}
-                </div>
-              ))}
-            </div>
-            {nCount > 0 && (
-              <p className="text-[11px] text-[#6b7a72] mt-3 bg-[#f4f1e9] rounded-[10px] px-3 py-2">
-                El índice WHS es la media de los <strong className="text-[#0e1a16]">{nCount} diferenciales más bajos</strong> de tus últimas {diffs.length} rondas.
-              </p>
-            )}
+        {/* ── WHS HANDICAP ── */}
+        <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4 mb-3">
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="text-[16px] font-bold text-[#0e1a16]">Evolución hándicap</h2>
+            {diffs.length > 0 && <span className="font-mono text-[10px] text-[#6b7a72]">{nCount} cuentan de {diffs.length}</span>}
           </div>
-        )}
 
-        {/* Settings */}
-        <div className="bg-white rounded-[22px] border border-[#e5e0d4] overflow-hidden mb-3">
-          <Link href="/ronda/campo" className="flex items-center justify-between px-4 py-3.5 border-b border-[#efebe1] active:opacity-70">
-            <span className="text-[14px] font-semibold text-[#0e1a16]">Nueva ronda</span>
+          {diffs.length >= 2 ? (
+            <>
+              <Sparkline diffs={diffs} />
+              <div className="flex justify-between mt-1 mb-4">
+                <span className="font-mono text-[9px] text-[#6b7a72]">{formatDate(diffs[diffs.length-1]?.played_at)}</span>
+                <span className="font-mono text-[10px] font-bold text-[#1f8a5b]">Actual: {formatHandicap(profile.handicap_index)}</span>
+                <span className="font-mono text-[9px] text-[#6b7a72]">{formatDate(diffs[0]?.played_at)}</span>
+              </div>
+            </>
+          ) : diffs.length === 0 ? (
+            <p className="text-[13px] text-[#6b7a72] py-3">Completa rondas para ver la evolución de tu hándicap.</p>
+          ) : null}
+
+          {/* Rounds detail */}
+          {diffs.length > 0 && (
+            <>
+              <div className="flex items-baseline justify-between mb-2">
+                <p className="font-bold text-[13px] text-[#0e1a16]">Partidos del cálculo</p>
+              </div>
+              <div className="space-y-1">
+                {diffs.map((d, i) => (
+                  <div key={i} className="flex items-center gap-3 py-2 border-b border-[#efebe1] last:border-0">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: d.counting ? '#1f8a5b' : '#f4f1e9' }}>
+                      {d.counting
+                        ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        : <span className="font-mono text-[9px] text-[#6b7a72]">{i+1}</span>
+                      }
+                    </div>
+                    <span className="text-[12px] text-[#6b7a72] flex-1">{formatDate(d.played_at)}</span>
+                    <span className="font-mono text-[14px] font-black" style={{ color: d.counting ? '#1f8a5b' : '#0e1a16' }}>{d.diff.toFixed(1)}</span>
+                    {d.counting && <span className="font-mono text-[8px] bg-[#d9eedd] text-[#1f8a5b] px-1.5 py-0.5 rounded-full">cuenta</span>}
+                  </div>
+                ))}
+              </div>
+              {nCount > 0 && (
+                <p className="text-[11px] text-[#6b7a72] mt-3 bg-[#f4f1e9] rounded-[10px] px-3 py-2">
+                  Media de los <strong className="text-[#0e1a16]">{nCount} diferenciales más bajos</strong> de las últimas {diffs.length} rondas.
+                </p>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* ── ACCESOS ── */}
+        <div className="space-y-2 mb-3">
+          {/* Jugadores registrados */}
+          <Link href="/jugadores" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70">
+            <div className="w-9 h-9 rounded-full bg-[#d9eedd] flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#1f8a5b" strokeWidth="1.8" strokeLinecap="round"/><circle cx="9" cy="7" r="4" stroke="#1f8a5b" strokeWidth="1.8"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#1f8a5b" strokeWidth="1.8" strokeLinecap="round"/></svg>
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-[14px] text-[#0e1a16]">El club</p>
+              <p className="text-[11px] text-[#6b7a72]">Ver todos los jugadores registrados</p>
+            </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
           </Link>
-          <Link href="/jugadores" className="flex items-center justify-between px-4 py-3.5 border-b border-[#efebe1] active:opacity-70">
-            <span className="text-[14px] font-semibold text-[#0e1a16]">El club · jugadores</span>
+
+          {/* Editar campos */}
+          <Link href="/ronda/campo" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70">
+            <div className="w-9 h-9 rounded-full bg-[#dde7fb] flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 18 Q8 6 14 12 T20 8" stroke="#2a6fdb" strokeWidth="2" fill="none" strokeLinecap="round"/><circle cx="20" cy="8" r="1.8" fill="#2a6fdb"/></svg>
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-[14px] text-[#0e1a16]">Campos</p>
+              <p className="text-[11px] text-[#6b7a72]">Editar campos, hoyos y distancias</p>
+            </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
           </Link>
-          <Link href="/stats" className="flex items-center justify-between px-4 py-3.5 border-b border-[#efebe1] active:opacity-70">
-            <span className="text-[14px] font-semibold text-[#0e1a16]">Mis estadísticas</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
-          </Link>
+
+          {/* Admin — solo para admin */}
           {email === 's.vallve93@gmail.com' && (
-            <Link href="/admin" className="flex items-center justify-between px-4 py-3.5 active:opacity-70">
-              <span className="text-[14px] font-semibold text-[#c6432d]">Panel de administración</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#c6432d" strokeWidth="2" strokeLinecap="round"/></svg>
+            <Link href="/admin" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#fadcd6] active:opacity-70">
+              <div className="w-9 h-9 rounded-full bg-[#fadcd6] flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#c6432d" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-[14px] text-[#c6432d]">Administración</p>
+                <p className="text-[11px] text-[#6b7a72]">Gestionar usuarios y ligas</p>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
             </Link>
           )}
         </div>

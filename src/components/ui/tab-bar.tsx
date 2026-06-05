@@ -64,7 +64,7 @@ export function TabBar() {
           const isActive = key === active
           return (
             <Link key={key} href={href}
-              className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 transition-colors ${isActive ? 'text-[#1f8a5b]' : 'text-[#6b7a72]'}`}>
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 transition-colors ${isActive ? 'text-[#1f8a5b]' : 'text-[#6b7a72]'}`}>
               {icon(isActive)}
               <span className="text-[10px] font-semibold">{label}</span>
             </Link>

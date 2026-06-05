@@ -150,29 +150,29 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
       <div className="safe-top">
-        {/* Header */}
-        <div className="flex items-center justify-between px-[14px] pt-3 pb-1">
+        {/* Header — fijo y compacto */}
+        <div className="flex items-center justify-between px-[14px] pt-2 pb-1">
           <div className="flex items-center gap-2">
-            <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
+            <svg width="24" height="24" viewBox="0 0 64 64" fill="none">
               <circle cx="32" cy="32" r="30" fill="#9bc9a3"/>
               <path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round"/>
               <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16"/>
             </svg>
-            <span className="text-[17px] font-black tracking-tight text-[#0e1a16]">bogeyclub</span>
+            <span className="text-[22px] font-black tracking-tight text-[#0e1a16]">bogeyclub</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <span className="font-mono text-[11px] text-[#6b7a72] tracking-wide uppercase">
               {new Date().toLocaleDateString('es-ES', { weekday: 'short' })} · {formatHandicap(profile.handicap_index)}
             </span>
             <Link href="/perfil">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold" style={{ backgroundColor: profile.avatar_color ?? '#1f8a5b' }}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: profile.avatar_color ?? '#1f8a5b' }}>
                 {initials}
               </div>
             </Link>
           </div>
         </div>
 
-        <div className="px-[14px] space-y-3 mt-3">
+        <div className="px-[14px] space-y-3 mt-2">
           {/* Hero dark card */}
           <div className="rounded-[22px] p-5 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
             <div className="absolute top-[-50px] right-[-50px] w-[200px] h-[200px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.92 }}/>
@@ -189,14 +189,14 @@ export default function HomePage() {
                 Buenas, {firstName}.<br/>
                 Toca <span style={{ color: '#1f8a5b' }}>perder bolas.</span><br/>con la cuadrilla.
               </h1>
-              <div className="flex gap-2 flex-wrap">
-                <Link href="/ronda/campo" className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full font-bold text-[14px] text-[#0e1a16] transition active:scale-[0.98]" style={{ backgroundColor: '#1f8a5b' }}>
+              <div className="flex gap-2">
+                <Link href="/ronda/campo" className="flex-1 flex items-center justify-center py-3 rounded-full font-bold text-[14px] text-[#0e1a16] transition active:scale-[0.98]" style={{ backgroundColor: '#1f8a5b' }}>
                   Competitivo →
                 </Link>
-                <Link href="/torneo/nuevo" className="flex items-center justify-center px-4 py-3 rounded-full font-bold text-[13px] text-white transition active:scale-[0.98]" style={{ backgroundColor: '#2a6fdb' }}>
+                <Link href="/torneo/nuevo" className="flex items-center justify-center px-4 py-3 rounded-full font-bold text-[13px] transition active:scale-[0.98]" style={{ backgroundColor: '#d4a24a', color: '#0e1a16' }}>
                   Torneo
                 </Link>
-                <Link href="/ronda/campo?practice=true" className="flex items-center justify-center px-4 py-3 rounded-full font-semibold text-[13px] text-white transition active:scale-[0.98]" style={{ backgroundColor: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                <Link href="/ronda/campo?practice=true" className="flex items-center justify-center px-4 py-3 rounded-full font-semibold text-[13px] transition active:scale-[0.98]" style={{ backgroundColor: '#2a4a3a', color: '#9bc9a3', border: '1px solid #3a6a4a' }}>
                   Práctica
                 </Link>
               </div>
@@ -275,8 +275,8 @@ export default function HomePage() {
                   ))}
                   <div className="flex-1"/>
                   <Link href={`/ronda/campo?league=${activeLeague.id}`}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-[11px] text-[#0e1a16] transition active:scale-[0.98]"
-                    style={{ backgroundColor: '#e8b75a' }}>
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-[11px] transition active:scale-[0.98]"
+                    style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}>
                     Jugar →
                   </Link>
                   <Link href="/liga" className="font-mono text-[9px] text-white/60 ml-1">Ver liga →</Link>

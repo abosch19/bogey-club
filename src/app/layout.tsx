@@ -6,6 +6,16 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Bogey Club',
   description: 'Tu app de golf con amigos',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'BogeyClub',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-touch-fullscreen': 'yes',
+  },
 }
 
 export const viewport: Viewport = {
@@ -14,6 +24,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
+  themeColor: '#0e1a16',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
