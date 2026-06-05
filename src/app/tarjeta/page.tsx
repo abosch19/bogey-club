@@ -32,17 +32,23 @@ function TarjetaPage() {
   const [showEditPlayers, setShowEditPlayers] = useState(false)
   const [allProfiles, setAllProfiles] = useState<{id:string;name:string;avatar_color:string;handicap_index:number}[]>([])
   const [courseId, setCourseId]   = useState('')
+  const [bet, setBet]             = useState('')
+  const [showBetModal, setShowBetModal] = useState(false)
+  const [savingBet, setSavingBet] = useState(false)
   const supabase = createClient()
 
   async function reload() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) setMyId(user.id)
 
-    const { data: round } = await supabase.from('rounds').select('course_id, notes, courses(name, holes_count)').eq('id', roundId).single()
+    const { data: round } = await supabase.from('rounds').select('course_id, notes, courses(name, holes_count), status').eq('id', roundId).single()
     if (!round) return
     const course = Array.isArray(round.courses) ? round.courses[0] : round.courses as any
     const hm = (round as any).notes ?? 'all'
     setHoleMode(hm)
+    // Load bet if notes isn't a hole_mode value
+    const notesVal = (round as any).notes ?? ''
+    if (!['all','front','back','9_once','9_twice'].includes(notesVal)) setBet(notesVal)
     setCourseId((round as any).course_id)
     setCourse(course?.name ?? '')
     const base = course?.holes_count ?? 18
@@ -285,6 +291,16 @@ function TarjetaPage() {
                 </div>
               )
             })}
+            {/* Bet button */}
+            <button onClick={() => setShowBetModal(true)}
+              className="flex items-center gap-1 px-2 py-1 rounded-full border transition"
+              style={{ backgroundColor: bet ? '#f6e6c4' : '#f4f1e9', borderColor: bet ? '#e8b75a' : '#e5e0d4' }}
+              title={bet || 'Añadir apuesta'}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill={bet ? '#9b6e1a' : '#6b7a72'}/></svg>
+              <span className="font-mono text-[9px] font-bold" style={{ color: bet ? '#9b6e1a' : '#6b7a72' }}>
+                {bet ? 'Apuesta' : 'Apostar'}
+              </span>
+            </button>
             {/* Edit players button */}
             <button onClick={() => { setShowEditPlayers(true); supabase.from('profiles').select('id,name,avatar_color,handicap_index').order('name').then(r => setAllProfiles(r.data ?? [])) }}
               className="w-8 h-8 rounded-full bg-[#f4f1e9] border border-[#e5e0d4] flex items-center justify-center">
@@ -350,6 +366,40 @@ function TarjetaPage() {
           ) : null}
         </div>
       </div>
+
+      {/* Bet modal */}
+      {showBetModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }}>
+          <div className="w-full max-w-[430px] bg-white rounded-t-[28px] p-5 pb-10">
+            <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-4"/>
+            <h2 className="text-[18px] font-black text-[#0e1a16] mb-1">Apuesta de la ronda</h2>
+            <p className="text-[12px] text-[#6b7a72] mb-4">El que pierda tiene que cumplirla. Se mostrará al firmar.</p>
+            <input
+              value={bet}
+              onChange={e => setBet(e.target.value)}
+              placeholder="Ej: el que pierde paga las cervezas..."
+              className="w-full border-2 border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] outline-none focus:border-[#e8b75a] mb-4"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setShowBetModal(false)}
+                className="flex-1 py-3 rounded-full border border-[#e5e0d4] font-semibold text-[14px] text-[#6b7a72]">
+                Cancelar
+              </button>
+              <button disabled={savingBet} onClick={async () => {
+                setSavingBet(true)
+                await fetch('/api/ronda/apuesta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId, bet }) })
+                setSavingBet(false)
+                setShowBetModal(false)
+              }}
+                className="flex-1 py-3 rounded-full font-bold text-[14px] text-[#0e1a16] disabled:opacity-60"
+                style={{ backgroundColor: '#e8b75a' }}>
+                {savingBet ? 'Guardando...' : bet ? 'Guardar apuesta' : 'Quitar apuesta'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit players modal */}
       {showEditPlayers && (
