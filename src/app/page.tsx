@@ -204,15 +204,22 @@ export default function HomePage() {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#1f8a5b]"/>
                 <span className="text-white text-[11px] font-semibold">Listo para jugar</span>
               </div>
-              <h1 className="text-white text-[28px] font-black tracking-tight leading-tight mb-5">
+              <h1 className="text-white text-[28px] font-black tracking-tight leading-tight mb-3">
                 Buenas, {firstName}.<br/>
                 Toca <span style={{ color: '#1f8a5b' }}>perder bolas.</span>
               </h1>
+
+              {/* Frase del día — entre el texto y los botones */}
+              <div className="rounded-[12px] px-3 py-2.5 mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                <p className="text-white/70 text-[12px] italic leading-snug">"{dailyQuote.text}"</p>
+                <p className="font-mono text-[9px] text-white/35 mt-1">— {dailyQuote.author}</p>
+              </div>
+
               <div className="flex gap-2">
                 <Link href="/ronda/campo" className="flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[15px] text-[#0e1a16] transition active:scale-[0.98]" style={{ backgroundColor: '#1f8a5b' }}>
                   Competitivo
                 </Link>
-                <Link href="/ronda/campo?practice=true" className="flex items-center justify-center px-5 py-3.5 rounded-full font-semibold text-[14px] text-white transition active:scale-[0.98]" style={{ backgroundColor: '#0e1a16' }}>
+                <Link href="/ronda/campo?practice=true" className="flex items-center justify-center px-5 py-3.5 rounded-full font-semibold text-[14px] transition active:scale-[0.98]" style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)', color: '#fff' }}>
                   Práctica
                 </Link>
               </div>
@@ -312,15 +319,6 @@ export default function HomePage() {
             </Link>
           )}
 
-          {/* Quote del día */}
-          <div className="bg-[#0e1a16] rounded-[18px] px-5 py-4 relative overflow-hidden">
-            <div className="absolute right-[-20px] top-[-20px] w-[80px] h-[80px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.4 }}/>
-            <p className="font-mono text-[9px] text-white/40 uppercase tracking-[0.15em] mb-2">Sabiduría bogey-club</p>
-            <p className="text-white text-[14px] font-semibold leading-relaxed italic mb-2 relative">
-              "{dailyQuote.text}"
-            </p>
-            <p className="font-mono text-[10px] text-white/40">— {dailyQuote.author}</p>
-          </div>
 
           {/* El club feed */}
           {feed.length > 0 && (
