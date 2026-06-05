@@ -179,11 +179,20 @@ function TarjetaPage() {
                       {group.map(h => {
                         const s = getScore(p.id, h.hole_number)
                         const d = s != null ? s - h.par : null
+                        const pts = (modes.includes('stableford') && s != null)
+                          ? stablefordPts(s, h.par, strokesReceived(p.course_handicap, h.stroke_index))
+                          : null
                         return (
-                          <td key={h.hole_number} className="py-1.5 px-0.5">
-                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block active:scale-95 transition">
-                              {s != null ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
-                                : <span className="text-[#c4bfb5] text-[13px]">·</span>}
+                          <td key={h.hole_number} className="py-1 px-0.5">
+                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block active:scale-95 transition text-center">
+                              {s != null ? (
+                                <>
+                                  <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold mx-auto ${scoreChipClass(d!)}`}>{s}</div>
+                                  {pts !== null && (
+                                    <p className="font-mono text-[8px] font-bold leading-none mt-0.5" style={{ color: pts>=3?'#2a6fdb':pts===2?'#1f8a5b':pts===1?'#9b6e1a':'#a83a25' }}>{pts}pt</p>
+                                  )}
+                                </>
+                              ) : <span className="text-[#c4bfb5] text-[13px]">·</span>}
                             </button>
                           </td>
                         )

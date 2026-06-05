@@ -190,13 +190,10 @@ export default function HomePage() {
                 Toca <span style={{ color: '#1f8a5b' }}>perder bolas.</span><br/>con la cuadrilla.
               </h1>
               <div className="flex gap-2">
-                <Link href="/ronda/campo" className="flex-1 flex items-center justify-center py-3 rounded-full font-bold text-[14px] text-[#0e1a16] transition active:scale-[0.98]" style={{ backgroundColor: '#1f8a5b' }}>
+                <Link href="/ronda/campo" className="flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[15px] text-[#0e1a16] transition active:scale-[0.98]" style={{ backgroundColor: '#1f8a5b' }}>
                   Competitivo →
                 </Link>
-                <Link href="/torneo/nuevo" className="flex items-center justify-center px-4 py-3 rounded-full font-bold text-[13px] text-white transition active:scale-[0.98]" style={{ backgroundColor: '#2a6fdb' }}>
-                  Torneo
-                </Link>
-                <Link href="/ronda/campo?practice=true" className="flex items-center justify-center px-4 py-3 rounded-full font-semibold text-[13px] text-white transition active:scale-[0.98]" style={{ backgroundColor: '#0e1a16' }}>
+                <Link href="/ronda/campo?practice=true" className="flex items-center justify-center px-5 py-3.5 rounded-full font-semibold text-[14px] text-white transition active:scale-[0.98]" style={{ backgroundColor: '#0e1a16' }}>
                   Práctica
                 </Link>
               </div>
