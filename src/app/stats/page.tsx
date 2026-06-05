@@ -267,11 +267,11 @@ export default function StatsPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
-      <div className="safe-top px-[14px] pt-3 pb-4">
-        <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16] mb-3">Stats</h1>
-
-        {/* Section tabs */}
-        <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] mb-4">
+      {/* Header fijo */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-[#f4f1e9] z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
+        style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
+        <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16] mb-2">Stats</h1>
+        <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4]">
           {SECTIONS.map(s => (
             <button key={s.key} onClick={() => setSection(s.key)}
               className="flex-1 py-1.5 rounded-full text-[11px] font-bold transition"
@@ -280,7 +280,11 @@ export default function StatsPage() {
             </button>
           ))}
         </div>
+      </div>
+      {/* Spacer */}
+      <div style={{ height: 'calc(max(14px, env(safe-area-inset-top)) + 88px)' }}/>
 
+      <div className="px-[14px] pb-4">
         {/* ── GENERAL ── */}
         {section === 'general' && (
           <div className="space-y-3">

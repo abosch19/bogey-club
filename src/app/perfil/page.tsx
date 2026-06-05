@@ -55,9 +55,14 @@ export default function PerfilPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
-      <div className="safe-top px-[14px] pt-3 pb-4">
-        <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16] mb-4">Carnet</h1>
+      {/* Header fijo */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-[#f4f1e9] z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
+        style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
+        <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16]">Carnet</h1>
+      </div>
+      <div style={{ height: 'calc(max(14px, env(safe-area-inset-top)) + 50px)' }}/>
 
+      <div className="px-[14px] pb-4">
         {/* Member card */}
         <div className="rounded-[22px] p-5 mb-3 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
           <div className="absolute right-[-40px] top-[-40px] w-[160px] h-[160px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.85 }}/>
