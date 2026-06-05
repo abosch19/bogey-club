@@ -76,17 +76,60 @@ export default function LigaPage() {
 
       <div className="px-[14px] pb-4">
         {leagues.length === 0 ? (
-          <div className="bg-white rounded-[22px] p-8 border border-[#e5e0d4] text-center">
-            <div className="w-14 h-14 rounded-full bg-[#f6e6c4] flex items-center justify-center mx-auto mb-4">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z" stroke="#9b6e1a" strokeWidth="1.8" strokeLinecap="round"/></svg>
+          <div className="space-y-3">
+            {/* Hero empty state */}
+            <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-6">
+              <div className="w-14 h-14 rounded-full bg-[#f6e6c4] flex items-center justify-center mb-4">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z" stroke="#9b6e1a" strokeWidth="1.8" strokeLinecap="round"/></svg>
+              </div>
+              <p className="text-[18px] font-black text-[#0e1a16] mb-1">¿Qué es una liga?</p>
+              <p className="text-[13px] text-[#6b7a72] mb-4">Una competición entre amigos a lo largo de varias jornadas. Cada ronda puntúa y al final hay un campeón.</p>
+              <Link href="/liga/nueva"
+                className="flex items-center justify-center gap-2 w-full py-3.5 rounded-full font-bold text-[14px] text-white"
+                style={{ backgroundColor: '#1f8a5b' }}>
+                Crear primera liga →
+              </Link>
             </div>
-            <p className="text-[15px] font-bold text-[#0e1a16] mb-1">Sin ligas activas</p>
-            <p className="text-[13px] text-[#6b7a72] mb-4">Crea una liga con tus amigos y compite por la clasificación.</p>
-            <Link href="/liga/nueva"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-full font-bold text-[14px] text-[#0e1a16]"
-              style={{ backgroundColor: '#1f8a5b', color: '#fff' }}>
-              Crear primera liga →
-            </Link>
+
+            {/* How it works */}
+            <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4">
+              <p className="text-[13px] font-bold text-[#0e1a16] mb-3">¿Cómo funciona?</p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#d9eedd] flex items-center justify-center flex-shrink-0 text-[14px]">👥</div>
+                  <p className="text-[12px] text-[#6b7a72]">Invita a tus amigos — con 8 jugadores, puntúan los 4 primeros de cada ronda</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#dde7fb] flex items-center justify-center flex-shrink-0 text-[14px]">🏎️</div>
+                  <p className="text-[12px] text-[#6b7a72]">Sistema de puntos al estilo F1: 25, 18, 15, 12... El mejor acumula más</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#f6e6c4] flex items-center justify-center flex-shrink-0 text-[14px]">🏆</div>
+                  <p className="text-[12px] text-[#6b7a72]">Al final de la temporada, el clasificado número 1 se lleva la gloria</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Example standings preview */}
+            <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4">
+              <p className="text-[13px] font-bold text-[#0e1a16] mb-3">Ejemplo de clasificación</p>
+              <div className="space-y-1.5">
+                {[
+                  { pos: 1, name: 'Tú', pts: 68, color: '#1f8a5b', highlight: true },
+                  { pos: 2, name: 'Amigo 1', pts: 61, color: '#2a6fdb', highlight: false },
+                  { pos: 3, name: 'Amigo 2', pts: 43, color: '#d4a24a', highlight: false },
+                ].map(p => (
+                  <div key={p.pos} className="flex items-center gap-3 py-1.5 px-2 rounded-[10px]"
+                    style={{ backgroundColor: p.highlight ? '#d9eedd' : 'transparent' }}>
+                    <span className="font-mono text-[12px] font-bold w-5 text-center" style={{ color: p.highlight ? '#1f8a5b' : '#6b7a72' }}>{p.pos}</span>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold" style={{ backgroundColor: p.color }}>{p.name[0]}</div>
+                    <span className="flex-1 text-[13px] font-semibold text-[#0e1a16]">{p.name}</span>
+                    <span className="font-mono text-[14px] font-black text-[#0e1a16]">{p.pts}</span>
+                    <span className="font-mono text-[9px] text-[#6b7a72]">PTS</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

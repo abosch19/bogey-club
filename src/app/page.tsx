@@ -48,6 +48,7 @@ export default function HomePage() {
   const [loading, setLoading]         = useState(true)
   const [lastRound, setLastRound]     = useState<LastRound | null>(null)
   const [quickStarting, setQuickStarting] = useState(false)
+  const [completedRoundsCount, setCompletedRoundsCount] = useState(0)
   const supabase = createClient()
 
   useEffect(() => {
@@ -62,14 +63,25 @@ export default function HomePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
 
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      // Run independent queries in parallel
+      const [profRes, rpsRes, lpsRes, recentRoundsRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('round_players').select('round_id').eq('profile_id', user.id).limit(20),
+        supabase.from('league_players').select('league_id, leagues(id, name, active, total_rounds)').eq('profile_id', user.id).limit(5),
+        supabase.from('rounds').select('id, date, courses(name), round_players(profile_id, profiles(name, avatar_color))').eq('status', 'completed').order('created_at', { ascending: false }).limit(6),
+      ])
+
+      const prof = profRes.data
       if (!prof) { window.location.href = '/onboarding'; return }
       setProfile(prof)
 
-      // Active round
-      const { data: rps } = await supabase.from('round_players').select('round_id').eq('profile_id', user.id).limit(20)
+      const rps = rpsRes.data
+      const lps = lpsRes.data
+      const recentRounds = recentRoundsRes.data
+
+      // Active round — depends on rps
       if (rps?.length) {
-        const roundIds = rps.map(r => r.round_id)
+        const roundIds = rps.map((r: any) => r.round_id)
         const { data: rounds } = await supabase
           .from('rounds').select('id, course_id, courses(name, holes_count)')
           .in('id', roundIds).eq('status', 'active').limit(1)
@@ -79,14 +91,18 @@ export default function HomePage() {
           const course = Array.isArray(r.courses) ? r.courses[0] : r.courses as any
           const totalHoles = course?.holes_count ?? 18
 
-          // Fetch holes (par) and scores
-          const { data: holes } = await supabase.from('holes').select('hole_number, par').eq('course_id', r.course_id).order('hole_number')
-          const { data: scores } = await supabase.from('scores').select('hole_number, strokes').eq('round_id', r.id).eq('profile_id', user.id)
+          const [holesRes, scoresRes] = await Promise.all([
+            supabase.from('holes').select('hole_number, par').eq('course_id', r.course_id).order('hole_number'),
+            supabase.from('scores').select('hole_number, strokes').eq('round_id', r.id).eq('profile_id', user.id),
+          ])
+
+          const holes = holesRes.data
+          const scores = scoresRes.data
 
           const holeScores: HoleScore[] = (scores ?? [])
-            .filter(s => s.strokes != null)
-            .map(s => {
-              const hole = (holes ?? []).find(h => h.hole_number === s.hole_number)
+            .filter((s: any) => s.strokes != null)
+            .map((s: any) => {
+              const hole = (holes ?? []).find((h: any) => h.hole_number === s.hole_number)
               return { hole_number: s.hole_number, strokes: s.strokes, par: hole?.par ?? 4 }
             })
 
@@ -94,7 +110,7 @@ export default function HomePage() {
           const totalPar     = holeScores.reduce((a, s) => a + s.par, 0)
           const playedHoles  = holeScores.map(s => s.hole_number)
           const nextHole     = Array.from({ length: totalHoles }, (_, i) => i + 1).find(h => !playedHoles.includes(h)) ?? 1
-          const nextPar      = (holes ?? []).find(h => h.hole_number === nextHole)?.par ?? 4
+          const nextPar      = (holes ?? []).find((h: any) => h.hole_number === nextHole)?.par ?? 4
 
           setActiveRound({
             id: r.id, course_name: course?.name ?? 'Campo',
@@ -107,8 +123,7 @@ export default function HomePage() {
         }
       }
 
-      // Active league
-      const { data: lps } = await supabase.from('league_players').select('league_id, leagues(id, name, active, total_rounds)').eq('profile_id', user.id).limit(5)
+      // Active league — depends on lps
       const activeLp = (lps ?? []).find((x: any) => {
         const l = Array.isArray(x.leagues) ? x.leagues[0] : x.leagues
         return l?.active
@@ -116,14 +131,13 @@ export default function HomePage() {
       if (activeLp) {
         const lg = Array.isArray(activeLp.leagues) ? (activeLp.leagues as any[])[0] : activeLp.leagues as any
         if (lg) {
-          const { data: standings } = await supabase
-            .from('league_standings')
-            .select('profile_id, total_points, profiles(name, avatar_color)')
-            .eq('league_id', lg.id)
-            .order('total_points', { ascending: false })
-            .limit(5)
+          const [standingsRes, lrsRes] = await Promise.all([
+            supabase.from('league_standings').select('profile_id, total_points, profiles(name, avatar_color)').eq('league_id', lg.id).order('total_points', { ascending: false }).limit(5),
+            supabase.from('league_rounds').select('id').eq('league_id', lg.id),
+          ])
 
-          const { data: lrs } = await supabase.from('league_rounds').select('id').eq('league_id', lg.id)
+          const standings = standingsRes.data
+          const lrs = lrsRes.data
           const st = (standings ?? []).map((s: any) => ({ profile_id: s.profile_id, name: s.profiles?.name ?? 'J', avatar_color: s.profiles?.avatar_color ?? '#6b7a72', total_points: s.total_points }))
           const myPos = st.findIndex(s => s.profile_id === user.id) + 1
 
@@ -138,13 +152,24 @@ export default function HomePage() {
         }
       }
 
-      // Feed — recent completed rounds from all players
-      const { data: recentRounds } = await supabase
-        .from('rounds')
-        .select('id, date, courses(name), round_players(profile_id, profiles(name, avatar_color))')
-        .eq('status', 'completed')
-        .order('created_at', { ascending: false })
-        .limit(6)
+      // Feed — recent completed rounds, fetch scores for birdie/eagle detection
+      const roundIds = (recentRounds ?? []).map((r: any) => r.id)
+
+      // Fetch scores for all recent rounds in one query + completed rounds count for user
+      const [allRecentScoresRes, holesDataRes, userCompletedRes] = await Promise.all([
+        roundIds.length > 0
+          ? supabase.from('scores').select('round_id, profile_id, hole_number, strokes').in('round_id', roundIds)
+          : Promise.resolve({ data: [] }),
+        supabase.from('holes').select('hole_number, par, course_id'),
+        rps?.length
+          ? supabase.from('rounds').select('id').in('id', (rps ?? []).map((r: any) => r.round_id)).eq('status', 'completed')
+          : Promise.resolve({ data: [] }),
+      ])
+
+      const allRecentScores = (allRecentScoresRes as any).data ?? []
+      const allHoles = (holesDataRes as any).data ?? []
+      const userCompleted = (userCompletedRes as any).data ?? []
+      setCompletedRoundsCount(userCompleted.length)
 
       const feedItems: FeedItem[] = []
       for (const r of recentRounds ?? []) {
@@ -155,12 +180,34 @@ export default function HomePage() {
           const pid = rp.profile_id
           const days = Math.floor((Date.now() - new Date(r.date).getTime()) / 86400000)
           const timeStr = days === 0 ? 'hoy' : days === 1 ? 'ayer' : `hace ${days} días`
-          // Detect PB
-          let isPB = false
-          try {
-            const { data: roundScores } = await supabase.from('scores').select('strokes').eq('round_id', r.id).eq('profile_id', pid)
-            const total = (roundScores ?? []).reduce((a: number, s: any) => a + (s.strokes ?? 0), 0)
-            if (total > 0) {
+
+          // Get this player's scores for this round from the pre-fetched data
+          const playerScores = allRecentScores.filter((s: any) => s.round_id === r.id && s.profile_id === pid)
+          const total = playerScores.reduce((a: number, s: any) => a + (s.strokes ?? 0), 0)
+
+          // Detect birdie/eagle using fetched hole pars
+          let birdieHole: number | null = null
+          let eagleHole: number | null = null
+          for (const s of playerScores) {
+            const holeInfo = allHoles.find((h: any) => h.hole_number === s.hole_number)
+            if (!holeInfo) continue
+            const delta = s.strokes - holeInfo.par
+            if (delta <= -2 && eagleHole === null) eagleHole = s.hole_number
+            else if (delta === -1 && birdieHole === null) birdieHole = s.hole_number
+          }
+
+          let action = 'completó una ronda'
+          let badge: string | null = null
+
+          if (eagleHole !== null) {
+            action = `hizo eagle en el hoyo ${eagleHole}`
+            badge = '🦅'
+          } else if (birdieHole !== null) {
+            action = `hizo birdie en el hoyo ${birdieHole}`
+            badge = '🐦'
+          } else if (total > 0) {
+            // Check PB using allRecentScores already fetched — only do extra query if needed
+            try {
               const { data: allScores } = await supabase.from('scores').select('strokes, round_id').eq('profile_id', pid).not('strokes', 'is', null).limit(200)
               const roundTotals: Record<string, number> = {}
               for (const s of allScores ?? []) {
@@ -168,10 +215,14 @@ export default function HomePage() {
                 roundTotals[s.round_id] += s.strokes ?? 0
               }
               const pastBests = Object.entries(roundTotals).filter(([rid]) => rid !== r.id).map(([, v]) => v).filter(v => v > 0)
-              if (pastBests.length > 0) isPB = total <= Math.min(...pastBests)
-            }
-          } catch {}
-          feedItems.push({ id: r.id + pid, round_id: r.id, name, avatar_color: rp.profiles?.avatar_color ?? '#6b7a72', action: isPB ? 'batió su récord personal!' : 'completó una ronda', detail: `${course?.name ?? 'Campo'} · ${timeStr}`, time: timeStr, badge: isPB ? 'PB' : null })
+              if (pastBests.length > 0 && total <= Math.min(...pastBests)) {
+                action = 'batió su récord personal!'
+                badge = 'PB'
+              }
+            } catch {}
+          }
+
+          feedItems.push({ id: r.id + pid, round_id: r.id, name, avatar_color: rp.profiles?.avatar_color ?? '#6b7a72', action, detail: `${course?.name ?? 'Campo'} · ${timeStr}`, time: timeStr, badge })
         }
       }
       setFeed(feedItems.slice(0, 4))
@@ -278,6 +329,28 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* Onboarding card — only when 0 completed rounds and no active round */}
+          {completedRoundsCount === 0 && !activeRound && (
+            <div className="bg-white rounded-[22px] border-2 border-[#1f8a5b] p-4">
+              <p className="font-black text-[16px] text-[#0e1a16] mb-2">Bienvenido al club 🏌️</p>
+              <div className="space-y-2">
+                {[
+                  { n: '1', text: 'Empieza una ronda con tus amigos' },
+                  { n: '2', text: 'Anota golpe a golpe en el campo' },
+                  { n: '3', text: 'Ve tus stats y el ranking al terminar' },
+                ].map(s => (
+                  <div key={s.n} className="flex gap-3 items-center">
+                    <div className="w-6 h-6 rounded-full bg-[#1f8a5b] flex items-center justify-center text-white text-[11px] font-black">{s.n}</div>
+                    <p className="text-[13px] text-[#6b7a72]">{s.text}</p>
+                  </div>
+                ))}
+              </div>
+              <Link href="/ronda/campo" className="mt-3 flex items-center justify-center w-full py-3 rounded-full font-bold text-[14px] text-white" style={{ backgroundColor: '#1f8a5b' }}>
+                Primera ronda →
+              </Link>
+            </div>
+          )}
+
           {/* Ultima ronda quick-start */}
           {lastRound && !activeRound && (
             <button
@@ -360,7 +433,7 @@ export default function HomePage() {
                 </div>
                 {/* Top 3 + actions */}
                 <div className="flex items-center gap-2">
-                  {activeLeague.top3.map((p, i) => (
+                  {activeLeague.top3.map((p) => (
                     <div key={p.profile_id} className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}>
                       <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
                       <span className="font-mono text-[10px] font-bold text-white">{p.total_points}</span>
@@ -411,6 +484,12 @@ export default function HomePage() {
                         </p>
                         {item.badge === 'PB' && (
                           <span className="font-mono text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#e8b75a', color: '#0e1a16' }}>PB</span>
+                        )}
+                        {item.badge === '🐦' && (
+                          <span className="text-[14px] flex-shrink-0">🐦</span>
+                        )}
+                        {item.badge === '🦅' && (
+                          <span className="text-[14px] flex-shrink-0">🦅</span>
                         )}
                       </div>
                       <p className="text-[11px] text-[#6b7a72] mt-0.5">{item.detail}</p>

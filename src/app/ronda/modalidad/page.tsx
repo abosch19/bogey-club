@@ -163,6 +163,16 @@ function SeleccionarModalidadPage() {
             </button>
           )
         })}
+        {/* Hint: añade Stableford si solo tienes Stroke */}
+        {extras.length === 0 && (
+          <div className="bg-[#f6e6c4] rounded-[12px] px-4 py-3 flex gap-2">
+            <span className="text-[16px]">💡</span>
+            <p className="text-[12px] text-[#9b6e1a]">
+              Añade <strong>Stableford</strong> para ver puntos en tiempo real en la tarjeta. Ideal para nivelar con el handicap.
+            </p>
+          </div>
+        )}
+
         {/* Apuesta */}
         <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
           <label className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2">

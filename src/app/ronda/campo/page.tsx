@@ -28,11 +28,74 @@ function SeleccionarCampoPage() {
   // For hole selection modal
   const [showHoleModal, setShowHoleModal] = useState(false)
   const [holeMode, setHoleMode] = useState<'all' | 'front' | 'back' | '9_once' | '9_twice'>('all')
+  const [courseScores, setCourseScores] = useState<Record<string, number[]>>({})
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.from('courses').select('id,name,holes_count,par,slope,course_rating,record_score').eq('active', true).order('name')
-      .then(({ data }) => { setCourses(data ?? []); setLoading(false) })
+    async function loadCourses() {
+      const { data: coursesData } = await supabase.from('courses').select('id,name,holes_count,par,slope,course_rating,record_score').eq('active', true).order('name')
+      setCourses(coursesData ?? [])
+      setLoading(false)
+
+      if (!coursesData?.length) return
+
+      // Fetch user's course history
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const courseIds = coursesData.map(c => c.id)
+        const { data: userRounds } = await supabase
+          .from('rounds')
+          .select('id, course_id')
+          .eq('status', 'completed')
+          .in('course_id', courseIds)
+
+        if (!userRounds?.length) return
+
+        // Filter rounds where the user participated
+        const roundIds = userRounds.map(r => r.id)
+        const { data: playerRounds } = await supabase
+          .from('round_players')
+          .select('round_id')
+          .eq('profile_id', user.id)
+          .in('round_id', roundIds)
+
+        if (!playerRounds?.length) return
+
+        const myRoundIds = playerRounds.map(r => r.round_id)
+
+        // Fetch total scores for each of these rounds
+        const { data: allScores } = await supabase
+          .from('scores')
+          .select('round_id, strokes')
+          .eq('profile_id', user.id)
+          .in('round_id', myRoundIds)
+          .not('strokes', 'is', null)
+
+        // Build round totals
+        const roundTotals: Record<string, number> = {}
+        for (const s of allScores ?? []) {
+          if (!roundTotals[s.round_id]) roundTotals[s.round_id] = 0
+          roundTotals[s.round_id] += s.strokes ?? 0
+        }
+
+        // Map course_id -> last 3 totals (sorted by round, most recent first via order of userRounds)
+        const scoreByCourse: Record<string, number[]> = {}
+        for (const r of userRounds) {
+          if (!myRoundIds.includes(r.id)) continue
+          const total = roundTotals[r.id]
+          if (!total || total === 0) continue
+          if (!scoreByCourse[r.course_id]) scoreByCourse[r.course_id] = []
+          if (scoreByCourse[r.course_id].length < 3) {
+            scoreByCourse[r.course_id].push(total)
+          }
+        }
+
+        setCourseScores(scoreByCourse)
+      } catch {}
+    }
+    loadCourses()
   }, [])
 
   const isPP = (name: string) => name.startsWith('P&P')
@@ -147,6 +210,16 @@ function SeleccionarCampoPage() {
                   <p className="font-mono text-[10px] mt-0.5 uppercase tracking-wide" style={{ color: isSel ? 'rgba(255,255,255,0.55)' : '#6b7a72' }}>
                     Par {course.par}{course.record_score ? ` · Récord ${course.record_score}` : ''}
                   </p>
+                  {courseScores[course.id]?.length > 0 && (
+                    <div className="flex gap-1 mt-1">
+                      {courseScores[course.id].slice(0, 3).map((s, i) => (
+                        <span key={i} className="font-mono text-[9px] px-1.5 py-0.5 rounded-full"
+                          style={{ backgroundColor: isSel ? 'rgba(255,255,255,0.18)' : '#d9eedd', color: isSel ? '#fff' : '#1f8a5b' }}>
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Checkmark */}

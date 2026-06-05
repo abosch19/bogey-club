@@ -26,6 +26,7 @@ export default function PerfilPage() {
   const [email, setEmail]       = useState('')
   const [diffs, setDiffs]       = useState<{ diff: number; played_at: string; counting: boolean }[]>([])
   const [loading, setLoading]   = useState(true)
+  const [recalculating, setRecalculating] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -42,6 +43,30 @@ export default function PerfilPage() {
     }
     load()
   }, [])
+
+  async function recalculate() {
+    setRecalculating(true)
+    try {
+      const res = await fetch('/api/profile/recalcular-whs', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      // Reload diffs and profile
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const [profRes, diffsRes] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', user.id).single(),
+          supabase.from('whs_differentials').select('differential, played_at, is_counting').eq('profile_id', user.id).order('played_at', { ascending: false }).limit(20),
+        ])
+        if (profRes.data) setProfile(profRes.data)
+        setDiffs((diffsRes.data ?? []).map((x: any) => ({ diff: x.differential, played_at: x.played_at, counting: x.is_counting })))
+      }
+      alert(`Hándicap recalculado correctamente (${data.rounds_processed ?? 0} rondas procesadas)`)
+    } catch (err: unknown) {
+      alert('Error al recalcular: ' + (err instanceof Error ? err.message : 'Error desconocido'))
+    } finally {
+      setRecalculating(false)
+    }
+  }
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -143,6 +168,14 @@ export default function PerfilPage() {
               )}
             </>
           )}
+        </div>
+
+        {/* Recalcular hándicap */}
+        <div className="mb-3">
+          <button onClick={recalculate} disabled={recalculating}
+            className="w-full py-3 rounded-[14px] text-[13px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60">
+            {recalculating ? 'Recalculando...' : 'Recalcular mi hándicap WHS'}
+          </button>
         </div>
 
         {/* ── ACCESOS ── */}
