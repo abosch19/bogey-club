@@ -182,7 +182,7 @@ function SeleccionarJugadoresPage() {
           <div className="flex justify-center pt-6"><div className="w-6 h-6 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
         ) : filtered.map((p, i) => {
           const isSel = !!selected.find(s => s.id === p.id)
-          const isDisabled = !isSel && selected.length >= 8
+          const isDisabled = false // sin límite
           return (
             <button key={p.id} onClick={() => !isDisabled && togglePlayer(p)}
               className={`w-full flex items-center gap-3 rounded-[16px] p-4 border transition-all ${isDisabled ? 'opacity-40' : 'active:scale-[0.99]'}`}
@@ -207,7 +207,7 @@ function SeleccionarJugadoresPage() {
       </div>
 
       {/* Torneo toggle — aparece con 5+ jugadores */}
-      {selected.length >= 5 && (
+      {selected.length >= 4 && (
         <div className="fixed bottom-[88px] left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px]">
           <button onClick={() => setTorneoMode(!torneoMode)}
             className="w-full flex items-center justify-between px-4 py-3 rounded-[14px] border-2 transition"
@@ -233,7 +233,7 @@ function SeleccionarJugadoresPage() {
         <button onClick={handleNext} disabled={selected.length === 0}
           className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-40"
           style={{ backgroundColor: torneoMode ? '#2a6fdb' : '#1f8a5b', color: '#0e1a16' }}>
-          <span>Tú {selected.length > 1 ? `+ ${selected.length - 1} jugador${selected.length > 2 ? 'es' : ''}` : 'solo'}</span>
+          <span>{selected.length} jugador{selected.length !== 1 ? 'es' : ''}</span>
           <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
             {torneoMode ? 'CREAR TORNEO →' : 'SIGUIENTE →'}
           </span>
