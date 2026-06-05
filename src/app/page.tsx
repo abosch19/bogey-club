@@ -17,6 +17,19 @@ type LeagueStanding = { profile_id: string; name: string; avatar_color: string; 
 type ActiveLeague = { id: string; name: string; round_played: number; total_rounds: number; my_position: number; my_points: number; top3: LeagueStanding[] }
 type FeedItem = { id: string; round_id: string; name: string; avatar_color: string; action: string; detail: string; time: string }
 
+const GOLF_QUOTES = [
+  { text: "El golf es el único deporte donde puedes hacer trampa y luego confesar en el hoyo 18.", author: "Anónimo del vestuario" },
+  { text: "No hay ningún hoyo que no se pueda hacer peor con un segundo golpe.", author: "Ley de Murphy golfista" },
+  { text: "Golf: el arte de meter una bola en un agujero usando los instrumentos más inapropiados.", author: "Winston Churchill" },
+  { text: "El golf saca lo mejor de uno... y también lo peor.", author: "Bogey Club" },
+  { text: "Si cuentas todos tus golpes en golf, nunca podrás tener amigos.", author: "Sabiduría popular" },
+  { text: "El golf es un buen paseo arruinado.", author: "Mark Twain" },
+  { text: "Juego con mi conciencia. Siempre que cometo un error, mi conciencia me dice que anote 5.", author: "Bob Hope" },
+  { text: "En golf, la humillación llega por parejas. Y a veces por águilas.", author: "Bogey Club" },
+  { text: "El árbol que te cortó el camino llevaba ahí 200 años. Tú llevas 20 minutos.", author: "Sabiduría del campo" },
+  { text: "Mi handicap no refleja mi nivel. Refleja mis esperanzas.", author: "Bogey Club" },
+]
+
 function holeBarColor(delta: number | null): string {
   if (delta === null) return '#ece8db'
   if (delta <= -1) return '#2a6fdb'
@@ -27,6 +40,7 @@ function holeBarColor(delta: number | null): string {
 
 export default function HomePage() {
   const [profile, setProfile]         = useState<Profile | null>(null)
+  const dailyQuote = GOLF_QUOTES[new Date().getDate() % GOLF_QUOTES.length]
   const [activeRound, setActiveRound] = useState<ActiveRound | null>(null)
   const [activeLeague, setActiveLeague] = useState<ActiveLeague | null>(null)
   const [feed, setFeed]               = useState<FeedItem[]>([])
@@ -158,7 +172,7 @@ export default function HomePage() {
             <path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round"/>
             <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16"/>
           </svg>
-          <span className="text-[26px] font-black tracking-tight text-[#0e1a16]">bogeyclub</span>
+          <span className="text-[26px] font-black tracking-tight text-[#0e1a16]">Bogey-Club</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="font-mono text-[11px] text-[#6b7a72] tracking-wide uppercase">
@@ -192,11 +206,11 @@ export default function HomePage() {
               </div>
               <h1 className="text-white text-[28px] font-black tracking-tight leading-tight mb-5">
                 Buenas, {firstName}.<br/>
-                Toca <span style={{ color: '#1f8a5b' }}>perder bolas.</span><br/>con la cuadrilla.
+                Toca <span style={{ color: '#1f8a5b' }}>perder bolas.</span>
               </h1>
               <div className="flex gap-2">
                 <Link href="/ronda/campo" className="flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[15px] text-[#0e1a16] transition active:scale-[0.98]" style={{ backgroundColor: '#1f8a5b' }}>
-                  Competitivo →
+                  Competitivo
                 </Link>
                 <Link href="/ronda/campo?practice=true" className="flex items-center justify-center px-5 py-3.5 rounded-full font-semibold text-[14px] text-white transition active:scale-[0.98]" style={{ backgroundColor: '#0e1a16' }}>
                   Práctica
@@ -297,6 +311,16 @@ export default function HomePage() {
               </div>
             </Link>
           )}
+
+          {/* Quote del día */}
+          <div className="bg-[#0e1a16] rounded-[18px] px-5 py-4 relative overflow-hidden">
+            <div className="absolute right-[-20px] top-[-20px] w-[80px] h-[80px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.4 }}/>
+            <p className="font-mono text-[9px] text-white/40 uppercase tracking-[0.15em] mb-2">Sabiduría bogey-club</p>
+            <p className="text-white text-[14px] font-semibold leading-relaxed italic mb-2 relative">
+              "{dailyQuote.text}"
+            </p>
+            <p className="font-mono text-[10px] text-white/40">— {dailyQuote.author}</p>
+          </div>
 
           {/* El club feed */}
           {feed.length > 0 && (

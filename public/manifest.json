@@ -1,6 +1,6 @@
 {
-  "name": "Bogey Club",
-  "short_name": "BogeyClub",
+  "name": "Bogey-Club",
+  "short_name": "Bogey-Club",
   "description": "Tu app de golf con amigos",
   "start_url": "/",
   "display": "standalone",
