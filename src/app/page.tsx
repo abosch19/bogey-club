@@ -193,10 +193,10 @@ export default function HomePage() {
                 <Link href="/ronda/campo" className="flex-1 flex items-center justify-center py-3 rounded-full font-bold text-[14px] text-[#0e1a16] transition active:scale-[0.98]" style={{ backgroundColor: '#1f8a5b' }}>
                   Competitivo →
                 </Link>
-                <Link href="/torneo/nuevo" className="flex items-center justify-center px-4 py-3 rounded-full font-bold text-[13px] transition active:scale-[0.98]" style={{ backgroundColor: '#d4a24a', color: '#0e1a16' }}>
+                <Link href="/torneo/nuevo" className="flex items-center justify-center px-4 py-3 rounded-full font-bold text-[13px] text-white transition active:scale-[0.98]" style={{ backgroundColor: '#2a6fdb' }}>
                   Torneo
                 </Link>
-                <Link href="/ronda/campo?practice=true" className="flex items-center justify-center px-4 py-3 rounded-full font-semibold text-[13px] transition active:scale-[0.98]" style={{ backgroundColor: '#2a4a3a', color: '#9bc9a3', border: '1px solid #3a6a4a' }}>
+                <Link href="/ronda/campo?practice=true" className="flex items-center justify-center px-4 py-3 rounded-full font-semibold text-[13px] text-white transition active:scale-[0.98]" style={{ backgroundColor: '#0e1a16' }}>
                   Práctica
                 </Link>
               </div>
@@ -251,7 +251,7 @@ export default function HomePage() {
           {/* Liga card */}
           {activeLeague ? (
             <div className="rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-              <div className="absolute right-[-30px] top-[-30px] w-[120px] h-[120px] rounded-full" style={{ backgroundColor: '#e8b75a', opacity: 0.9 }}/>
+              <div className="absolute right-[-30px] top-[-30px] w-[120px] h-[120px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.7 }}/>
               <div className="relative">
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -285,7 +285,7 @@ export default function HomePage() {
             </div>
           ) : (
             <Link href="/liga/nueva" className="block rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-              <div className="absolute right-[-30px] top-[-30px] w-[120px] h-[120px] rounded-full" style={{ backgroundColor: '#e8b75a', opacity: 0.9 }}/>
+              <div className="absolute right-[-30px] top-[-30px] w-[120px] h-[120px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.7 }}/>
               <div className="relative flex items-center justify-between">
                 <div>
                   <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">LIGA</p>

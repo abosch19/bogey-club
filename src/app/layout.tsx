@@ -12,10 +12,6 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'BogeyClub',
   },
-  other: {
-    'mobile-web-app-capable': 'yes',
-    'apple-touch-fullscreen': 'yes',
-  },
 }
 
 export const viewport: Viewport = {
