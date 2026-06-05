@@ -182,7 +182,7 @@ function SeleccionarJugadoresPage() {
           <div className="flex justify-center pt-6"><div className="w-6 h-6 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
         ) : filtered.map((p, i) => {
           const isSel = !!selected.find(s => s.id === p.id)
-          const isDisabled = !isSel && selected.length >= 4
+          const isDisabled = !isSel && selected.length >= 8
           return (
             <button key={p.id} onClick={() => !isDisabled && togglePlayer(p)}
               className={`w-full flex items-center gap-3 rounded-[16px] p-4 border transition-all ${isDisabled ? 'opacity-40' : 'active:scale-[0.99]'}`}

@@ -179,20 +179,12 @@ function TarjetaPage() {
                       {group.map(h => {
                         const s = getScore(p.id, h.hole_number)
                         const d = s != null ? s - h.par : null
-                        const pts = (modes.includes('stableford') && s != null)
-                          ? stablefordPts(s, h.par, strokesReceived(p.course_handicap, h.stroke_index))
-                          : null
                         return (
-                          <td key={h.hole_number} className="py-1 px-0.5">
-                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block active:scale-95 transition text-center">
-                              {s != null ? (
-                                <>
-                                  <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold mx-auto ${scoreChipClass(d!)}`}>{s}</div>
-                                  {pts !== null && (
-                                    <p className="font-mono text-[8px] font-bold leading-none mt-0.5" style={{ color: pts>=3?'#2a6fdb':pts===2?'#1f8a5b':pts===1?'#9b6e1a':'#a83a25' }}>{pts}pt</p>
-                                  )}
-                                </>
-                              ) : <span className="text-[#c4bfb5] text-[13px]">·</span>}
+                          <td key={h.hole_number} className="py-1.5 px-0.5">
+                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block active:scale-95 transition">
+                              {s != null
+                                ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
+                                : <span className="text-[#c4bfb5] text-[13px]">·</span>}
                             </button>
                           </td>
                         )
@@ -211,15 +203,37 @@ function TarjetaPage() {
                   const blockPts = group.reduce((a, h) => { const s = getScore(p.id, h.hole_number); return s ? a + stablefordPts(s, h.par, strokesReceived(p.course_handicap, h.stroke_index)) : a }, 0)
                   return (
                     <tr key={p.id} className="border-t border-[#efebe1]">
-                      <td className="px-2 py-1.5"><div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div></td>
+                      <td className="px-2 py-1">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                      </td>
                       {group.map(h => {
                         const s = getScore(p.id, h.hole_number)
-                        const pts = s ? stablefordPts(s, h.par, strokesReceived(p.course_handicap, h.stroke_index)) : null
+                        const rcv = strokesReceived(p.course_handicap, h.stroke_index)
+                        const pts = s ? stablefordPts(s, h.par, rcv) : null
                         return (
-                          <td key={h.hole_number} className="py-1.5 px-0.5">
-                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block">
-                              {pts != null ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${pts>=3?'bg-[#dde7fb] text-[#2a6fdb]':pts===2?'bg-[#d9eedd] text-[#1f8a5b]':pts===1?'bg-[#f6e6c4] text-[#9b6e1a]':'bg-[#fadcd6] text-[#a83a25]'}`}>{pts}</div>
-                                : <span className="text-[#c4bfb5] text-[13px]">·</span>}
+                          <td key={h.hole_number} className="py-1 px-0.5">
+                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block text-center relative">
+                              {/* Asterisks for handicap strokes */}
+                              {rcv > 0 && (
+                                <div className="flex justify-center gap-px mb-0.5">
+                                  {Array.from({ length: rcv }).map((_, i) => (
+                                    <span key={i} className="text-[8px] font-black leading-none" style={{ color: p.avatar_color }}>*</span>
+                                  ))}
+                                </div>
+                              )}
+                              {s != null ? (
+                                <div className="text-center">
+                                  <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold mx-auto ${scoreChipClass(s - h.par)}`}>{s}</div>
+                                  {pts !== null && (
+                                    <p className="font-mono text-[9px] font-black leading-none mt-0.5"
+                                      style={{ color: pts>=3?'#2a6fdb':pts===2?'#1f8a5b':pts===1?'#9b6e1a':'#a83a25' }}>
+                                      {pts}pt
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-[#c4bfb5] text-[13px]">·</span>
+                              )}
                             </button>
                           </td>
                         )
