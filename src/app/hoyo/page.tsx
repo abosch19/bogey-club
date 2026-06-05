@@ -130,15 +130,10 @@ function HoyoPage() {
       {/* Header */}
       <div className="safe-top px-[14px] pt-3 pb-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push(`/tarjeta?round=${roundId}`)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              Tarjeta
-            </button>
-            <button onClick={() => router.push(`/tarjeta?round=${roundId}`)} className="font-mono text-[10px] text-[#1f8a5b] underline underline-offset-2">
-              Ver tarjeta
-            </button>
-          </div>
+          <button onClick={() => router.push(`/tarjeta?round=${roundId}`)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Tarjeta
+          </button>
           <div className="flex items-center gap-3">
             {holeNum > 1 && (
               <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${holeNum - 1}`)} className="font-mono text-[11px] text-[#6b7a72]">← H{holeNum - 1}</button>
@@ -303,14 +298,21 @@ function HoyoPage() {
         })}
       </div>
 
-      {/* Save CTA */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-3 bg-gradient-to-t from-[#f4f1e9] to-transparent">
+      {/* CTAs */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-3 bg-gradient-to-t from-[#f4f1e9] to-transparent space-y-2">
+        {/* Ver tarjeta — botón grande y accesible */}
+        <button onClick={() => router.push(`/tarjeta?round=${roundId}`)}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-full font-semibold text-[14px] border-2 border-[#e5e0d4] bg-white text-[#0e1a16] transition active:scale-[0.98]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#0e1a16" strokeWidth="1.8"/><path d="M3 10h18M9 5v14" stroke="#0e1a16" strokeWidth="1.8"/></svg>
+          Ver tarjeta completa
+        </button>
+        {/* Guardar y continuar */}
         <button onClick={handleSave} disabled={saving}
           className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] text-white transition active:scale-[0.98] disabled:opacity-60"
           style={{ backgroundColor: '#0e1a16' }}>
           <span>{holeNum >= totalHoles ? 'Guardar y ver resumen' : `Guardar · hoyo ${holeNum + 1}`}</span>
           <span className="px-3 py-1.5 rounded-full text-[12px] font-black text-[#0e1a16]" style={{ backgroundColor: '#1f8a5b' }}>
-            {saving ? '...' : holeNum >= totalHoles ? 'FIN' : `H${holeNum + 1} ->`}
+            {saving ? '...' : holeNum >= totalHoles ? 'FIN' : `H${holeNum + 1} →`}
           </span>
         </button>
       </div>
