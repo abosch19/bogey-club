@@ -216,11 +216,22 @@ export default function PerfilPage() {
           )}
         </div>
 
-        {/* Recalcular hándicap */}
-        <div className="mb-3">
+        {/* Recalcular + Reiniciar hándicap */}
+        <div className="grid grid-cols-2 gap-2 mb-3">
           <button onClick={recalculate} disabled={recalculating}
-            className="w-full py-3 rounded-[14px] text-[13px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60">
-            {recalculating ? 'Recalculando...' : 'Recalcular mi hándicap WHS'}
+            className="py-3 rounded-[14px] text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60">
+            {recalculating ? 'Calculando...' : 'Recalcular WHS'}
+          </button>
+          <button onClick={() => {
+            const val = prompt(`Introduce tu hándicap actual (0–54):\nActual: ${profile.handicap_index?.toFixed(1)}`)
+            if (val === null) return
+            const num = parseFloat(val)
+            if (isNaN(num) || num < 0 || num > 54) { alert('Valor inválido. Debe ser entre 0 y 54.'); return }
+            fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ handicap_index: num }) })
+              .then(() => setProfile((p: any) => ({ ...p, handicap_index: num })))
+          }}
+            className="py-3 rounded-[14px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80">
+            Reiniciar hándicap
           </button>
         </div>
 

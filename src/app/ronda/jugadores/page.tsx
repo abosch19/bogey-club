@@ -11,9 +11,10 @@ function SeleccionarJugadoresPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const courseId = searchParams.get('course') ?? ''
-  const isPractice = searchParams.get('practice') === 'true'
-  const leagueId   = searchParams.get('league') ?? ''
-  const holeMode   = searchParams.get('hole_mode') ?? 'all'
+  const isPractice    = searchParams.get('practice') === 'true'
+  const leagueId      = searchParams.get('league') ?? ''
+  const holeMode      = searchParams.get('hole_mode') ?? 'all'
+  const prefillPlayers = searchParams.get('prefill_players')?.split(',').filter(Boolean) ?? []
 
   const [allPlayers, setAllPlayers] = useState<Player[]>([])
   const [selected, setSelected] = useState<Player[]>([])
@@ -39,7 +40,13 @@ function SeleccionarJugadoresPage() {
       if (myProfile) {
         const me: Player = { ...myProfile }
         setMe(me)
-        setSelected([me]) // auto-select self
+        // Prefill from last round if provided
+        if (prefillPlayers.length > 0) {
+          const prefilled = (profiles ?? []).filter(p => prefillPlayers.includes(p.id)).map(p => ({ ...p }))
+          setSelected(prefilled.length > 0 ? prefilled : [me])
+        } else {
+          setSelected([me])
+        }
       }
 
       setAllPlayers(profiles.filter(p => p.id !== user.id))

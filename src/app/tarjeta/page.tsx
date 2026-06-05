@@ -35,20 +35,23 @@ function TarjetaPage() {
   const [bet, setBet]             = useState('')
   const [showBetModal, setShowBetModal] = useState(false)
   const [savingBet, setSavingBet] = useState(false)
+  const [isPractice, setIsPractice] = useState(false)
+  const [roundCreatedBy, setRoundCreatedBy] = useState('')
   const supabase = createClient()
 
   async function reload() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) setMyId(user.id)
 
-    const { data: round } = await supabase.from('rounds').select('course_id, notes, courses(name, holes_count), status').eq('id', roundId).single()
+    const { data: round } = await supabase.from('rounds').select('course_id, notes, is_practice, created_by, courses(name, holes_count), status').eq('id', roundId).single()
     if (!round) return
     const course = Array.isArray(round.courses) ? round.courses[0] : round.courses as any
     const hm = (round as any).notes ?? 'all'
     setHoleMode(hm)
-    // Load bet if notes isn't a hole_mode value
     const notesVal = (round as any).notes ?? ''
     if (!['all','front','back','9_once','9_twice'].includes(notesVal)) setBet(notesVal)
+    setIsPractice(!!(round as any).is_practice)
+    setRoundCreatedBy((round as any).created_by ?? '')
     setCourseId((round as any).course_id)
     setCourse(course?.name ?? '')
     const base = course?.holes_count ?? 18
@@ -439,16 +442,23 @@ function TarjetaPage() {
               ))}
             </div>
 
-            {/* Danger zone */}
+            {/* Danger zone — solo práctica */}
             <div className="mt-5 pt-4 border-t border-[#efebe1]">
-              <button onClick={async () => {
-                if (!confirm('¿Borrar esta ronda completa? Se eliminarán todos los golpes. Esta acción no se puede deshacer.')) return
-                await fetch('/api/ronda/borrar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId }) })
-                router.push('/')
-              }}
-                className="w-full py-3 rounded-full border-2 border-[#c6432d] text-[#c6432d] font-bold text-[14px] transition active:opacity-80">
-                Borrar partida completa
-              </button>
+              {isPractice ? (
+                <button onClick={async () => {
+                  if (!confirm('¿Borrar esta ronda de práctica? Se eliminarán todos los golpes.')) return
+                  await fetch('/api/ronda/borrar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId }) })
+                  router.push('/')
+                }}
+                  className="w-full py-3 rounded-full border-2 border-[#c6432d] text-[#c6432d] font-bold text-[14px] transition active:opacity-80">
+                  Borrar ronda de práctica
+                </button>
+              ) : (
+                <div className="bg-[#f4f1e9] rounded-[12px] px-4 py-3 text-center">
+                  <p className="text-[12px] text-[#6b7a72] font-semibold">Ronda competitiva — no se puede borrar</p>
+                  <p className="font-mono text-[10px] text-[#6b7a72] mt-0.5">Contacta al admin si hay un error</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

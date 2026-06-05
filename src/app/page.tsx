@@ -232,29 +232,16 @@ export default function HomePage() {
     load()
   }, [])
 
-  async function quickStart(lr: LastRound) {
-    setQuickStarting(true)
-    try {
-      const res = await fetch('/api/ronda/crear', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          course_id: lr.course_id,
-          is_practice: false,
-          player_ids: lr.player_ids,
-          guests: lr.guests ?? [],
-          modes: lr.modes,
-          hole_mode: lr.hole_mode ?? 'all',
-          ...(lr.league_id ? { league_id: lr.league_id } : {}),
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      window.location.href = `/tarjeta?round=${data.round_id}`
-    } catch {
-      alert('Error al iniciar ronda')
-      setQuickStarting(false)
-    }
+  function quickStart(lr: LastRound) {
+    // Navigate to jugadores with course prefilled so user can review/modify
+    const params = new URLSearchParams({
+      course: lr.course_id,
+      practice: 'false',
+      hole_mode: lr.hole_mode ?? 'all',
+      ...(lr.player_ids?.length ? { prefill_players: lr.player_ids.join(',') } : {}),
+      ...(lr.league_id ? { league: lr.league_id } : {}),
+    })
+    window.location.href = `/ronda/jugadores?${params}`
   }
 
   if (loading || !profile) {
