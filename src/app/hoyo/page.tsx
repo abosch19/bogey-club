@@ -202,8 +202,89 @@ function HoyoPage() {
         </div>
       )}
 
-      {/* Players — compact 2-row per player */}
-      <div className="flex-1 px-[14px] space-y-2 pb-28">
+      {/* SCRAMBLE MODE — one score per team */}
+      {roundModes.includes('scramble') && (() => {
+        const isTeams = players.length >= 4
+        // In scramble, course_handicap field stores team number (1 or 2) for 4+ players
+        const teams = isTeams
+          ? [1, 2].map(t => ({ team: t, members: players.filter(p => p.course_handicap === t) }))
+          : [{ team: 1, members: players }]
+
+        return (
+          <div className="flex-1 px-[14px] space-y-3 pb-28">
+            {isTeams && (
+              <div className="bg-[#dde7fb] rounded-[12px] px-4 py-2.5 flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#2a6fdb" strokeWidth="1.8" strokeLinecap="round"/><circle cx="9" cy="7" r="4" stroke="#2a6fdb" strokeWidth="1.8"/></svg>
+                <p className="text-[12px] text-[#2a6fdb] font-semibold">Scramble por parejas — un resultado por equipo</p>
+              </div>
+            )}
+            {teams.map(({ team, members }) => {
+              const teamKey = `team_${team}`
+              const sc = get(members[0]?.id ?? teamKey)
+              const delta = sc.strokes != null ? sc.strokes - par : null
+              const colors = delta != null ? scoreColor(delta) : null
+              const scoreOpts = [par - 1, par, par + 1, par + 2, par + 3, par + 4].filter(s => s >= 1)
+
+              return (
+                <div key={team} className="bg-white rounded-[18px] border-2 overflow-hidden"
+                  style={{ borderColor: team === 1 ? '#1f8a5b' : '#2a6fdb' }}>
+                  {/* Team header */}
+                  <div className="flex items-center gap-2 px-3 py-2 border-b border-[#efebe1]"
+                    style={{ backgroundColor: team === 1 ? '#d9eedd' : '#dde7fb' }}>
+                    <div className="flex -space-x-1">
+                      {members.map(m => (
+                        <div key={m.id} className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white" style={{ backgroundColor: m.avatar_color }}>{m.short}</div>
+                      ))}
+                    </div>
+                    <p className="font-bold text-[13px]" style={{ color: team === 1 ? '#1f8a5b' : '#2a6fdb' }}>
+                      {isTeams ? `Equipo ${team}` : 'Resultado equipo'}
+                    </p>
+                    {colors && sc.strokes != null && (
+                      <div className="ml-auto w-8 h-8 rounded-[8px] flex items-center justify-center font-mono text-[13px] font-black" style={{ backgroundColor: colors.bg, color: colors.text }}>
+                        {sc.strokes}
+                      </div>
+                    )}
+                  </div>
+                  {/* Score buttons */}
+                  <div className="flex gap-1.5 px-3 pt-3 pb-2">
+                    {scoreOpts.map(s => {
+                      const d = s - par
+                      const c = scoreColor(d)
+                      const isSel = sc.strokes === s
+                      return (
+                        <button key={s} onClick={() => {
+                          // Set same score for all team members
+                          members.forEach(m => setScore(m.id, s))
+                        }}
+                          className="flex-1 h-12 rounded-[12px] transition active:scale-95 flex flex-col items-center justify-center"
+                          style={{ backgroundColor: isSel ? c.bg : '#f4f1e9', color: isSel ? c.text : '#9b9b8a', border: isSel ? `2px solid ${c.text}55` : '2px solid transparent' }}>
+                          <span className="font-mono font-black" style={{ fontSize: isSel ? 18 : 16 }}>{s}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {/* Putts */}
+                  <div className="flex items-center gap-2 px-3 pb-3 border-t border-[#efebe1] pt-2">
+                    <span className="font-mono text-[11px] text-[#6b7a72] w-12">Putts</span>
+                    <div className="flex gap-2 flex-1">
+                      {[0,1,2,3,4].map(n => (
+                        <button key={n} onClick={() => members.forEach(m => set(m.id, 'putts', n))}
+                          className="flex-1 h-9 rounded-[10px] font-mono text-[13px] font-bold transition"
+                          style={{ backgroundColor: sc.putts === n ? '#0e1a16' : '#f4f1e9', color: sc.putts === n ? '#fff' : '#6b7a72' }}>
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      })()}
+
+      {/* Players — compact 2-row per player (non-scramble) */}
+      {!roundModes.includes('scramble') && <div className="flex-1 px-[14px] space-y-2 pb-28">
         {players.map(p => {
           const sc = get(p.id)
           const delta = sc.strokes != null ? sc.strokes - par : null
@@ -322,7 +403,7 @@ function HoyoPage() {
             </div>
           )
         })}
-      </div>
+      </div>}
 
       {/* CTAs */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-3 bg-gradient-to-t from-[#f4f1e9] to-transparent space-y-2">

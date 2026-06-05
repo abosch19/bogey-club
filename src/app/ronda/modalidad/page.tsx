@@ -23,8 +23,9 @@ function SeleccionarModalidadPage() {
 
   function isCompatible(mode: GameMode): boolean {
     if (mode === 'matchplay' || mode === 'matchplay_hcp') return totalPlayers === 2
-    if (mode === 'wolf') return totalPlayers >= 3  // Wolf: 3+ jugadores
-    if (mode === 'bbb') return totalPlayers >= 2   // BBB: 2+ jugadores
+    if (mode === 'wolf') return totalPlayers >= 3
+    if (mode === 'bbb') return totalPlayers >= 2
+    if (mode === 'scramble') return totalPlayers >= 2 && totalPlayers % 2 === 0
     return true
   }
 

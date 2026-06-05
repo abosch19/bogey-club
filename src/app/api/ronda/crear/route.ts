@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       status: 'active',
       is_practice: is_practice ?? false,
       date: new Date().toISOString().split('T')[0],
-      notes: hole_mode ?? 'all',  // store hole_mode in notes field
+      notes: hole_mode ?? 'all',
     })
     .select('id')
     .single()
@@ -53,15 +53,32 @@ export async function POST(request: Request) {
     ? await admin.from('profiles').select('id, handicap_index').in('id', player_ids)
     : { data: [] }
 
+  // For scramble, assign teams: pair players by handicap (best+worst = team 1, etc.)
+  const isScramble = (modes ?? []).includes('scramble')
+  const sortedProfiles = [...(profiles ?? [])].sort((a, b) => a.handicap_index - b.handicap_index)
+  const teamMap: Record<string, number> = {}
+  if (isScramble && sortedProfiles.length >= 4) {
+    // 4+ players: team 1 = player 1 & last, team 2 = player 2 & second-to-last
+    sortedProfiles.forEach((p, i) => {
+      teamMap[p.id] = i % 2 === 0 ? 1 : 2
+    })
+  } else if (isScramble && sortedProfiles.length === 2) {
+    // 2 players: same team
+    sortedProfiles.forEach(p => { teamMap[p.id] = 1 })
+  }
+
   // 4. Build player inserts
   const playerInserts: PlayerInsert[] = (profiles ?? []).map(p => ({
     round_id: round.id,
     profile_id: p.id,
     guest_id: null,
     is_guest: false,
-    course_handicap: course
-      ? courseHandicap(p.handicap_index, course.slope, course.course_rating, course.par)
-      : Math.round(p.handicap_index),
+    // For scramble: store team in course_handicap field (1 or 2), else normal hcp
+    course_handicap: isScramble && teamMap[p.id]
+      ? teamMap[p.id]  // reuse field to store team
+      : course
+        ? courseHandicap(p.handicap_index, course.slope, course.course_rating, course.par)
+        : Math.round(p.handicap_index),
   }))
 
   // 5. Add guests
@@ -103,7 +120,7 @@ export async function POST(request: Request) {
   }))
   await admin.from('round_modes').insert(modeInserts)
 
-  // Link to league if provided
+  // 7. Link to league if provided
   if (league_id) {
     const { data: lastLR } = await admin.from('league_rounds').select('round_number').eq('league_id', league_id).order('round_number', { ascending: false }).limit(1).maybeSingle()
     const nextNum = (lastLR?.round_number ?? 0) + 1

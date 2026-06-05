@@ -31,6 +31,7 @@ export default function NuevaLigaPage() {
     { id: 'matchplay',     name: 'Matchplay',            desc: 'Gana hoyos, sin handicap. Solo 2 jugadores.' },
     { id: 'matchplay_hcp', name: 'Matchplay c/ Hcp',    desc: 'Matchplay con golpes de ventaja por handicap.' },
     { id: 'bbb',           name: 'Bingo Bango Bongo',   desc: '3 puntos por hoyo: 1º en green, más cerca, 1º en meter.' },
+    { id: 'scramble',      name: 'Scramble',             desc: 'Mejor bola en cada golpe. Por parejas si son 4+.' },
   ]
 
   return (
