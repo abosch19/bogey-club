@@ -21,8 +21,6 @@ function SeleccionarJugadoresPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
-  const [torneoMode, setTorneoMode] = useState(false)
-
   // Guest form
   const [showGuestForm, setShowGuestForm] = useState(false)
   const [guestName, setGuestName] = useState('')
@@ -81,7 +79,7 @@ function SeleccionarJugadoresPage() {
     const playerIds = selected.filter(p => !p.isGuest).map(p => p.id).join(',')
     const guestData = selected.filter(p => p.isGuest).map(p => `${p.name}:${p.handicap_index}`).join('|')
 
-    // 5+ players → always go to torneo
+    // 5+ players → torneo automático
     if (selected.length >= 5) {
       const params = new URLSearchParams({
         course: courseId,
@@ -92,6 +90,8 @@ function SeleccionarJugadoresPage() {
       router.push(`/torneo/nuevo?${params}`)
       return
     }
+
+    // Remove any lingering torneoMode reference
 
     const params = new URLSearchParams({
       course: courseId,
@@ -206,36 +206,23 @@ function SeleccionarJugadoresPage() {
         })}
       </div>
 
-      {/* Torneo toggle — aparece con 5+ jugadores */}
-      {selected.length >= 4 && (
-        <div className="fixed bottom-[88px] left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px]">
-          <button onClick={() => setTorneoMode(!torneoMode)}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-[14px] border-2 transition"
-            style={{ backgroundColor: torneoMode ? '#dde7fb' : '#fff', borderColor: torneoMode ? '#2a6fdb' : '#e5e0d4' }}>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: torneoMode ? '#2a6fdb' : '#f4f1e9' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z" stroke={torneoMode ? '#fff' : '#6b7a72'} strokeWidth="2" strokeLinecap="round"/></svg>
-              </div>
-              <div>
-                <p className="font-bold text-[13px]" style={{ color: torneoMode ? '#2a6fdb' : '#0e1a16' }}>Modo torneo</p>
-                <p className="text-[11px]" style={{ color: torneoMode ? '#2a6fdb' : '#6b7a72' }}>Dividir {selected.length} jugadores en grupos</p>
-              </div>
-            </div>
-            <div className="w-11 h-6 rounded-full transition flex items-center px-0.5" style={{ backgroundColor: torneoMode ? '#2a6fdb' : '#e5e0d4' }}>
-              <div className="w-5 h-5 rounded-full bg-white shadow transition-transform" style={{ transform: torneoMode ? 'translateX(20px)' : 'translateX(0)' }}/>
-            </div>
-          </button>
-        </div>
-      )}
-
       {/* CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
+        {/* Torneo info — no toggle, just info */}
+        {selected.length >= 5 && (
+          <div className="flex items-center gap-2 bg-[#dde7fb] rounded-[10px] px-3 py-2 mb-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z" stroke="#2a6fdb" strokeWidth="2" strokeLinecap="round"/></svg>
+            <p className="font-mono text-[10px] font-bold text-[#2a6fdb] uppercase tracking-wide">
+              Modo torneo — {Math.ceil(selected.length / 4)} grupos automáticos
+            </p>
+          </div>
+        )}
         <button onClick={handleNext} disabled={selected.length === 0}
           className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-40"
-          style={{ backgroundColor: torneoMode ? '#2a6fdb' : '#1f8a5b', color: '#0e1a16' }}>
+          style={{ backgroundColor: selected.length >= 5 ? '#2a6fdb' : '#1f8a5b', color: selected.length >= 5 ? '#fff' : '#0e1a16' }}>
           <span>{selected.length} jugador{selected.length !== 1 ? 'es' : ''}</span>
           <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
-            {torneoMode ? 'CREAR TORNEO →' : 'SIGUIENTE →'}
+            {selected.length >= 5 ? 'CREAR TORNEO →' : 'SIGUIENTE →'}
           </span>
         </button>
       </div>

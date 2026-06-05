@@ -14,31 +14,32 @@ const MODES = [
   { id: 'bbb',        name: 'Bingo Bango Bongo', desc: '3 puntos por hoyo. 2+ jugadores.' },
 ]
 
-function autoGroupByHandicap(players: Player[], groupSize: number): Player[] {
-  const sorted = [...players].sort((a, b) => a.handicap_index - b.handicap_index)
+// Hybrid: handicap tiers + random within tier + snake distribution
+function autoGroup(players: Player[], groupSize: number): Player[] {
   const nGroups = Math.ceil(players.length / groupSize)
-  return sorted.map((p, i) => {
+  const sorted = [...players].sort((a, b) => a.handicap_index - b.handicap_index)
+  // Shuffle within handicap tiers (each tier = nGroups players)
+  const result: Player[] = []
+  for (let t = 0; t < Math.ceil(sorted.length / nGroups); t++) {
+    const tier = sorted.slice(t * nGroups, (t + 1) * nGroups)
+    for (let i = tier.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [tier[i], tier[j]] = [tier[j], tier[i]]
+    }
+    result.push(...tier)
+  }
+  // Snake distribution: row 0 → 1,2,3,4 / row 1 → 4,3,2,1 / etc
+  return result.map((p, i) => {
     const row = Math.floor(i / nGroups)
     const col = row % 2 === 0 ? i % nGroups : nGroups - 1 - (i % nGroups)
     return { ...p, group: col + 1 }
   })
 }
 
-function autoGroupRandom(players: Player[], groupSize: number): Player[] {
-  // Fisher-Yates shuffle
-  const shuffled = [...players]
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-  }
-  return shuffled.map((p, i) => ({ ...p, group: Math.floor(i / groupSize) + 1 }))
-}
-
 function NuevoTorneoPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [step, setStep]       = useState<'config'|'grupos'>('config')
-  const [groupCriteria, setGroupCriteria] = useState<'handicap'|'random'>('handicap')
   const [name, setName]       = useState('')
   const [courses, setCourses] = useState<Course[]>([])
   const [courseId, setCourseId] = useState('')
@@ -89,9 +90,7 @@ function NuevoTorneoPage() {
 
   function goToGroups() {
     if (!name || !courseId || selected.length < 2) return
-    const grouped = groupCriteria === 'handicap'
-      ? autoGroupByHandicap(selected, groupSize)
-      : autoGroupRandom(selected, groupSize)
+    const grouped = autoGroup(selected, groupSize)
     setGroups(grouped)
     setStep('grupos')
   }
@@ -171,22 +170,10 @@ function NuevoTorneoPage() {
                 </div>
               </div>
 
-              {/* Grouping criteria */}
-              <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
-                <p className="font-bold text-[14px] text-[#0e1a16] mb-3">Criterio de reparto</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { key: 'handicap', label: 'Por hándicap', desc: 'Grupos equilibrados' },
-                    { key: 'random',   label: 'Aleatorio',    desc: 'Reparto al azar' },
-                  ].map(c => (
-                    <button key={c.key} onClick={() => setGroupCriteria(c.key as 'handicap'|'random')}
-                      className="p-3 rounded-[12px] border text-left transition"
-                      style={{ backgroundColor: groupCriteria === c.key ? '#0e1a16' : '#f4f1e9', borderColor: groupCriteria === c.key ? '#0e1a16' : '#e5e0d4' }}>
-                      <p className="font-bold text-[13px]" style={{ color: groupCriteria === c.key ? '#fff' : '#0e1a16' }}>{c.label}</p>
-                      <p className="text-[11px] mt-0.5" style={{ color: groupCriteria === c.key ? 'rgba(255,255,255,0.6)' : '#6b7a72' }}>{c.desc}</p>
-                    </button>
-                  ))}
-                </div>
+              {/* Reparto info */}
+              <div className="bg-[#f4f1e9] rounded-[14px] px-4 py-3 flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#6b7a72" strokeWidth="1.8"/><path d="M12 8v4l3 3" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                <p className="text-[12px] text-[#6b7a72]">Los grupos se reparten automáticamente equilibrando hándicap con algo de aleatoriedad. Podrás ajustar en el siguiente paso.</p>
               </div>
 
               {/* Group size */}
@@ -247,7 +234,7 @@ function NuevoTorneoPage() {
           <>
             <div className="flex items-center justify-between mb-1">
               <h1 className="text-[24px] font-black tracking-tight text-[#0e1a16]">Ajusta los grupos</h1>
-              <button onClick={() => setGroups(groupCriteria === 'handicap' ? autoGroupByHandicap(selected, groupSize) : autoGroupRandom(selected, groupSize))}
+              <button onClick={() => setGroups(autoGroup(selected, groupSize))}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#6b7a72] active:opacity-70">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 3v5h5" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 Redistribuir
