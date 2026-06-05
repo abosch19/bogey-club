@@ -21,13 +21,13 @@ const GOLF_QUOTES = [
   { text: "El golf es el único deporte donde puedes hacer trampa y luego confesar en el hoyo 18.", author: "Anónimo del vestuario" },
   { text: "No hay ningún hoyo que no se pueda hacer peor con un segundo golpe.", author: "Ley de Murphy golfista" },
   { text: "Golf: el arte de meter una bola en un agujero usando los instrumentos más inapropiados.", author: "Winston Churchill" },
-  { text: "El golf saca lo mejor de uno... y también lo peor.", author: "Bogey Club" },
+  { text: "El golf saca lo mejor de uno... y también lo peor.", author: "Bogey-Club" },
   { text: "Si cuentas todos tus golpes en golf, nunca podrás tener amigos.", author: "Sabiduría popular" },
   { text: "El golf es un buen paseo arruinado.", author: "Mark Twain" },
   { text: "Juego con mi conciencia. Siempre que cometo un error, mi conciencia me dice que anote 5.", author: "Bob Hope" },
-  { text: "En golf, la humillación llega por parejas. Y a veces por águilas.", author: "Bogey Club" },
+  { text: "En golf, la humillación llega por parejas. Y a veces por águilas.", author: "Bogey-Club" },
   { text: "El árbol que te cortó el camino llevaba ahí 200 años. Tú llevas 20 minutos.", author: "Sabiduría del campo" },
-  { text: "Mi handicap no refleja mi nivel. Refleja mis esperanzas.", author: "Bogey Club" },
+  { text: "Mi handicap no refleja mi nivel. Refleja mis esperanzas.", author: "Bogey-Club" },
 ]
 
 function holeBarColor(delta: number | null): string {
