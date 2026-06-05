@@ -13,6 +13,17 @@ export function TabBar() {
 
   useEffect(() => {
     async function check() {
+      // Cache for 60 seconds to avoid repeated DB calls
+      try {
+        const cached = sessionStorage.getItem('activeRound')
+        const cacheTime = sessionStorage.getItem('activeRoundTime')
+        if (cached && cacheTime && Date.now() - parseInt(cacheTime) < 60000) {
+          setActiveRoundId(cached === 'null' ? null : cached)
+          setChecked(true)
+          return
+        }
+      } catch {}
+
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setChecked(true); return }
 
@@ -22,6 +33,7 @@ export function TabBar() {
         .eq('profile_id', user.id)
         .limit(20)
 
+      let foundId: string | null = null
       if (rps?.length) {
         const { data: rounds } = await supabase
           .from('rounds')
@@ -29,8 +41,13 @@ export function TabBar() {
           .in('id', rps.map(r => r.round_id))
           .eq('status', 'active')
           .limit(1)
-        if (rounds?.length) setActiveRoundId(rounds[0].id)
+        if (rounds?.length) foundId = rounds[0].id
       }
+      if (foundId) setActiveRoundId(foundId)
+      try {
+        sessionStorage.setItem('activeRound', foundId ?? 'null')
+        sessionStorage.setItem('activeRoundTime', Date.now().toString())
+      } catch {}
       setChecked(true)
     }
     check()

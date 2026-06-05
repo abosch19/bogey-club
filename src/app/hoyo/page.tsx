@@ -38,11 +38,14 @@ function HoyoPage() {
   const [totalHoles, setTotal]  = useState(18)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [roundModes, setRoundModes] = useState<string[]>([])
+  const [holeAvg, setHoleAvg]   = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
     if (!roundId) return
     async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+
       const [roundRes, playersRes, modesRes] = await Promise.all([
         supabase.from('rounds').select('course_id, courses(holes_count)').eq('id', roundId).single(),
         supabase.from('round_players').select('profile_id, is_guest, course_handicap, profiles(name, avatar_color)').eq('round_id', roundId),
@@ -53,8 +56,19 @@ function HoyoPage() {
       const course = Array.isArray(roundRes.data?.courses) ? roundRes.data!.courses[0] : roundRes.data?.courses as any
       setTotal(course?.holes_count ?? 18)
 
-      const { data: h } = await supabase.from('holes').select('hole_number, par, stroke_index, distance_m').eq('course_id', roundRes.data?.course_id).eq('hole_number', holeNum).single()
-      setHole(h)
+      const [holeRes, historicalRes] = await Promise.all([
+        supabase.from('holes').select('hole_number, par, stroke_index, distance_m').eq('course_id', roundRes.data?.course_id).eq('hole_number', holeNum).single(),
+        user ? supabase.from('scores').select('strokes, hole_number').eq('profile_id', user.id).eq('hole_number', holeNum).limit(10) : Promise.resolve({ data: null }),
+      ])
+      setHole(holeRes.data)
+
+      if (historicalRes.data && historicalRes.data.length > 0) {
+        const validScores = historicalRes.data.filter((s: any) => s.strokes != null)
+        if (validScores.length > 0) {
+          const avg = (validScores.reduce((a: number, s: any) => a + s.strokes, 0) / validScores.length).toFixed(1)
+          setHoleAvg(avg)
+        }
+      }
 
       const ps: Player[] = (playersRes.data ?? []).map((rp: any) => ({
         id: rp.profile_id ?? `guest_${rp.id}`,
@@ -67,7 +81,7 @@ function HoyoPage() {
 
       // Load existing scores
       const ids = ps.filter(p => !p.id.startsWith('guest_')).map(p => p.id)
-      if (ids.length > 0 && h) {
+      if (ids.length > 0 && holeRes.data) {
         const { data: existing } = await supabase.from('scores').select('*').eq('round_id', roundId).eq('hole_number', holeNum).in('profile_id', ids)
         const init: Record<string, PlayerScore> = {}
         for (const s of existing ?? []) {
@@ -89,7 +103,6 @@ function HoyoPage() {
 
   function setScore(pid: string, strokes: number) {
     const par = hole?.par ?? 4
-    // Auto-set GIR if strokes <= par - putts
     const current = get(pid)
     const gir = strokes <= par - 1 // heuristic
     setScores(prev => ({ ...prev, [pid]: { ...current, strokes, gir } }))
@@ -105,7 +118,7 @@ function HoyoPage() {
     if (!res.ok) { setSaving(false); alert('Error guardando'); return }
     const isLast = holeNum >= totalHoles
     if (isLast) router.push(`/resumen?round=${roundId}`)
-    else router.push(`/tarjeta?round=${roundId}`)
+    else router.push(`/hoyo?round=${roundId}&hole=${holeNum + 1}`)
   }
 
   if (!hole) return SPINNER
@@ -117,10 +130,15 @@ function HoyoPage() {
       {/* Header */}
       <div className="safe-top px-[14px] pt-3 pb-2">
         <div className="flex items-center justify-between">
-          <button onClick={() => router.push(`/tarjeta?round=${roundId}`)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Tarjeta
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => router.push(`/tarjeta?round=${roundId}`)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Tarjeta
+            </button>
+            <button onClick={() => router.push(`/tarjeta?round=${roundId}`)} className="font-mono text-[10px] text-[#1f8a5b] underline underline-offset-2">
+              Ver tarjeta
+            </button>
+          </div>
           <div className="flex items-center gap-3">
             {holeNum > 1 && (
               <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${holeNum - 1}`)} className="font-mono text-[11px] text-[#6b7a72]">← H{holeNum - 1}</button>
@@ -143,6 +161,9 @@ function HoyoPage() {
             <span className="font-mono text-[10px] text-white/50">SI {hole.stroke_index}</span>
             {hole.distance_m && <span className="font-mono text-[10px] text-white/50">{hole.distance_m}m</span>}
           </div>
+          {holeAvg && (
+            <span className="font-mono text-[10px] text-white/50">Tu media: {holeAvg}</span>
+          )}
           {/* Handicap strokes per player — highlighted if receiving on this hole */}
           <div className="flex gap-2 flex-wrap mt-1">
             {players.map(p => {
@@ -254,10 +275,10 @@ function HoyoPage() {
                 <button onClick={() => set(p.id, 'in_bunker', !sc.in_bunker)}
                   className="flex-1 py-2.5 rounded-[10px] text-[12px] font-bold transition"
                   style={{ backgroundColor: sc.in_bunker ? '#f6e6c4' : '#f4f1e9', color: sc.in_bunker ? '#9b6e1a' : '#6b7a72' }}>
-                  Búnker
+                  Bunker
                 </button>
                 <div className="flex items-center gap-1.5 flex-1 justify-center">
-                  <button onClick={() => set(p.id, 'penalties', Math.max(0, sc.penalties - 1))} className="w-8 h-8 rounded-full bg-[#f4f1e9] flex items-center justify-center text-[16px] text-[#6b7a72]">−</button>
+                  <button onClick={() => set(p.id, 'penalties', Math.max(0, sc.penalties - 1))} className="w-8 h-8 rounded-full bg-[#f4f1e9] flex items-center justify-center text-[16px] text-[#6b7a72]">-</button>
                   <div className="text-center">
                     <span className="font-mono text-[14px] font-black text-[#0e1a16]">{sc.penalties}</span>
                     <p className="font-mono text-[8px] text-[#6b7a72] leading-none">Pen</p>
@@ -271,8 +292,8 @@ function HoyoPage() {
                 <div className="px-3 pb-3 pt-1 border-t border-[#efebe1]">
                   <div className="flex items-center gap-3">
                     <span className="text-[12px] text-[#6b7a72] font-medium">Golpes exactos:</span>
-                    <button onClick={() => sc.strokes && set(p.id, 'strokes', Math.max(1, sc.strokes - 1))} className="w-8 h-8 rounded-full border border-[#e5e0d4] flex items-center justify-center text-[16px] text-[#6b7a72]">−</button>
-                    <span className="font-mono text-[20px] font-black text-[#0e1a16] w-8 text-center">{sc.strokes ?? '–'}</span>
+                    <button onClick={() => sc.strokes && set(p.id, 'strokes', Math.max(1, sc.strokes - 1))} className="w-8 h-8 rounded-full border border-[#e5e0d4] flex items-center justify-center text-[16px] text-[#6b7a72]">-</button>
+                    <span className="font-mono text-[20px] font-black text-[#0e1a16] w-8 text-center">{sc.strokes ?? '-'}</span>
                     <button onClick={() => set(p.id, 'strokes', (sc.strokes ?? par) + 1)} className="w-8 h-8 rounded-full bg-[#0e1a16] flex items-center justify-center text-[16px] text-white">+</button>
                   </div>
                 </div>
@@ -287,9 +308,9 @@ function HoyoPage() {
         <button onClick={handleSave} disabled={saving}
           className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] text-white transition active:scale-[0.98] disabled:opacity-60"
           style={{ backgroundColor: '#0e1a16' }}>
-          <span>{holeNum >= totalHoles ? 'Guardar · ver resumen' : `Guardar · hoyo ${holeNum + 1}`}</span>
+          <span>{holeNum >= totalHoles ? 'Guardar y ver resumen' : `Guardar · hoyo ${holeNum + 1}`}</span>
           <span className="px-3 py-1.5 rounded-full text-[12px] font-black text-[#0e1a16]" style={{ backgroundColor: '#1f8a5b' }}>
-            {saving ? '…' : holeNum >= totalHoles ? '✓' : `H${holeNum + 1} →`}
+            {saving ? '...' : holeNum >= totalHoles ? 'FIN' : `H${holeNum + 1} ->`}
           </span>
         </button>
       </div>

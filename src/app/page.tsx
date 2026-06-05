@@ -15,7 +15,8 @@ type ActiveRound = {
 }
 type LeagueStanding = { profile_id: string; name: string; avatar_color: string; total_points: number }
 type ActiveLeague = { id: string; name: string; round_played: number; total_rounds: number; my_position: number; my_points: number; top3: LeagueStanding[] }
-type FeedItem = { id: string; round_id: string; name: string; avatar_color: string; action: string; detail: string; time: string }
+type FeedItem = { id: string; round_id: string; name: string; avatar_color: string; action: string; detail: string; time: string; badge?: string | null }
+type LastRound = { course_id: string; course_name: string; player_ids: string[]; guests: string[]; modes: string[]; hole_mode: string; league_id?: string }
 
 const GOLF_QUOTES = [
   { text: "El golf es el único deporte donde puedes hacer trampa y luego confesar en el hoyo 18.", author: "Anónimo del vestuario" },
@@ -45,7 +46,16 @@ export default function HomePage() {
   const [activeLeague, setActiveLeague] = useState<ActiveLeague | null>(null)
   const [feed, setFeed]               = useState<FeedItem[]>([])
   const [loading, setLoading]         = useState(true)
+  const [lastRound, setLastRound]     = useState<LastRound | null>(null)
+  const [quickStarting, setQuickStarting] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('lastRound')
+      if (stored) setLastRound(JSON.parse(stored))
+    } catch {}
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -142,9 +152,26 @@ export default function HomePage() {
         const rps2 = (r as any).round_players ?? []
         for (const rp of rps2.slice(0, 1)) {
           const name = rp.profiles?.name ?? 'Jugador'
+          const pid = rp.profile_id
           const days = Math.floor((Date.now() - new Date(r.date).getTime()) / 86400000)
           const timeStr = days === 0 ? 'hoy' : days === 1 ? 'ayer' : `hace ${days} días`
-          feedItems.push({ id: r.id + rp.profile_id, round_id: r.id, name, avatar_color: rp.profiles?.avatar_color ?? '#6b7a72', action: 'completó una ronda', detail: `${course?.name ?? 'Campo'} · ${timeStr}`, time: timeStr })
+          // Detect PB
+          let isPB = false
+          try {
+            const { data: roundScores } = await supabase.from('scores').select('strokes').eq('round_id', r.id).eq('profile_id', pid)
+            const total = (roundScores ?? []).reduce((a: number, s: any) => a + (s.strokes ?? 0), 0)
+            if (total > 0) {
+              const { data: allScores } = await supabase.from('scores').select('strokes, round_id').eq('profile_id', pid).not('strokes', 'is', null).limit(200)
+              const roundTotals: Record<string, number> = {}
+              for (const s of allScores ?? []) {
+                if (!roundTotals[s.round_id]) roundTotals[s.round_id] = 0
+                roundTotals[s.round_id] += s.strokes ?? 0
+              }
+              const pastBests = Object.entries(roundTotals).filter(([rid]) => rid !== r.id).map(([, v]) => v).filter(v => v > 0)
+              if (pastBests.length > 0) isPB = total <= Math.min(...pastBests)
+            }
+          } catch {}
+          feedItems.push({ id: r.id + pid, round_id: r.id, name, avatar_color: rp.profiles?.avatar_color ?? '#6b7a72', action: isPB ? 'batió su récord personal!' : 'completó una ronda', detail: `${course?.name ?? 'Campo'} · ${timeStr}`, time: timeStr, badge: isPB ? 'PB' : null })
         }
       }
       setFeed(feedItems.slice(0, 4))
@@ -153,6 +180,31 @@ export default function HomePage() {
     }
     load()
   }, [])
+
+  async function quickStart(lr: LastRound) {
+    setQuickStarting(true)
+    try {
+      const res = await fetch('/api/ronda/crear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          course_id: lr.course_id,
+          is_practice: false,
+          player_ids: lr.player_ids,
+          guests: lr.guests ?? [],
+          modes: lr.modes,
+          hole_mode: lr.hole_mode ?? 'all',
+          ...(lr.league_id ? { league_id: lr.league_id } : {}),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      window.location.href = `/tarjeta?round=${data.round_id}`
+    } catch {
+      alert('Error al iniciar ronda')
+      setQuickStarting(false)
+    }
+  }
 
   if (loading || !profile) {
     return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
@@ -225,6 +277,24 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+
+          {/* Ultima ronda quick-start */}
+          {lastRound && !activeRound && (
+            <button
+              onClick={() => quickStart(lastRound)}
+              disabled={quickStarting}
+              className="w-full text-left bg-white rounded-[22px] border border-[#e5e0d4] px-4 py-3 flex items-center justify-between transition active:scale-[0.98] disabled:opacity-60"
+            >
+              <div>
+                <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-[0.15em] mb-1">Ultima ronda</p>
+                <p className="text-[15px] font-bold text-[#0e1a16]">Repetir ronda</p>
+                <p className="text-[12px] text-[#6b7a72] mt-0.5">{lastRound.course_name} · {lastRound.modes.join(', ')}</p>
+              </div>
+              <span className="w-9 h-9 rounded-full flex items-center justify-center text-white flex-shrink-0" style={{ backgroundColor: '#1f8a5b' }}>
+                {quickStarting ? '...' : '→'}
+              </span>
+            </button>
+          )}
 
           {/* Active round card */}
           {activeRound && (
@@ -335,9 +405,14 @@ export default function HomePage() {
                       {item.name[0].toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] text-[#0e1a16] leading-tight">
-                        <span className="font-bold">{item.name}</span> {item.action}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[13px] text-[#0e1a16] leading-tight">
+                          <span className="font-bold">{item.name}</span> {item.action}
+                        </p>
+                        {item.badge === 'PB' && (
+                          <span className="font-mono text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#e8b75a', color: '#0e1a16' }}>PB</span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-[#6b7a72] mt-0.5">{item.detail}</p>
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>

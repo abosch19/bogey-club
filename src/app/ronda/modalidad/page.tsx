@@ -18,6 +18,7 @@ function SeleccionarModalidadPage() {
   // Stroke is always active
   const [extras, setExtras] = useState<GameMode[]>([])
   const [loading, setLoading] = useState(false)
+  const [bet, setBet] = useState('')
 
   function isCompatible(mode: GameMode): boolean {
     if (mode === 'matchplay' || mode === 'matchplay_hcp') return totalPlayers === 2
@@ -38,6 +39,7 @@ function SeleccionarModalidadPage() {
   async function handleStart() {
     setLoading(true)
     try {
+      const modes = ['stroke', ...extras]
       const res = await fetch('/api/ronda/crear', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,13 +48,27 @@ function SeleccionarModalidadPage() {
           is_practice: isPractice,
           player_ids: playerIds,
           guests,
-          modes: ['stroke', ...extras],
+          modes,
           hole_mode: holeMode,
           ...(leagueId ? { league_id: leagueId } : {}),
+          ...(bet ? { notes: bet } : {}),
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
+      // Save last round config for quick-start
+      try {
+        const courseName = searchParams.get('course_name') ?? courseId
+        localStorage.setItem('lastRound', JSON.stringify({
+          course_id: courseId,
+          course_name: courseName,
+          player_ids: playerIds,
+          guests,
+          modes,
+          hole_mode: holeMode,
+          ...(leagueId ? { league_id: leagueId } : {}),
+        }))
+      } catch {}
       router.push(`/tarjeta?round=${data.round_id}`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al crear la ronda'
@@ -147,6 +163,18 @@ function SeleccionarModalidadPage() {
             </button>
           )
         })}
+        {/* Apuesta */}
+        <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
+          <label className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2">
+            Apuesta (opcional)
+          </label>
+          <input
+            value={bet}
+            onChange={e => setBet(e.target.value)}
+            placeholder="El que pierde paga las cervezas..."
+            className="w-full text-[14px] text-[#0e1a16] bg-transparent outline-none placeholder-[#c4bfb5]"
+          />
+        </div>
       </div>
 
       {/* CTA */}

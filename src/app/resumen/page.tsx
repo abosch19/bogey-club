@@ -29,6 +29,7 @@ function ResumenPage() {
   const [activeTab, setActiveTab] = useState<Tab>('stroke')
   const [saving, setSaving]   = useState(false)
   const [signed, setSigned]   = useState(false)
+  const [celebrating, setCelebrating] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -79,7 +80,11 @@ function ResumenPage() {
     setSaving(true)
     await fetch('/api/ronda/finalizar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId }) })
     setSaving(false)
-    setSigned(true)
+    setCelebrating(true)
+    setTimeout(() => {
+      setCelebrating(false)
+      setSigned(true)
+    }, 2000)
   }
 
   if (!round) return SPINNER
@@ -104,8 +109,20 @@ function ResumenPage() {
 
   const TAB_LABELS: Record<Tab, string> = { stroke: 'Stroke', stableford: 'Stableford', clasificacion: 'Clasificación' }
 
+  const firstPlayer = players[0]
+  const firstTotal = firstPlayer ? getTotal(firstPlayer.id) : 0
+  const firstDelta = firstTotal && realPar > 0 ? firstTotal - realPar : 0
+  const celebrationDeltaStr = firstDelta > 0 ? `+${firstDelta}` : firstDelta === 0 ? 'E' : `${firstDelta}`
+
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-32">
+      {celebrating && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0e1a16]">
+          <div className="text-[80px] animate-bounce">&#9971;</div>
+          <p className="text-white text-[28px] font-black mt-4">Ronda firmada!</p>
+          <p className="text-white/60 text-[14px] mt-2">{firstTotal} golpes · {celebrationDeltaStr}</p>
+        </div>
+      )}
       <div className="safe-top px-[14px] pt-3 pb-3">
         <div className="flex items-center justify-between mb-3">
           <Link href={`/tarjeta?round=${roundId}`} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
