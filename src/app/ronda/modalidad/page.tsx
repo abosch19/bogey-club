@@ -43,7 +43,8 @@ function SeleccionarModalidadPage() {
   async function handleStart() {
     setLoading(true)
     try {
-      const modes = ['stroke', ...extras]
+      // Scramble replaces stroke — no individual player scores
+      const modes = isScrambleSelected ? extras : ['stroke', ...extras]
       const res = await fetch('/api/ronda/crear', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -81,6 +82,7 @@ function SeleccionarModalidadPage() {
     }
   }
 
+  const isScrambleSelected = extras.includes('scramble')
   const modesByCompat = GAME_MODES.filter(m => m.id !== 'stroke')
 
   return (
@@ -98,30 +100,34 @@ function SeleccionarModalidadPage() {
           ¿A qué<br/><span className="text-[#1f8a5b]">jugamos?</span>
         </h1>
         <div className="flex items-center gap-2 mt-1">
-          <p className="text-[13px] text-[#6b7a72]">Stroke Play siempre activo. Añade hasta 2 más.</p>
+          <p className="text-[13px] text-[#6b7a72]">
+            {isScrambleSelected ? 'Scramble activo — sin resultado individual.' : 'Stroke Play siempre activo. Añade hasta 2 más.'}
+          </p>
           {leagueId && <span className="font-mono text-[9px] bg-[#dde7fb] text-[#2a6fdb] px-2 py-0.5 rounded-full uppercase font-bold">LIGA</span>}
         </div>
       </div>
 
       <div className="flex-1 px-[14px] pb-32 space-y-2 overflow-y-auto">
-        {/* Stroke Play — always active */}
-        <div className="rounded-[16px] p-4 border-2" style={{ backgroundColor: '#0e1a16', borderColor: '#0e1a16' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#1f8a5b' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M5 3v18"/><path d="M5 4h11l-2 3 2 3H5"/></svg>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-white font-bold text-[15px]">Stroke Play</span>
-                <span className="font-mono text-[8px] bg-white/20 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">Siempre activo</span>
+        {/* Stroke Play — hidden when Scramble is active */}
+        {!isScrambleSelected && (
+          <div className="rounded-[16px] p-4 border-2" style={{ backgroundColor: '#0e1a16', borderColor: '#0e1a16' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#1f8a5b' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M5 3v18"/><path d="M5 4h11l-2 3 2 3H5"/></svg>
               </div>
-              <p className="text-white/60 text-[12px] mt-0.5">Suma de golpes. Gana quien menos haga.</p>
-            </div>
-            <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: '#1f8a5b' }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-bold text-[15px]">Stroke Play</span>
+                  <span className="font-mono text-[8px] bg-white/20 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">Siempre activo</span>
+                </div>
+                <p className="text-white/60 text-[12px] mt-0.5">Suma de golpes. Gana quien menos haga.</p>
+              </div>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: '#1f8a5b' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Other modes */}
         {modesByCompat.map(mode => {
@@ -224,8 +230,10 @@ function SeleccionarModalidadPage() {
           className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-60"
           style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}>
           <span>
-            Stroke{extras.length > 0 ? ` + ${extras.map(e => GAME_MODES.find(m => m.id === e)?.name.split(' ')[0]).join(' + ')}` : ' Play'}
-            {isPractice ? ' · Práctica' : ''}
+            {isScrambleSelected
+              ? `Scramble${isPractice ? ' · Práctica' : ''}`
+              : `Stroke${extras.length > 0 ? ` + ${extras.map(e => GAME_MODES.find(m => m.id === e)?.name.split(' ')[0]).join(' + ')}` : ' Play'}${isPractice ? ' · Práctica' : ''}`
+            }
           </span>
           <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
             {loading ? '…' : 'EMPEZAR →'}
