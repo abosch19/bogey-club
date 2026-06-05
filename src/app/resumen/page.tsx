@@ -35,7 +35,7 @@ function ResumenPage() {
   useEffect(() => {
     if (!roundId) return
     async function load() {
-      const { data: r } = await supabase.from('rounds').select('id, date, is_practice, status, course_id, courses(name, par, holes_count)').eq('id', roundId).single()
+      const { data: r } = await supabase.from('rounds').select('id, date, is_practice, status, course_id, notes, courses(name, par, holes_count)').eq('id', roundId).single()
       if (!r) return
       const c = Array.isArray(r.courses) ? r.courses[0] : r.courses as any
       setRound(r); setCourse(c)
@@ -349,10 +349,28 @@ function ResumenPage() {
       {!readonly && (signed || round?.status === 'completed') && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
           {signed && (
-            <div className="bg-[#d9eedd] rounded-[14px] px-4 py-3 mb-3 flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              <span className="text-[#1f8a5b] font-semibold text-[13px]">Ronda firmada y guardada</span>
-            </div>
+            <>
+              <div className="bg-[#d9eedd] rounded-[14px] px-4 py-3 mb-2 flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="text-[#1f8a5b] font-semibold text-[13px]">Ronda firmada y guardada</span>
+              </div>
+              {/* Apuesta — si existe en notes */}
+              {round?.notes && !['all','front','back','9_once','9_twice'].includes(round.notes) && (
+                <div className="bg-[#f6e6c4] border-2 border-[#e8b75a] rounded-[14px] px-4 py-3 mb-2">
+                  <p className="font-mono text-[9px] text-[#9b6e1a] uppercase tracking-wide mb-1">Apuesta de la ronda</p>
+                  <p className="font-bold text-[15px] text-[#0e1a16]">{round.notes}</p>
+                  {/* Winner */}
+                  {(() => {
+                    const sorted = [...players].map(p => ({ ...p, total: scores.filter(s => s.profile_id === p.id).reduce((a,s) => a + (s.strokes ?? 0), 0) })).filter(p => p.total > 0).sort((a,b) => a.total - b.total)
+                    if (sorted.length >= 2 && sorted[0].total < sorted[1].total) {
+                      const loser = sorted[sorted.length - 1]
+                      return <p className="text-[13px] text-[#9b6e1a] mt-1 font-semibold">{loser.name}, te toca a ti. 😏</p>
+                    }
+                    return null
+                  })()}
+                </div>
+              )}
+            </>
           )}
           <div className="flex gap-2">
             <Link href="/"

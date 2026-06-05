@@ -80,13 +80,22 @@ export default function TorneoPage() {
     setLoading(false)
   }, [id])
 
-  useEffect(() => { load() }, [load])
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
+  const [secondsAgo, setSecondsAgo] = useState(0)
 
-  // Auto-refresh every 30s for live updates
+  useEffect(() => { load().then(() => setLastUpdate(new Date())) }, [load])
+
+  // Auto-refresh every 15s
   useEffect(() => {
-    const interval = setInterval(load, 30000)
+    const interval = setInterval(() => { load().then(() => setLastUpdate(new Date())) }, 15000)
     return () => clearInterval(interval)
   }, [load])
+
+  // Update "hace Xs" counter
+  useEffect(() => {
+    const t = setInterval(() => setSecondsAgo(Math.floor((Date.now() - lastUpdate.getTime()) / 1000)), 1000)
+    return () => clearInterval(t)
+  }, [lastUpdate])
 
   if (loading || !tournament) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
@@ -133,8 +142,10 @@ export default function TorneoPage() {
             </p>
             <p className="text-white text-[22px] font-black tracking-tight mt-1">{tournament.name}</p>
             <div className="flex items-center gap-2 mt-2">
-              <div className="w-2 h-2 rounded-full bg-[#1f8a5b]"/>
-              <span className="text-white/70 text-[12px] font-medium">En vivo · actualiza cada 30s</span>
+              <div className="w-2 h-2 rounded-full bg-[#1f8a5b] animate-pulse"/>
+              <span className="text-white/70 text-[12px] font-medium">
+                En vivo · {secondsAgo < 5 ? 'ahora mismo' : `hace ${secondsAgo}s`}
+              </span>
               {myGroup && (
                 <span className="ml-auto font-mono text-[9px] px-2 py-0.5 rounded-full" style={{ backgroundColor: GROUP_COLORS[myGroup.group - 1], color: '#fff' }}>
                   Tu grupo: {myGroup.group}
@@ -205,15 +216,26 @@ export default function TorneoPage() {
         {/* GRUPOS */}
         {tab === 'grupos' && (
           <div className="space-y-3">
-            {/* Group selector */}
+            {/* Group selector with hole progress */}
             <div className="flex gap-1.5">
-              {Array.from({ length: nGroups }, (_, i) => i + 1).map(g => (
-                <button key={g} onClick={() => setActiveGroup(g)}
-                  className="flex-1 py-2 rounded-full text-[12px] font-bold transition"
-                  style={{ backgroundColor: activeGroup === g ? GROUP_COLORS[g - 1] : '#fff', color: activeGroup === g ? '#fff' : '#6b7a72', border: `1.5px solid ${activeGroup === g ? GROUP_COLORS[g - 1] : '#e5e0d4'}` }}>
-                  Grupo {g}
-                </button>
-              ))}
+              {Array.from({ length: nGroups }, (_, i) => i + 1).map(g => {
+                const gPlayers = players.filter(p => p.group === g)
+                // Max holes played in this group
+                const maxHole = gPlayers.length > 0
+                  ? Math.max(...gPlayers.map(p => (scores[p.id] ?? []).length))
+                  : 0
+                const totalH = course?.holes_count ?? 18
+                return (
+                  <button key={g} onClick={() => setActiveGroup(g)}
+                    className="flex-1 py-2 rounded-full text-[11px] font-bold transition flex flex-col items-center gap-0.5"
+                    style={{ backgroundColor: activeGroup === g ? GROUP_COLORS[g - 1] : '#fff', color: activeGroup === g ? '#fff' : '#6b7a72', border: `1.5px solid ${activeGroup === g ? GROUP_COLORS[g - 1] : '#e5e0d4'}` }}>
+                    <span>Grupo {g}</span>
+                    {maxHole > 0 && (
+                      <span className="font-mono text-[8px] opacity-80">H{maxHole}/{totalH}</span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
 
             {activeGroup !== null && (() => {

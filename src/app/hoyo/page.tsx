@@ -155,32 +155,40 @@ function HoyoPage() {
       </div>
 
       {/* Compact hole hero */}
-      <div className="mx-[14px] rounded-[18px] px-4 py-3 mb-3 relative overflow-hidden flex items-center gap-4" style={{ backgroundColor: '#0e1a16' }}>
+      <div className="mx-[14px] rounded-[18px] px-4 py-3 mb-3 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
         <div className="absolute right-[-20px] top-[-20px] w-[80px] h-[80px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.85 }}/>
-        <div className="text-[56px] font-black text-white leading-none relative">{holeNum}</div>
-        <div className="relative">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-white text-[18px] font-black">Par {par}</span>
-            <span className="font-mono text-[10px] text-white/50">SI {hole.stroke_index}</span>
-            {hole.distance_m && <span className="font-mono text-[10px] text-white/50">{hole.distance_m}m</span>}
+        <div className="flex items-center gap-4 mb-3 relative">
+          <div className="text-[56px] font-black text-white leading-none">{holeNum}</div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-white text-[18px] font-black">Par {par}</span>
+              <span className="font-mono text-[10px] text-white/50">Hcp {hole.stroke_index}</span>
+              {hole.distance_m && <span className="font-mono text-[10px] text-white/50">{hole.distance_m}m</span>}
+            </div>
+            {holeAvg && (
+              <span className="font-mono text-[10px] text-white/50">Tu media: {holeAvg}</span>
+            )}
           </div>
-          {holeAvg && (
-            <span className="font-mono text-[10px] text-white/50">Tu media: {holeAvg}</span>
-          )}
-          {/* Handicap strokes per player — highlighted if receiving on this hole */}
-          <div className="flex gap-2 flex-wrap mt-1">
-            {players.map(p => {
-              const rcv = strokesReceived(p.course_handicap, hole.stroke_index)
-              return (
-                <div key={p.id} className="flex items-center gap-1 px-2 py-1 rounded-full"
-                  style={{ backgroundColor: rcv > 0 ? 'rgba(31,138,91,0.25)' : 'rgba(255,255,255,0.1)' }}>
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0" style={{ backgroundColor: p.avatar_color }}>{p.short}</div>
-                  <span className="font-mono text-[10px] text-white/70">h{p.course_handicap}</span>
-                  {rcv > 0 && <span className="font-mono text-[10px] font-black text-[#1f8a5b]">+{rcv}</span>}
+        </div>
+        {/* Par neto por jugador — lo más importante */}
+        <div className="relative flex gap-2 flex-wrap">
+          {players.map(p => {
+            const rcv = strokesReceived(p.course_handicap, hole.stroke_index)
+            const netPar = par + rcv
+            return (
+              <div key={p.id} className="flex items-center gap-2 px-3 py-2 rounded-[10px] flex-1"
+                style={{ backgroundColor: rcv > 0 ? 'rgba(31,138,91,0.3)' : 'rgba(255,255,255,0.08)' }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: p.avatar_color }}>{p.short}</div>
+                <div>
+                  <p className="font-mono text-[9px] text-white/50 uppercase leading-none">{p.name.split(' ')[0]}</p>
+                  <p className="font-black text-white leading-none mt-0.5">
+                    Par neto <span style={{ color: rcv > 0 ? '#1f8a5b' : '#fff' }}>{netPar}</span>
+                    {rcv > 0 && <span className="font-mono text-[9px] text-[#1f8a5b] ml-1">(+{rcv})</span>}
+                  </p>
                 </div>
-              )
-            })}
-          </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
