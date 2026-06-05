@@ -64,9 +64,13 @@ export async function POST(request: Request) {
         if (id && team) teamMap[id] = parseInt(team)
       })
     } else {
-      // Fallback: auto-assign by handicap
+      // Fallback: 2 players = same team (play together); 4+ = alternate by handicap
       const sorted = [...(profiles ?? [])].sort((a, b) => a.handicap_index - b.handicap_index)
-      sorted.forEach((p, i) => { teamMap[p.id] = i % 2 === 0 ? 1 : 2 })
+      if (sorted.length === 2) {
+        sorted.forEach(p => { teamMap[p.id] = 1 }) // Both on team 1 — play together
+      } else {
+        sorted.forEach((p, i) => { teamMap[p.id] = i % 2 === 0 ? 1 : 2 })
+      }
     }
   }
 

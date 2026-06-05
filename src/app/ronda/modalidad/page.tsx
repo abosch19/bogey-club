@@ -27,7 +27,8 @@ function SeleccionarModalidadPage() {
     if (mode === 'matchplay' || mode === 'matchplay_hcp') return totalPlayers === 2
     if (mode === 'wolf') return totalPlayers >= 3
     if (mode === 'bbb') return totalPlayers >= 2
-    if (mode === 'scramble') return totalPlayers >= 2 && totalPlayers % 2 === 0
+    // Scramble: 2 players = same team OK; 4+ players need even number for 2 teams
+    if (mode === 'scramble') return totalPlayers === 2 || (totalPlayers >= 4 && totalPlayers % 2 === 0)
     return true
   }
 
@@ -45,8 +46,9 @@ function SeleccionarModalidadPage() {
   async function handleStart() {
     setLoading(true)
     try {
-      // Scramble: if no teams assigned yet, go to parejas step
-      if (isScrambleSelected && !scrambleTeams) {
+      // Scramble: 2 players = same team, no assignment needed
+      // 4+ players = go to parejas for manual team assignment
+      if (isScrambleSelected && !scrambleTeams && totalPlayers >= 4) {
         const params = new URLSearchParams({
           course: courseId,
           practice: String(isPractice),

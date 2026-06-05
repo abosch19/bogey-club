@@ -204,10 +204,10 @@ function HoyoPage() {
 
       {/* SCRAMBLE MODE — one score per team */}
       {roundModes.includes('scramble') && (() => {
-        const isTeams = players.length >= 4
-        // In scramble, course_handicap field stores team number (1 or 2) for 4+ players
+        const isTeams = players.length >= 4 && players.some(p => p.course_handicap === 2)
+        // 2 players = one team together; 4+ = two teams (team stored in course_handicap)
         const teams = isTeams
-          ? [1, 2].map(t => ({ team: t, members: players.filter(p => p.course_handicap === t) }))
+          ? [1, 2].map(t => ({ team: t, members: players.filter(p => p.course_handicap === t) })).filter(t => t.members.length > 0)
           : [{ team: 1, members: players }]
 
         return (
@@ -215,7 +215,7 @@ function HoyoPage() {
             {isTeams && (
               <div className="bg-[#dde7fb] rounded-[12px] px-4 py-2.5 flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#2a6fdb" strokeWidth="1.8" strokeLinecap="round"/><circle cx="9" cy="7" r="4" stroke="#2a6fdb" strokeWidth="1.8"/></svg>
-                <p className="text-[12px] text-[#2a6fdb] font-semibold">Scramble por parejas — un resultado por equipo</p>
+                <p className="text-[12px] text-[#2a6fdb] font-semibold">Scramble — todos juegan, se elige la mejor bola</p>
               </div>
             )}
             {teams.map(({ team, members }) => {
