@@ -170,30 +170,30 @@ function HoyoPage() {
 
           return (
             <div key={p.id} className="bg-white rounded-[18px] border border-[#e5e0d4] overflow-hidden">
-              {/* Row 1: score buttons */}
-              <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0" style={{ backgroundColor: p.avatar_color }}>
-                  {p.short}
-                </div>
-                <div className="w-16">
-                  <p className="text-[13px] font-semibold text-[#0e1a16] truncate">{p.name.split(' ')[0]}</p>
-                  <p className="font-mono text-[10px] text-[#6b7a72]">
+              {/* Row 1: player + score buttons */}
+              <div className="flex items-center gap-2.5 px-3 pt-3 pb-2.5">
+                <div className="flex-shrink-0 text-center" style={{ minWidth: 44 }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold mx-auto" style={{ backgroundColor: p.avatar_color }}>
+                    {p.short}
+                  </div>
+                  <p className="font-mono text-[9px] text-[#6b7a72] mt-0.5">
                     h{p.course_handicap}
                     {(() => { const rcv = strokesReceived(p.course_handicap, hole?.stroke_index ?? 18); return rcv > 0 ? <span className="text-[#1f8a5b] font-black"> +{rcv}</span> : null })()}
                   </p>
                 </div>
-                <div className="flex gap-1 flex-1">
+                <div className="flex gap-1.5 flex-1">
                   {scoreOpts.map(s => {
                     const d = s - par
                     const c = scoreColor(d)
                     const isSelected = sc.strokes === s
                     return (
                       <button key={s} onClick={() => setScore(p.id, s)}
-                        className="flex-1 h-11 rounded-[10px] font-mono text-[15px] font-black transition active:scale-95"
+                        className="flex-1 h-12 rounded-[12px] font-mono text-[16px] font-black transition active:scale-95"
                         style={{
                           backgroundColor: isSelected ? c.bg : '#f4f1e9',
-                          color: isSelected ? c.text : '#6b7a72',
-                          border: isSelected ? `2px solid ${c.text}44` : '2px solid transparent',
+                          color: isSelected ? c.text : '#9b9b8a',
+                          border: isSelected ? `2px solid ${c.text}55` : '2px solid transparent',
+                          fontSize: isSelected ? 18 : 16,
                         }}>
                         {s}
                       </button>
@@ -215,48 +215,46 @@ function HoyoPage() {
                 </div>
               </div>
 
-              {/* Row 2: stats — más grande */}
-              <div className="flex items-center gap-2 px-3 pb-3 border-t border-[#efebe1] pt-2.5">
-                {/* Putts */}
-                <div className="flex gap-1.5">
+              {/* Row 2: putts */}
+              <div className="flex items-center gap-2 px-3 py-2.5 border-t border-[#efebe1]">
+                <span className="font-mono text-[11px] text-[#6b7a72] w-12">Putts</span>
+                <div className="flex gap-2 flex-1">
                   {[0, 1, 2, 3, 4].map(n => (
                     <button key={n} onClick={() => set(p.id, 'putts', n)}
-                      className="w-9 h-9 rounded-full flex items-center justify-center font-mono text-[13px] font-bold transition active:scale-95"
+                      className="flex-1 h-11 rounded-[10px] font-mono text-[16px] font-bold transition active:scale-95"
                       style={{ backgroundColor: sc.putts === n ? '#0e1a16' : '#f4f1e9', color: sc.putts === n ? '#fff' : '#6b7a72' }}>
                       {n}
                     </button>
                   ))}
-                  <span className="font-mono text-[10px] text-[#6b7a72] self-center ml-0.5">P</span>
                 </div>
+              </div>
 
-                <div className="flex-1"/>
-
-                {/* Calle */}
+              {/* Row 3: toggles */}
+              <div className="flex items-center gap-2 px-3 pb-3 border-t border-[#efebe1] pt-2.5">
                 {par > 3 && (
                   <button onClick={() => set(p.id, 'fairway', !sc.fairway)}
-                    className="px-3 py-2 rounded-full text-[11px] font-bold transition"
+                    className="flex-1 py-2.5 rounded-[10px] text-[12px] font-bold transition"
                     style={{ backgroundColor: sc.fairway ? '#d9eedd' : '#f4f1e9', color: sc.fairway ? '#1f8a5b' : '#6b7a72' }}>
                     Calle
                   </button>
                 )}
-                {/* GIR */}
                 <button onClick={() => set(p.id, 'gir', !sc.gir)}
-                  className="px-3 py-2 rounded-full text-[11px] font-bold transition"
+                  className="flex-1 py-2.5 rounded-[10px] text-[12px] font-bold transition"
                   style={{ backgroundColor: sc.gir ? '#d9eedd' : '#f4f1e9', color: sc.gir ? '#1f8a5b' : '#6b7a72' }}>
                   GIR
                 </button>
-                {/* Búnker */}
                 <button onClick={() => set(p.id, 'in_bunker', !sc.in_bunker)}
-                  className="px-3 py-2 rounded-full text-[11px] font-bold transition"
+                  className="flex-1 py-2.5 rounded-[10px] text-[12px] font-bold transition"
                   style={{ backgroundColor: sc.in_bunker ? '#f6e6c4' : '#f4f1e9', color: sc.in_bunker ? '#9b6e1a' : '#6b7a72' }}>
-                  Búnk
+                  Búnker
                 </button>
-                {/* Penalti */}
-                <div className="flex items-center gap-1">
-                  <button onClick={() => set(p.id, 'penalties', Math.max(0, sc.penalties - 1))} className="w-7 h-7 rounded-full bg-[#f4f1e9] flex items-center justify-center text-[14px] text-[#6b7a72]">−</button>
-                  <span className="font-mono text-[13px] font-bold text-[#0e1a16] w-4 text-center">{sc.penalties}</span>
-                  <button onClick={() => set(p.id, 'penalties', sc.penalties + 1)} className="w-7 h-7 rounded-full bg-[#f4f1e9] flex items-center justify-center text-[14px] text-[#6b7a72]">+</button>
-                  <span className="font-mono text-[10px] text-[#6b7a72]">Pen</span>
+                <div className="flex items-center gap-1.5 flex-1 justify-center">
+                  <button onClick={() => set(p.id, 'penalties', Math.max(0, sc.penalties - 1))} className="w-8 h-8 rounded-full bg-[#f4f1e9] flex items-center justify-center text-[16px] text-[#6b7a72]">−</button>
+                  <div className="text-center">
+                    <span className="font-mono text-[14px] font-black text-[#0e1a16]">{sc.penalties}</span>
+                    <p className="font-mono text-[8px] text-[#6b7a72] leading-none">Pen</p>
+                  </div>
+                  <button onClick={() => set(p.id, 'penalties', sc.penalties + 1)} className="w-8 h-8 rounded-full bg-[#f4f1e9] flex items-center justify-center text-[16px] text-[#6b7a72]">+</button>
                 </div>
               </div>
 

@@ -149,28 +149,28 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
-      <div className="safe-top">
-        {/* Header — fijo y compacto */}
-        <div className="flex items-center justify-between px-[14px] pt-2 pb-1">
+      {/* Header pegado arriba sin padding extra */}
+      <div className="flex items-center justify-between px-[14px] pt-3 pb-1" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
           <div className="flex items-center gap-2">
-            <svg width="24" height="24" viewBox="0 0 64 64" fill="none">
+            <svg width="26" height="26" viewBox="0 0 64 64" fill="none">
               <circle cx="32" cy="32" r="30" fill="#9bc9a3"/>
               <path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round"/>
               <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16"/>
             </svg>
-            <span className="text-[22px] font-black tracking-tight text-[#0e1a16]">bogeyclub</span>
+            <span className="text-[26px] font-black tracking-tight text-[#0e1a16]">bogeyclub</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-[11px] text-[#6b7a72] tracking-wide uppercase">
               {new Date().toLocaleDateString('es-ES', { weekday: 'short' })} · {formatHandicap(profile.handicap_index)}
             </span>
             <Link href="/perfil">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: profile.avatar_color ?? '#1f8a5b' }}>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold" style={{ backgroundColor: profile.avatar_color ?? '#1f8a5b' }}>
                 {initials}
               </div>
             </Link>
           </div>
         </div>
+      <div>
 
         <div className="px-[14px] space-y-3 mt-2">
           {/* Hero dark card */}
