@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatHandicap } from '@/lib/golf'
 
@@ -14,21 +14,31 @@ const MODES = [
   { id: 'bbb',        name: 'Bingo Bango Bongo', desc: '3 puntos por hoyo. 2+ jugadores.' },
 ]
 
-function autoGroup(players: Player[], groupSize: number): Player[] {
-  // Sort by handicap, then distribute in snake order for balanced groups
+function autoGroupByHandicap(players: Player[], groupSize: number): Player[] {
   const sorted = [...players].sort((a, b) => a.handicap_index - b.handicap_index)
   const nGroups = Math.ceil(players.length / groupSize)
   return sorted.map((p, i) => {
-    // Snake distribution: 0,1,2,2,1,0,0,1,2...
     const row = Math.floor(i / nGroups)
     const col = row % 2 === 0 ? i % nGroups : nGroups - 1 - (i % nGroups)
     return { ...p, group: col + 1 }
   })
 }
 
-export default function NuevoTorneoPage() {
+function autoGroupRandom(players: Player[], groupSize: number): Player[] {
+  // Fisher-Yates shuffle
+  const shuffled = [...players]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled.map((p, i) => ({ ...p, group: Math.floor(i / groupSize) + 1 }))
+}
+
+function NuevoTorneoPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [step, setStep]       = useState<'config'|'grupos'>('config')
+  const [groupCriteria, setGroupCriteria] = useState<'handicap'|'random'>('handicap')
   const [name, setName]       = useState('')
   const [courses, setCourses] = useState<Course[]>([])
   const [courseId, setCourseId] = useState('')
@@ -51,10 +61,22 @@ export default function NuevoTorneoPage() {
         supabase.from('profiles').select('id,name,handicap_index,avatar_color').order('handicap_index'),
       ])
       setCourses(coursesRes.data ?? [])
-      const me = profilesRes.data?.find(p => p.id === user.id)
-      setAllProfiles((profilesRes.data ?? []).map(p => ({ ...p, group: 1 })))
-      if (me) setSelected([{ ...me, group: 1 }])
-      if (coursesRes.data?.length) setCourseId(coursesRes.data[0].id)
+      const allP = (profilesRes.data ?? []).map(p => ({ ...p, group: 1 }))
+      setAllProfiles(allP)
+
+      // Pre-select players from URL params
+      const preselectedIds = searchParams.get('players')?.split(',').filter(Boolean) ?? []
+      const preCoursId = searchParams.get('course')
+      if (preCoursId) setCourseId(preCoursId)
+      else if (coursesRes.data?.length) setCourseId(coursesRes.data[0].id)
+
+      if (preselectedIds.length > 0) {
+        const presels = allP.filter(p => preselectedIds.includes(p.id))
+        setSelected(presels.length > 0 ? presels : allP.filter(p => p.id === user.id))
+      } else {
+        const me = allP.find(p => p.id === user.id)
+        if (me) setSelected([me])
+      }
       setLoading(false)
     }
     load()
@@ -67,7 +89,9 @@ export default function NuevoTorneoPage() {
 
   function goToGroups() {
     if (!name || !courseId || selected.length < 2) return
-    const grouped = autoGroup(selected, groupSize)
+    const grouped = groupCriteria === 'handicap'
+      ? autoGroupByHandicap(selected, groupSize)
+      : autoGroupRandom(selected, groupSize)
     setGroups(grouped)
     setStep('grupos')
   }
@@ -147,6 +171,24 @@ export default function NuevoTorneoPage() {
                 </div>
               </div>
 
+              {/* Grouping criteria */}
+              <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
+                <p className="font-bold text-[14px] text-[#0e1a16] mb-3">Criterio de reparto</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: 'handicap', label: 'Por hándicap', desc: 'Grupos equilibrados' },
+                    { key: 'random',   label: 'Aleatorio',    desc: 'Reparto al azar' },
+                  ].map(c => (
+                    <button key={c.key} onClick={() => setGroupCriteria(c.key as 'handicap'|'random')}
+                      className="p-3 rounded-[12px] border text-left transition"
+                      style={{ backgroundColor: groupCriteria === c.key ? '#0e1a16' : '#f4f1e9', borderColor: groupCriteria === c.key ? '#0e1a16' : '#e5e0d4' }}>
+                      <p className="font-bold text-[13px]" style={{ color: groupCriteria === c.key ? '#fff' : '#0e1a16' }}>{c.label}</p>
+                      <p className="text-[11px] mt-0.5" style={{ color: groupCriteria === c.key ? 'rgba(255,255,255,0.6)' : '#6b7a72' }}>{c.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Group size */}
               <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4 flex items-center justify-between">
                 <div>
@@ -203,8 +245,15 @@ export default function NuevoTorneoPage() {
 
         {step === 'grupos' && (
           <>
-            <h1 className="text-[24px] font-black tracking-tight text-[#0e1a16] mb-1">Ajusta los grupos</h1>
-            <p className="text-[13px] text-[#6b7a72] mb-5">Grupos creados por hándicap. Arrastra o toca para mover jugadores.</p>
+            <div className="flex items-center justify-between mb-1">
+              <h1 className="text-[24px] font-black tracking-tight text-[#0e1a16]">Ajusta los grupos</h1>
+              <button onClick={() => setGroups(groupCriteria === 'handicap' ? autoGroupByHandicap(selected, groupSize) : autoGroupRandom(selected, groupSize))}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#6b7a72] active:opacity-70">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 3v5h5" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Redistribuir
+              </button>
+            </div>
+            <p className="text-[13px] text-[#6b7a72] mb-4">Toca los números de grupo para mover jugadores.</p>
 
             <div className="space-y-3 mb-5">
               {Array.from({ length: nGroups }, (_, gi) => {
@@ -255,4 +304,9 @@ export default function NuevoTorneoPage() {
       </div>
     </div>
   )
+}
+
+
+export default function Page() {
+  return <Suspense fallback={<div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>}><NuevoTorneoPage /></Suspense>
 }

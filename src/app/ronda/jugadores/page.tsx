@@ -81,8 +81,8 @@ function SeleccionarJugadoresPage() {
     const playerIds = selected.filter(p => !p.isGuest).map(p => p.id).join(',')
     const guestData = selected.filter(p => p.isGuest).map(p => `${p.name}:${p.handicap_index}`).join('|')
 
-    // Torneo mode → redirect to torneo creation with players pre-selected
-    if (torneoMode) {
+    // 5+ players → always go to torneo
+    if (selected.length >= 5) {
       const params = new URLSearchParams({
         course: courseId,
         players: playerIds,
