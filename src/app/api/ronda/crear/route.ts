@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
-  const { course_id, is_practice, player_ids, guests, modes, league_id, hole_mode } = await request.json()
+  const { course_id, is_practice, player_ids, guests, modes, league_id, hole_mode, scramble_teams } = await request.json()
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,18 +53,21 @@ export async function POST(request: Request) {
     ? await admin.from('profiles').select('id, handicap_index').in('id', player_ids)
     : { data: [] }
 
-  // For scramble, assign teams: pair players by handicap (best+worst = team 1, etc.)
+  // For scramble, use manual team assignments if provided
   const isScramble = (modes ?? []).includes('scramble')
-  const sortedProfiles = [...(profiles ?? [])].sort((a, b) => a.handicap_index - b.handicap_index)
   const teamMap: Record<string, number> = {}
-  if (isScramble && sortedProfiles.length >= 4) {
-    // 4+ players: team 1 = player 1 & last, team 2 = player 2 & second-to-last
-    sortedProfiles.forEach((p, i) => {
-      teamMap[p.id] = i % 2 === 0 ? 1 : 2
-    })
-  } else if (isScramble && sortedProfiles.length === 2) {
-    // 2 players: same team
-    sortedProfiles.forEach(p => { teamMap[p.id] = 1 })
+  if (isScramble) {
+    if (scramble_teams) {
+      // Parse "id1:1,id2:2,id3:1,id4:2"
+      String(scramble_teams).split(',').forEach((entry: string) => {
+        const [id, team] = entry.split(':')
+        if (id && team) teamMap[id] = parseInt(team)
+      })
+    } else {
+      // Fallback: auto-assign by handicap
+      const sorted = [...(profiles ?? [])].sort((a, b) => a.handicap_index - b.handicap_index)
+      sorted.forEach((p, i) => { teamMap[p.id] = i % 2 === 0 ? 1 : 2 })
+    }
   }
 
   // 4. Build player inserts

@@ -11,12 +11,14 @@ function SeleccionarModalidadPage() {
   const isPractice = searchParams.get('practice') === 'true'
   const playerIds  = searchParams.get('players')?.split(',').filter(Boolean) ?? []
   const guests     = searchParams.get('guests')?.split('|').filter(Boolean) ?? []
-  const leagueId   = searchParams.get('league') ?? ''
-  const holeMode   = searchParams.get('hole_mode') ?? 'all'
+  const leagueId    = searchParams.get('league') ?? ''
+  const holeMode    = searchParams.get('hole_mode') ?? 'all'
+  const preMode     = searchParams.get('mode') ?? ''
+  const scrambleTeams = searchParams.get('scramble_teams') ?? ''
   const totalPlayers = playerIds.length + guests.length
 
   // Stroke is always active
-  const [extras, setExtras] = useState<GameMode[]>([])
+  const [extras, setExtras] = useState<GameMode[]>(preMode === 'scramble' ? ['scramble'] : [])
   const [loading, setLoading] = useState(false)
   const [bet, setBet] = useState('')
   const [expandedMode, setExpandedMode] = useState<string | null>(null)
@@ -43,6 +45,20 @@ function SeleccionarModalidadPage() {
   async function handleStart() {
     setLoading(true)
     try {
+      // Scramble: if no teams assigned yet, go to parejas step
+      if (isScrambleSelected && !scrambleTeams) {
+        const params = new URLSearchParams({
+          course: courseId,
+          practice: String(isPractice),
+          players: playerIds.join(','),
+          hole_mode: holeMode,
+          ...(leagueId ? { league: leagueId } : {}),
+        })
+        router.push(`/ronda/parejas?${params}`)
+        setLoading(false)
+        return
+      }
+
       // Scramble replaces stroke — no individual player scores
       const modes = isScrambleSelected ? extras : ['stroke', ...extras]
       const res = await fetch('/api/ronda/crear', {
@@ -56,6 +72,7 @@ function SeleccionarModalidadPage() {
           modes,
           hole_mode: holeMode,
           ...(leagueId ? { league_id: leagueId } : {}),
+          ...(scrambleTeams ? { scramble_teams: scrambleTeams } : {}),
           ...(bet ? { notes: bet } : {}),
         }),
       })
@@ -72,6 +89,7 @@ function SeleccionarModalidadPage() {
           modes,
           hole_mode: holeMode,
           ...(leagueId ? { league_id: leagueId } : {}),
+          ...(scrambleTeams ? { scramble_teams: scrambleTeams } : {}),
         }))
       } catch {}
       router.push(`/tarjeta?round=${data.round_id}`)
