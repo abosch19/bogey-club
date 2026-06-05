@@ -39,7 +39,15 @@ function HoyoPage() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [roundModes, setRoundModes] = useState<string[]>([])
   const [holeAvg, setHoleAvg]   = useState<string | null>(null)
+  const [showTip, setShowTip]   = useState(holeNum === 1)
   const supabase = createClient()
+
+  useEffect(() => {
+    if (holeNum === 1) {
+      const t = setTimeout(() => setShowTip(false), 4000)
+      return () => clearTimeout(t)
+    }
+  }, [])
 
   useEffect(() => {
     if (!roundId) return
@@ -175,6 +183,16 @@ function HoyoPage() {
           </div>
         </div>
       </div>
+
+      {/* First-hole tip */}
+      {showTip && (
+        <div className="mx-[14px] rounded-[14px] px-4 py-3 mb-2 flex items-center justify-between" style={{backgroundColor:'#d9eedd'}}>
+          <p className="text-[12px] text-[#1f8a5b] font-semibold flex-1">
+            Toca el número de golpes para cada jugador. Guarda para avanzar al siguiente hoyo.
+          </p>
+          <button onClick={() => setShowTip(false)} className="text-[#1f8a5b] ml-2 text-[18px] leading-none">×</button>
+        </div>
+      )}
 
       {/* Players — compact 2-row per player */}
       <div className="flex-1 px-[14px] space-y-2 pb-28">

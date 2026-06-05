@@ -26,16 +26,16 @@ export default function LigaPage() {
       const { data: ls } = await supabase.from('leagues').select('*').in('id', ids).eq('active', true)
       setLeagues(ls ?? [])
 
-      // Fetch standings for each league
+      // Fetch standings for all leagues in parallel
       const stMap: Record<string, any[]> = {}
-      for (const l of ls ?? []) {
+      await Promise.all((ls ?? []).map(async (l) => {
         const { data: st } = await supabase
           .from('league_standings')
           .select('profile_id, total_points, rounds_played, wins, profiles(name, avatar_color)')
           .eq('league_id', l.id)
           .order('total_points', { ascending: false })
         stMap[l.id] = (st ?? []).map((s: any) => ({ ...s, name: s.profiles?.name ?? 'Jugador', avatar_color: s.profiles?.avatar_color ?? '#6b7a72' }))
-      }
+      }))
       setStandings(stMap)
       setLoading(false)
     }

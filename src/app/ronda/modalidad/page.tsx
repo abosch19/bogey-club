@@ -19,6 +19,7 @@ function SeleccionarModalidadPage() {
   const [extras, setExtras] = useState<GameMode[]>([])
   const [loading, setLoading] = useState(false)
   const [bet, setBet] = useState('')
+  const [expandedMode, setExpandedMode] = useState<string | null>(null)
 
   function isCompatible(mode: GameMode): boolean {
     if (mode === 'matchplay' || mode === 'matchplay_hcp') return totalPlayers === 2
@@ -30,9 +31,11 @@ function SeleccionarModalidadPage() {
   function toggleExtra(mode: GameMode) {
     if (extras.includes(mode)) {
       setExtras(extras.filter(m => m !== mode))
+      setExpandedMode(null)
     } else {
       if (extras.length >= 2) return
       setExtras([...extras, mode])
+      if (mode === 'wolf' || mode === 'bbb') setExpandedMode(mode)
     }
   }
 
@@ -155,11 +158,38 @@ function SeleccionarModalidadPage() {
                   </div>
                   <p className="text-[12px] mt-0.5" style={{ color: isSelected ? 'rgba(255,255,255,0.55)' : '#6b7a72' }}>{mode.desc}</p>
                 </div>
-                <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: isSelected ? '#1f8a5b' : 'transparent', border: isSelected ? 'none' : '1.5px solid #e5e0d4' }}>
-                  {isSelected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {isSelected && (mode.id === 'wolf' || mode.id === 'bbb') && (
+                    <button
+                      onClick={e => { e.stopPropagation(); setExpandedMode(expandedMode === mode.id ? null : mode.id) }}
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-white/70 font-bold text-[12px]"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+                      ?
+                    </button>
+                  )}
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: isSelected ? '#1f8a5b' : 'transparent', border: isSelected ? 'none' : '1.5px solid #e5e0d4' }}>
+                    {isSelected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </div>
                 </div>
               </div>
+              {isSelected && expandedMode === mode.id && (
+                <div className="mt-2 p-3 rounded-[10px] bg-[#f4f1e9]">
+                  {mode.id === 'wolf' && (
+                    <p className="text-[11px] text-[#6b7a72]">
+                      Cada hoyo, un jugador es el "lobo". Antes de empezar el hoyo decide:
+                      elegir pareja (y competir juntos) o ir solo (si gana, dobles puntos).
+                      Rota entre todos los jugadores.
+                    </p>
+                  )}
+                  {mode.id === 'bbb' && (
+                    <p className="text-[11px] text-[#6b7a72]">
+                      3 puntos por hoyo: Bingo (1º en llegar al green), Bango (más cerca del hoyo cuando todos están en green),
+                      Bongo (1º en embocar). Al anotar cada hoyo se reparten los 3 puntos.
+                    </p>
+                  )}
+                </div>
+              )}
             </button>
           )
         })}

@@ -136,6 +136,20 @@ function NuevoTorneoPage() {
             </h1>
 
             <div className="space-y-3">
+              {/* Torneo info card */}
+              <div className="bg-[#f4f1e9] rounded-[14px] p-4 mb-3">
+                <p className="font-bold text-[13px] text-[#0e1a16] mb-1">¿Qué es el Torneo del día?</p>
+                <p className="text-[12px] text-[#6b7a72] leading-relaxed">
+                  Juntáis a todos (6, 8, 10 jugadores...) y el sistema os divide en grupos equilibrados por hándicap.
+                  Cada grupo juega su partida y al final hay un leaderboard único para todos.
+                </p>
+                <div className="flex gap-3 mt-3 text-[11px] text-[#6b7a72]">
+                  <span className="bg-white rounded-full px-2 py-1 border border-[#e5e0d4]">Stableford</span>
+                  <span className="bg-white rounded-full px-2 py-1 border border-[#e5e0d4]">Stroke</span>
+                  <span className="bg-white rounded-full px-2 py-1 border border-[#e5e0d4]">BBB</span>
+                </div>
+              </div>
+
               {/* Name */}
               <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
                 <label className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2">Nombre del torneo</label>

@@ -34,9 +34,29 @@ export default function PerfilPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       setEmail(user.email ?? '')
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      if (!prof) { window.location.href = '/onboarding'; return }
-      setProfile(prof)
+
+      // Try sessionStorage cache for profile (30s TTL)
+      let prof: any = null
+      try {
+        const cachedProfile = sessionStorage.getItem('profile')
+        const cacheTime = sessionStorage.getItem('profileTime')
+        if (cachedProfile && cacheTime && Date.now() - parseInt(cacheTime) < 30000) {
+          prof = JSON.parse(cachedProfile)
+          setProfile(prof)
+        }
+      } catch {}
+
+      if (!prof) {
+        const { data: fetchedProf } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        if (!fetchedProf) { window.location.href = '/onboarding'; return }
+        prof = fetchedProf
+        setProfile(prof)
+        try {
+          sessionStorage.setItem('profile', JSON.stringify(prof))
+          sessionStorage.setItem('profileTime', Date.now().toString())
+        } catch {}
+      }
+
       const { data: d } = await supabase.from('whs_differentials').select('differential, played_at, is_counting').eq('profile_id', user.id).order('played_at', { ascending: false }).limit(20)
       setDiffs((d ?? []).map(x => ({ diff: x.differential, played_at: x.played_at, counting: x.is_counting })))
       setLoading(false)
@@ -142,6 +162,32 @@ export default function PerfilPage() {
           {/* Rounds detail */}
           {diffs.length > 0 && (
             <>
+              {/* WHS explanation card */}
+              <div className="bg-[#f4f1e9] rounded-[14px] px-4 py-3 mb-4">
+                <p className="font-bold text-[13px] text-[#0e1a16] mb-2">¿Qué es el índice WHS?</p>
+                <p className="text-[12px] text-[#6b7a72] leading-relaxed mb-2">
+                  Es tu nivel de juego oficial. Se calcula con tus mejores {nCount || 8} diferenciales
+                  de las últimas {diffs.length || 20} rondas.
+                  Cuanto más bajo, mejor juegas.
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { range: '0–5', label: 'Scratch', color: '#2a6fdb' },
+                    { range: '6–18', label: 'Amateur', color: '#1f8a5b' },
+                    { range: '19–54', label: 'Alto', color: '#9b6e1a' },
+                  ].map(r => (
+                    <div key={r.label} className="bg-white rounded-[10px] p-2 border border-[#e5e0d4]">
+                      <p className="font-mono text-[10px] font-bold" style={{color: r.color}}>{r.range}</p>
+                      <p className="text-[10px] text-[#6b7a72] mt-0.5">{r.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[11px] text-[#6b7a72] mt-2">
+                  <strong className="text-[#0e1a16]">Diferencial</strong> = (113 / Slope) × (Golpes − CR del campo).
+                  Los {nCount || 8} mejores de los últimos {diffs.length || 20} calculan tu índice.
+                </p>
+              </div>
+
               <div className="flex items-baseline justify-between mb-2">
                 <p className="font-bold text-[13px] text-[#0e1a16]">Partidos del cálculo</p>
               </div>
