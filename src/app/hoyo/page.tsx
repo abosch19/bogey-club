@@ -202,74 +202,100 @@ function HoyoPage() {
         </div>
       )}
 
-      {/* SCRAMBLE MODE — one score per team */}
+      {/* SCRAMBLE MODE — una tarjeta por equipo, un resultado compartido */}
       {roundModes.includes('scramble') && (() => {
-        const isTeams = players.length >= 4 && players.some(p => p.course_handicap === 2)
-        // 2 players = one team together; 4+ = two teams (team stored in course_handicap)
-        const teams = isTeams
-          ? [1, 2].map(t => ({ team: t, members: players.filter(p => p.course_handicap === t) })).filter(t => t.members.length > 0)
-          : [{ team: 1, members: players }]
+        // 2 players = 1 equipo (juegan juntos)
+        // 4+ players = 2 equipos (course_handicap guarda el nº de equipo: 1 o 2)
+        const hasTwoTeams = players.length >= 4 && players.some(p => p.course_handicap === 2)
+        const teams = hasTwoTeams
+          ? [
+              { team: 1, color: '#1f8a5b', light: '#d9eedd', members: players.filter(p => p.course_handicap === 1) },
+              { team: 2, color: '#2a6fdb', light: '#dde7fb', members: players.filter(p => p.course_handicap === 2) },
+            ].filter(t => t.members.length > 0)
+          : [{ team: 0, color: '#1f8a5b', light: '#d9eedd', members: players }]
+
+        const scoreOpts = [par - 1, par, par + 1, par + 2, par + 3, par + 4].filter(s => s >= 1)
 
         return (
-          <div className="flex-1 px-[14px] space-y-3 pb-28">
-            {isTeams && (
-              <div className="bg-[#dde7fb] rounded-[12px] px-4 py-2.5 flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#2a6fdb" strokeWidth="1.8" strokeLinecap="round"/><circle cx="9" cy="7" r="4" stroke="#2a6fdb" strokeWidth="1.8"/></svg>
-                <p className="text-[12px] text-[#2a6fdb] font-semibold">Scramble — todos juegan, se elige la mejor bola</p>
-              </div>
-            )}
-            {teams.map(({ team, members }) => {
-              const teamKey = `team_${team}`
-              const sc = get(members[0]?.id ?? teamKey)
+          <div className="flex-1 px-[14px] pb-28 space-y-3">
+            {/* Info chip */}
+            <div className="bg-[#d9eedd] rounded-[12px] px-4 py-2.5 flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 3v18"/><path d="M5 4h11l-2 3 2 3H5"/></svg>
+              <p className="text-[12px] text-[#1f8a5b] font-semibold">
+                {hasTwoTeams ? 'Scramble por equipos — un resultado por equipo' : 'Scramble — todos juegan, anotar el mejor resultado del equipo'}
+              </p>
+            </div>
+
+            {teams.map(({ team, color, light, members }) => {
+              // Use first member's score as the team score
+              const sc = get(members[0]?.id ?? '')
               const delta = sc.strokes != null ? sc.strokes - par : null
               const colors = delta != null ? scoreColor(delta) : null
-              const scoreOpts = [par - 1, par, par + 1, par + 2, par + 3, par + 4].filter(s => s >= 1)
 
               return (
-                <div key={team} className="bg-white rounded-[18px] border-2 overflow-hidden"
-                  style={{ borderColor: team === 1 ? '#1f8a5b' : '#2a6fdb' }}>
-                  {/* Team header */}
-                  <div className="flex items-center gap-2 px-3 py-2 border-b border-[#efebe1]"
-                    style={{ backgroundColor: team === 1 ? '#d9eedd' : '#dde7fb' }}>
-                    <div className="flex -space-x-1">
+                <div key={team} className="bg-white rounded-[22px] overflow-hidden border-2"
+                  style={{ borderColor: color }}>
+                  {/* Equipo header */}
+                  <div className="flex items-center gap-3 px-4 py-3" style={{ backgroundColor: light }}>
+                    <div className="flex -space-x-2">
                       {members.map(m => (
-                        <div key={m.id} className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white" style={{ backgroundColor: m.avatar_color }}>{m.short}</div>
+                        <div key={m.id} className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold border-[3px] border-white"
+                          style={{ backgroundColor: m.avatar_color }}>
+                          {m.short}
+                        </div>
                       ))}
                     </div>
-                    <p className="font-bold text-[13px]" style={{ color: team === 1 ? '#1f8a5b' : '#2a6fdb' }}>
-                      {isTeams ? `Equipo ${team}` : 'Resultado equipo'}
-                    </p>
+                    <div className="flex-1">
+                      <p className="font-black text-[15px]" style={{ color }}>
+                        {hasTwoTeams ? `Equipo ${team}` : members.map(m => m.name.split(' ')[0]).join(' & ')}
+                      </p>
+                      <p className="font-mono text-[10px] text-[#6b7a72]">
+                        {members.map(m => `h${m.course_handicap}`).join(' · ')}
+                      </p>
+                    </div>
+                    {/* Score chip actual */}
                     {colors && sc.strokes != null && (
-                      <div className="ml-auto w-8 h-8 rounded-[8px] flex items-center justify-center font-mono text-[13px] font-black" style={{ backgroundColor: colors.bg, color: colors.text }}>
-                        {sc.strokes}
+                      <div className="w-12 h-12 rounded-[12px] flex flex-col items-center justify-center font-mono font-black"
+                        style={{ backgroundColor: colors.bg, color: colors.text }}>
+                        <span className="text-[20px] leading-none">{sc.strokes}</span>
+                        <span className="text-[9px] leading-none mt-0.5">{delta! > 0 ? `+${delta}` : delta === 0 ? 'E' : delta}</span>
                       </div>
                     )}
                   </div>
+
                   {/* Score buttons */}
-                  <div className="flex gap-1.5 px-3 pt-3 pb-2">
-                    {scoreOpts.map(s => {
-                      const d = s - par
-                      const c = scoreColor(d)
-                      const isSel = sc.strokes === s
-                      return (
-                        <button key={s} onClick={() => {
-                          // Set same score for all team members
-                          members.forEach(m => setScore(m.id, s))
-                        }}
-                          className="flex-1 h-12 rounded-[12px] transition active:scale-95 flex flex-col items-center justify-center"
-                          style={{ backgroundColor: isSel ? c.bg : '#f4f1e9', color: isSel ? c.text : '#9b9b8a', border: isSel ? `2px solid ${c.text}55` : '2px solid transparent' }}>
-                          <span className="font-mono font-black" style={{ fontSize: isSel ? 18 : 16 }}>{s}</span>
-                        </button>
-                      )
-                    })}
+                  <div className="px-4 pt-4 pb-3">
+                    <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-2">Resultado del equipo · hoyo {holeNum}</p>
+                    <div className="flex gap-2">
+                      {scoreOpts.map(s => {
+                        const d = s - par
+                        const c = scoreColor(d)
+                        const isSel = sc.strokes === s
+                        return (
+                          <button key={s}
+                            onClick={() => members.forEach(m => setScore(m.id, s))}
+                            className="flex-1 h-14 rounded-[14px] transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                            style={{
+                              backgroundColor: isSel ? c.bg : '#f4f1e9',
+                              color: isSel ? c.text : '#9b9b8a',
+                              border: isSel ? `2px solid ${c.text}55` : '2px solid transparent',
+                            }}>
+                            <span className="font-mono font-black leading-none" style={{ fontSize: isSel ? 20 : 17 }}>{s}</span>
+                            {isSel && <span className="font-mono text-[9px] leading-none opacity-70">{d > 0 ? `+${d}` : d === 0 ? 'par' : `${d}`}</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
+
                   {/* Putts */}
-                  <div className="flex items-center gap-2 px-3 pb-3 border-t border-[#efebe1] pt-2">
+                  <div className="flex items-center gap-2 px-4 pb-4 border-t border-[#efebe1] pt-3">
                     <span className="font-mono text-[11px] text-[#6b7a72] w-12">Putts</span>
                     <div className="flex gap-2 flex-1">
                       {[0,1,2,3,4].map(n => (
-                        <button key={n} onClick={() => members.forEach(m => set(m.id, 'putts', n))}
-                          className="flex-1 h-9 rounded-[10px] font-mono text-[13px] font-bold transition"
+                        <button key={n}
+                          onClick={() => members.forEach(m => set(m.id, 'putts', n))}
+                          className="flex-1 h-10 rounded-[10px] font-mono text-[14px] font-bold transition active:scale-95"
                           style={{ backgroundColor: sc.putts === n ? '#0e1a16' : '#f4f1e9', color: sc.putts === n ? '#fff' : '#6b7a72' }}>
                           {n}
                         </button>
