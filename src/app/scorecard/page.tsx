@@ -6,6 +6,7 @@ import { Id } from '@convex/_generated/dataModel'
 import { scoreChipClass, stablefordPts, strokesReceived } from '@/lib/golf'
 import { Link } from 'react-router-dom'
 import { Drawer } from 'vaul'
+import { HoleSheet } from '@/components/HoleSheet'
 
 type Player = { id: string; name: string; avatar_color: string; course_handicap: number; is_guest: boolean }
 type Hole   = { hole_number: number; par: number; stroke_index: number }
@@ -30,6 +31,7 @@ function TarjetaPage() {
   const [betInit, setBetInit]     = useState(false)
   const [showBetModal, setShowBetModal] = useState(false)
   const [savingBet, setSavingBet] = useState(false)
+  const [editHole, setEditHole]   = useState<number | null>(null)
 
   const addPlayerMut    = useMutation(api.roundPlayers.add)
   const removePlayerMut = useMutation(api.roundPlayers.remove)
@@ -171,7 +173,7 @@ function TarjetaPage() {
                         const d = s != null ? s - h.par : null
                         return (
                           <td key={h.hole_number} className="py-1.5 px-0.5">
-                            <button onClick={() => navigate(`/hole?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block active:scale-95 transition">
+                            <button onClick={() => setEditHole(h.hole_number)} className="mx-auto block active:scale-95 transition">
                               {s != null
                                 ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
                                 : <span className="text-[#c4bfb5] text-[13px]">·</span>}
@@ -202,7 +204,7 @@ function TarjetaPage() {
                         const pts = s ? stablefordPts(s, h.par, rcv) : null
                         return (
                           <td key={h.hole_number} className="py-1 px-0.5">
-                            <button onClick={() => navigate(`/hole?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block text-center relative">
+                            <button onClick={() => setEditHole(h.hole_number)} className="mx-auto block text-center relative">
                               {/* Asterisks for handicap strokes */}
                               {rcv > 0 && (
                                 <div className="flex justify-center gap-px mb-0.5">
@@ -458,17 +460,26 @@ function TarjetaPage() {
             <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">FIRMAR →</span>
           </Link>
         ) : nextHole ? (
-          <Link to={`/hole?round=${roundId}&hole=${nextHole.hole_number}`}
+          <button onClick={() => setEditHole(nextHole.hole_number)}
             className="flex items-center justify-between w-full px-5 py-4 rounded-full font-bold text-[14px] text-white"
             style={{ backgroundColor: '#0e1a16' }}>
-            <div>
+            <div className="text-left">
               <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Siguiente</p>
               <p className="text-[15px] font-black">Hoyo {nextHole.hole_number} · par {nextHole.par}</p>
             </div>
             <span className="text-[#0e1a16] text-[12px] font-black px-3 py-1.5 rounded-full" style={{ backgroundColor: '#1f8a5b' }}>+ ANOTAR</span>
-          </Link>
+          </button>
         ) : null}
       </div>
+
+      {/* Hole scoring bottom sheet */}
+      <HoleSheet
+        roundId={roundId}
+        holeNumber={editHole}
+        onClose={() => setEditHole(null)}
+        onChangeHole={setEditHole}
+        onFinish={() => { setEditHole(null); navigate(`/summary?round=${roundId}`) }}
+      />
     </div>
   )
 }

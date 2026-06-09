@@ -1,9 +1,9 @@
-import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { strokesReceived, stablefordPts } from '@/lib/golf'
+import { Drawer } from 'vaul'
 
 type Hole   = { hole_number: number; par: number; stroke_index: number; distance_m: number | null }
 type Player = { id: string; name: string; short: string; avatar_color: string; course_handicap: number }
@@ -16,8 +16,6 @@ type PlayerScore = {
   penalties: number
 }
 
-const SPINNER = <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
-
 function scoreColor(delta: number): { bg: string; text: string } {
   if (delta <= -1) return { bg: '#dde7fb', text: '#2a6fdb' }
   if (delta === 0)  return { bg: '#d9eedd', text: '#1f8a5b' }
@@ -25,12 +23,15 @@ function scoreColor(delta: number): { bg: string; text: string } {
   return { bg: '#fadcd6', text: '#a83a25' }
 }
 
-function HoyoPage() {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const roundId  = searchParams.get('round') ?? ''
-  const holeNum  = parseInt(searchParams.get('hole') ?? '1')
+type HoleEntryProps = {
+  roundId: string
+  holeNum: number
+  onClose: () => void
+  onChangeHole: (n: number) => void
+  onFinish: () => void
+}
 
+function HoleEntry({ roundId, holeNum, onClose, onChangeHole, onFinish }: HoleEntryProps) {
   const data = useQuery(api.rounds.get, roundId ? { roundId: roundId as Id<'rounds'> } : 'skip')
   const holeHistory = useQuery(api.scores.myHoleHistory, { hole_number: holeNum })
   const saveHoleMut = useMutation(api.scores.saveHole)
@@ -103,30 +104,30 @@ function HoyoPage() {
       setSaving(false); alert('Error guardando'); return
     }
     const isLast = holeNum >= totalHoles
-    if (isLast) navigate(`/summary?round=${roundId}`)
-    else navigate(`/hole?round=${roundId}&hole=${holeNum + 1}`)
+    if (isLast) onFinish()
+    else onChangeHole(holeNum + 1)
   }
 
-  if (!hole) return SPINNER
+  if (!hole) return <div className="py-16 flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
   const par = hole.par
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] flex flex-col">
+    <div className="flex flex-col">
       {/* Header */}
-      <div className="safe-top px-[14px] pt-3 pb-2">
+      <div className="px-[14px] pb-2">
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate(`/scorecard?round=${roundId}`)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Tarjeta
+          <button onClick={onClose} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Cerrar
           </button>
           <div className="flex items-center gap-3">
             {holeNum > 1 && (
-              <button onClick={() => navigate(`/hole?round=${roundId}&hole=${holeNum - 1}`)} className="font-mono text-[11px] text-[#6b7a72]">← H{holeNum - 1}</button>
+              <button onClick={() => onChangeHole(holeNum - 1)} className="font-mono text-[11px] text-[#6b7a72]">← H{holeNum - 1}</button>
             )}
             <span className="font-mono text-[10px] text-[#6b7a72] uppercase">HOYO {String(holeNum).padStart(2,'0')} / {totalHoles}</span>
             {holeNum < totalHoles && (
-              <button onClick={() => navigate(`/hole?round=${roundId}&hole=${holeNum + 1}`)} className="font-mono text-[11px] text-[#6b7a72]">H{holeNum + 1} →</button>
+              <button onClick={() => onChangeHole(holeNum + 1)} className="font-mono text-[11px] text-[#6b7a72]">H{holeNum + 1} →</button>
             )}
           </div>
         </div>
@@ -136,7 +137,7 @@ function HoyoPage() {
       <div className="mx-[14px] rounded-[18px] px-4 py-3 mb-3 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
         <div className="absolute right-[-20px] top-[-20px] w-[80px] h-[80px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.85 }}/>
         <div className="flex items-center gap-4 mb-3 relative">
-          <div className="text-[56px] font-black text-white leading-none">{holeNum}</div>
+          <Drawer.Title asChild><div className="text-[56px] font-black text-white leading-none">{holeNum}</div></Drawer.Title>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-white text-[18px] font-black">Par {par}</span>
@@ -182,8 +183,6 @@ function HoyoPage() {
 
       {/* SCRAMBLE MODE — una tarjeta por equipo, un resultado compartido */}
       {roundModes.includes('scramble') && (() => {
-        // 2 players = 1 equipo (juegan juntos)
-        // 4+ players = 2 equipos (course_handicap guarda el nº de equipo: 1 o 2)
         const hasTwoTeams = players.length >= 4 && players.some(p => p.course_handicap === 2)
         const teams = hasTwoTeams
           ? [
@@ -195,8 +194,7 @@ function HoyoPage() {
         const scoreOpts = [par - 1, par, par + 1, par + 2, par + 3, par + 4].filter(s => s >= 1)
 
         return (
-          <div className="flex-1 px-[14px] pb-28 space-y-3">
-            {/* Info chip */}
+          <div className="px-[14px] space-y-3">
             <div className="bg-[#d9eedd] rounded-[12px] px-4 py-2.5 flex items-center gap-2">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 3v18"/><path d="M5 4h11l-2 3 2 3H5"/></svg>
               <p className="text-[12px] text-[#1f8a5b] font-semibold">
@@ -205,7 +203,6 @@ function HoyoPage() {
             </div>
 
             {teams.map(({ team, color, light, members }) => {
-              // Use first member's score as the team score
               const sc = get(members[0]?.id ?? '')
               const delta = sc.strokes != null ? sc.strokes - par : null
               const colors = delta != null ? scoreColor(delta) : null
@@ -213,7 +210,6 @@ function HoyoPage() {
               return (
                 <div key={team} className="bg-white rounded-[22px] overflow-hidden border-2"
                   style={{ borderColor: color }}>
-                  {/* Equipo header */}
                   <div className="flex items-center gap-3 px-4 py-3" style={{ backgroundColor: light }}>
                     <div className="flex -space-x-2">
                       {members.map(m => (
@@ -231,7 +227,6 @@ function HoyoPage() {
                         {members.map(m => `h${m.course_handicap}`).join(' · ')}
                       </p>
                     </div>
-                    {/* Score chip actual */}
                     {colors && sc.strokes != null && (
                       <div className="w-12 h-12 rounded-[12px] flex flex-col items-center justify-center font-mono font-black"
                         style={{ backgroundColor: colors.bg, color: colors.text }}>
@@ -241,7 +236,6 @@ function HoyoPage() {
                     )}
                   </div>
 
-                  {/* Score buttons */}
                   <div className="px-4 pt-4 pb-3">
                     <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-2">Resultado del equipo · hoyo {holeNum}</p>
                     <div className="flex gap-2">
@@ -266,7 +260,6 @@ function HoyoPage() {
                     </div>
                   </div>
 
-                  {/* Putts */}
                   <div className="flex items-center gap-2 px-4 pb-4 border-t border-[#efebe1] pt-3">
                     <span className="font-mono text-[11px] text-[#6b7a72] w-12">Putts</span>
                     <div className="flex gap-2 flex-1">
@@ -288,19 +281,17 @@ function HoyoPage() {
       })()}
 
       {/* Players — compact 2-row per player (non-scramble) */}
-      {!roundModes.includes('scramble') && <div className="flex-1 px-[14px] space-y-2 pb-28">
+      {!roundModes.includes('scramble') && <div className="px-[14px] space-y-2">
         {players.map(p => {
           const sc = get(p.id)
           const delta = sc.strokes != null ? sc.strokes - par : null
           const colors = delta != null ? scoreColor(delta) : null
           const isExp = expanded[p.id]
 
-          // Score button options: par-1, par, par+1, par+2, par+3, par+4
           const scoreOpts = [par - 1, par, par + 1, par + 2, par + 3, par + 4].filter(s => s >= 1)
 
           return (
             <div key={p.id} className="bg-white rounded-[18px] border border-[#e5e0d4] overflow-hidden">
-              {/* Row 1: player + score buttons */}
               <div className="flex items-center gap-2.5 px-3 pt-3 pb-2.5">
                 <div className="flex-shrink-0 text-center" style={{ minWidth: 44 }}>
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold mx-auto" style={{ backgroundColor: p.avatar_color }}>
@@ -335,7 +326,6 @@ function HoyoPage() {
                     )
                   })}
                 </div>
-                {/* Selected chip + expand */}
                 <div className="flex items-center gap-1.5">
                   {colors && sc.strokes != null && (
                     <div className="w-8 h-8 rounded-[8px] flex items-center justify-center font-mono text-[12px] font-black" style={{ backgroundColor: colors.bg, color: colors.text }}>
@@ -350,7 +340,6 @@ function HoyoPage() {
                 </div>
               </div>
 
-              {/* Row 2: putts */}
               <div className="flex items-center gap-2 px-3 py-2.5 border-t border-[#efebe1]">
                 <span className="font-mono text-[11px] text-[#6b7a72] w-12">Putts</span>
                 <div className="flex gap-2 flex-1">
@@ -364,7 +353,6 @@ function HoyoPage() {
                 </div>
               </div>
 
-              {/* Row 3: toggles */}
               <div className="flex items-center gap-2 px-3 pb-3 border-t border-[#efebe1] pt-2.5">
                 {par > 3 && (
                   <button onClick={() => set(p.id, 'fairway', !sc.fairway)}
@@ -393,7 +381,6 @@ function HoyoPage() {
                 </div>
               </div>
 
-              {/* Expanded: custom stroke input */}
               {isExp && (
                 <div className="px-3 pb-3 pt-1 border-t border-[#efebe1]">
                   <div className="flex items-center gap-3">
@@ -409,15 +396,8 @@ function HoyoPage() {
         })}
       </div>}
 
-      {/* CTAs */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-3 bg-gradient-to-t from-[#f4f1e9] to-transparent space-y-2">
-        {/* Ver tarjeta — botón grande y accesible */}
-        <button onClick={() => navigate(`/scorecard?round=${roundId}`)}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-full font-semibold text-[14px] border-2 border-[#e5e0d4] bg-white text-[#0e1a16] transition active:scale-[0.98]">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#0e1a16" strokeWidth="1.8"/><path d="M3 10h18M9 5v14" stroke="#0e1a16" strokeWidth="1.8"/></svg>
-          Ver tarjeta completa
-        </button>
-        {/* Guardar y continuar */}
+      {/* CTA */}
+      <div className="px-[14px] pt-3 pb-2 mt-2 sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent">
         <button onClick={handleSave} disabled={saving}
           className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] text-white transition active:scale-[0.98] disabled:opacity-60"
           style={{ backgroundColor: '#0e1a16' }}>
@@ -431,6 +411,34 @@ function HoyoPage() {
   )
 }
 
-export default function Page() {
-  return <Suspense fallback={SPINNER}><HoyoPage /></Suspense>
+type HoleSheetProps = {
+  roundId: string
+  holeNumber: number | null
+  onClose: () => void
+  onChangeHole: (n: number) => void
+  onFinish: () => void
+}
+
+/** Bottom sheet for scoring a single hole (replaces the old /hole screen). */
+export function HoleSheet({ roundId, holeNumber, onClose, onChangeHole, onFinish }: HoleSheetProps) {
+  return (
+    <Drawer.Root open={holeNumber !== null} onOpenChange={(o) => { if (!o) onClose() }}>
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 z-50" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }} />
+        <Drawer.Content aria-describedby={undefined} className="fixed bottom-0 inset-x-0 z-50 mx-auto max-w-[430px] bg-white rounded-t-[28px] pt-3 pb-6 max-h-[94vh] overflow-y-auto outline-none">
+          <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-3" />
+          {holeNumber !== null && (
+            <HoleEntry
+              key={holeNumber}
+              roundId={roundId}
+              holeNum={holeNumber}
+              onClose={onClose}
+              onChangeHole={onChangeHole}
+              onFinish={onFinish}
+            />
+          )}
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
+  )
 }
