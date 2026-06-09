@@ -9,7 +9,7 @@ type Hole   = { hole_number: number; par: number; stroke_index: number; distance
 type Player = { id: string; name: string; short: string; avatar_color: string; course_handicap: number }
 type PlayerScore = {
   strokes: number | null
-  putts: number
+  putts: number | null
   fairway: boolean | null
   gir: boolean
   in_bunker: boolean
@@ -26,21 +26,16 @@ function scoreColor(delta: number): { bg: string; text: string } {
 type HoleEntryProps = {
   roundId: string
   holeNum: number
-  onClose: () => void
   onChangeHole: (n: number) => void
   onFinish: () => void
 }
 
-function HoleEntry({ roundId, holeNum, onClose, onChangeHole, onFinish }: HoleEntryProps) {
+function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps) {
   const data = useQuery(api.rounds.get, roundId ? { roundId: roundId as Id<'rounds'> } : 'skip')
-  const holeHistory = useQuery(api.scores.myHoleHistory, { hole_number: holeNum })
   const saveHoleMut = useMutation(api.scores.saveHole)
 
-  const holeAvg = holeHistory && holeHistory.length > 0
-    ? (holeHistory.reduce((a, s) => a + s, 0) / holeHistory.length).toFixed(1)
-    : null
-
   const [scores, setScores]     = useState<Record<string, PlayerScore>>({})
+  const [initialScores, setInitialScores] = useState<Record<string, PlayerScore>>({})
   const [scoresInit, setScoresInit] = useState(false)
   const [saving, setSaving]     = useState(false)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -72,15 +67,21 @@ function HoleEntry({ roundId, holeNum, onClose, onChangeHole, onFinish }: HoleEn
   if (data && !scoresInit) {
     const init: Record<string, PlayerScore> = {}
     for (const s of (data.scores ?? []).filter(s => s.hole_number === holeNum)) {
-      init[s.profileId] = { strokes: s.strokes ?? null, putts: s.putts ?? 2, fairway: s.fairway ?? null, gir: s.gir ?? false, in_bunker: s.in_bunker ?? false, penalties: s.penalties ?? 0 }
+      init[s.profileId] = { strokes: s.strokes ?? null, putts: s.putts ?? null, fairway: s.fairway ?? null, gir: s.gir ?? false, in_bunker: s.in_bunker ?? false, penalties: s.penalties ?? 0 }
     }
     setScores(init)
+    setInitialScores(init)
     setScoresInit(true)
   }
 
   function get(pid: string): PlayerScore {
-    return scores[pid] ?? { strokes: null, putts: 2, fairway: null, gir: false, in_bunker: false, penalties: 0 }
+    return scores[pid] ?? { strokes: null, putts: null, fairway: null, gir: false, in_bunker: false, penalties: 0 }
   }
+
+  // Can only save when something changed AND at least one stroke was entered.
+  const hasChanges = JSON.stringify(scores) !== JSON.stringify(initialScores)
+  const hasStrokes = Object.values(scores).some(s => s.strokes != null)
+  const canSave = hasChanges && hasStrokes
 
   function set(pid: string, field: keyof PlayerScore, value: PlayerScore[typeof field]) {
     setScores(prev => ({ ...prev, [pid]: { ...get(pid), [field]: value } }))
@@ -115,59 +116,19 @@ function HoleEntry({ roundId, holeNum, onClose, onChangeHole, onFinish }: HoleEn
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="px-[14px] pb-2">
-        <div className="flex items-center justify-between">
-          <button onClick={onClose} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Cerrar
-          </button>
-          <div className="flex items-center gap-3">
-            {holeNum > 1 && (
-              <button onClick={() => onChangeHole(holeNum - 1)} className="font-mono text-[11px] text-[#6b7a72]">← H{holeNum - 1}</button>
-            )}
-            <span className="font-mono text-[10px] text-[#6b7a72] uppercase">HOYO {String(holeNum).padStart(2,'0')} / {totalHoles}</span>
-            {holeNum < totalHoles && (
-              <button onClick={() => onChangeHole(holeNum + 1)} className="font-mono text-[11px] text-[#6b7a72]">H{holeNum + 1} →</button>
-            )}
-          </div>
-        </div>
+      <div className="px-[14px] pb-2 text-center">
+        <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-[0.15em]">Hoyo {holeNum} de {totalHoles}</span>
       </div>
 
-      {/* Compact hole hero */}
-      <div className="mx-[14px] rounded-[18px] px-4 py-3 mb-3 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
+      {/* Hole hero — solo lo esencial */}
+      <div className="mx-[14px] rounded-[18px] px-4 py-4 mb-3 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
         <div className="absolute right-[-20px] top-[-20px] w-[80px] h-[80px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.85 }}/>
-        <div className="flex items-center gap-4 mb-3 relative">
-          <Drawer.Title asChild><div className="text-[56px] font-black text-white leading-none">{holeNum}</div></Drawer.Title>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-white text-[18px] font-black">Par {par}</span>
-              <span className="font-mono text-[10px] text-white/50">Hcp {hole.stroke_index}</span>
-              {hole.distance_m && <span className="font-mono text-[10px] text-white/50">{hole.distance_m}m</span>}
-            </div>
-            {holeAvg && (
-              <span className="font-mono text-[10px] text-white/50">Tu media: {holeAvg}</span>
-            )}
+        <div className="flex items-center gap-4 relative">
+          <Drawer.Title asChild><div className="text-[52px] font-black text-white leading-none">{holeNum}</div></Drawer.Title>
+          <div className="flex items-baseline gap-2">
+            <span className="text-white text-[22px] font-black">Par {par}</span>
+            <span className="font-mono text-[11px] text-white/50">Hcp {hole.stroke_index}</span>
           </div>
-        </div>
-        {/* Par neto por jugador — lo más importante */}
-        <div className="relative flex gap-2 flex-wrap">
-          {players.map(p => {
-            const rcv = strokesReceived(p.course_handicap, hole.stroke_index)
-            const netPar = par + rcv
-            return (
-              <div key={p.id} className="flex items-center gap-2 px-3 py-2 rounded-[10px] flex-1"
-                style={{ backgroundColor: rcv > 0 ? 'rgba(31,138,91,0.3)' : 'rgba(255,255,255,0.08)' }}>
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: p.avatar_color }}>{p.short}</div>
-                <div>
-                  <p className="font-mono text-[9px] text-white/50 uppercase leading-none">{p.name.split(' ')[0]}</p>
-                  <p className="font-black text-white leading-none mt-0.5">
-                    Par neto <span style={{ color: rcv > 0 ? '#1f8a5b' : '#fff' }}>{netPar}</span>
-                    {rcv > 0 && <span className="font-mono text-[9px] text-[#1f8a5b] ml-1">(+{rcv})</span>}
-                  </p>
-                </div>
-              </div>
-            )
-          })}
         </div>
       </div>
 
@@ -396,16 +357,25 @@ function HoleEntry({ roundId, holeNum, onClose, onChangeHole, onFinish }: HoleEn
         })}
       </div>}
 
-      {/* CTA */}
+      {/* CTA — guardar con cambio de hoyo a los lados */}
       <div className="px-[14px] pt-3 pb-2 mt-2 sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent">
-        <button onClick={handleSave} disabled={saving}
-          className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] text-white transition active:scale-[0.98] disabled:opacity-60"
-          style={{ backgroundColor: '#0e1a16' }}>
-          <span>{holeNum >= totalHoles ? 'Guardar y ver resumen' : `Guardar · hoyo ${holeNum + 1}`}</span>
-          <span className="px-3 py-1.5 rounded-full text-[12px] font-black text-[#0e1a16]" style={{ backgroundColor: '#1f8a5b' }}>
-            {saving ? '...' : holeNum >= totalHoles ? 'FIN' : `H${holeNum + 1} →`}
-          </span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => onChangeHole(holeNum - 1)} disabled={holeNum <= 1}
+            aria-label="Hoyo anterior"
+            className="w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center bg-[#f4f1e9] border border-[#e5e0d4] transition active:scale-95 disabled:opacity-30">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#0e1a16" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <button onClick={handleSave} disabled={saving || !canSave}
+            className="flex-1 h-14 rounded-full flex items-center justify-center font-bold text-[15px] text-white transition active:scale-[0.98] disabled:opacity-40"
+            style={{ backgroundColor: '#0e1a16' }}>
+            {saving ? 'Guardando…' : holeNum >= totalHoles ? 'Guardar y firmar' : 'Guardar'}
+          </button>
+          <button onClick={() => onChangeHole(holeNum + 1)} disabled={holeNum >= totalHoles}
+            aria-label="Hoyo siguiente"
+            className="w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center bg-[#f4f1e9] border border-[#e5e0d4] transition active:scale-95 disabled:opacity-30">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#0e1a16" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -432,7 +402,6 @@ export function HoleSheet({ roundId, holeNumber, onClose, onChangeHole, onFinish
               key={holeNumber}
               roundId={roundId}
               holeNum={holeNumber}
-              onClose={onClose}
               onChangeHole={onChangeHole}
               onFinish={onFinish}
             />
