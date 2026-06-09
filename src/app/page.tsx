@@ -65,7 +65,7 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
         </tr>
       </thead>
       <tbody>
-        {players.map((p, pi) => {
+        {players.map(p => {
           const byHole = new Map(p.hole_scores.map(s => [s.hole_number, s.strokes]))
           const blockScores = holes.map(h => byHole.get(h.hole_number)).filter((s): s is number => s != null)
           const blockTotal = blockScores.length ? blockScores.reduce((a, s) => a + s, 0) : null
@@ -73,7 +73,7 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
             ? holes.reduce((a, h) => { const s = byHole.get(h.hole_number); return s != null ? a + (s - h.par) : a }, 0)
             : null
           return (
-            <tr key={pi} className="border-t border-[#efebe1]">
+            <tr key={p.name} className="border-t border-[#efebe1]">
               <td className="px-2 py-1.5">
                 <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: p.avatar_color }}>
                   {p.name[0]?.toUpperCase()}
@@ -106,8 +106,10 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
   )
 }
 
+// Picked once per app load — the quote only rotates daily anyway.
+const DAILY_QUOTE = GOLF_QUOTES[new Date().getDate() % GOLF_QUOTES.length]
+
 export default function HomePage() {
-  const dailyQuote = GOLF_QUOTES[new Date().getDate() % GOLF_QUOTES.length]
   const data = useQuery(api.home.dashboard)
   const recentRounds = useQuery(api.home.recentRounds) ?? []
   const navigate = useNavigate()
@@ -167,8 +169,8 @@ export default function HomePage() {
 
               {/* Frase del día — entre el texto y los botones */}
               <div className="rounded-[12px] px-3 py-2.5 mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                <p className="text-white/70 text-[12px] italic leading-snug">"{dailyQuote.text}"</p>
-                <p className="font-mono text-[9px] text-white/35 mt-1">— {dailyQuote.author}</p>
+                <p className="text-white/70 text-[12px] italic leading-snug">"{DAILY_QUOTE.text}"</p>
+                <p className="font-mono text-[9px] text-white/35 mt-1">— {DAILY_QUOTE.author}</p>
               </div>
 
               <div className="flex gap-2">
@@ -225,11 +227,11 @@ export default function HomePage() {
                 {/* Colored hole bars */}
                 <div className="flex-1 pb-1">
                   <div className="flex gap-[3px]">
-                    {Array.from({ length: activeRound.total_holes }, (_, i) => {
-                      const hs = activeRound.hole_scores.find(s => s.hole_number === i + 1)
+                    {Array.from({ length: activeRound.total_holes }, (_, i) => i + 1).map(holeNum => {
+                      const hs = activeRound.hole_scores.find(s => s.hole_number === holeNum)
                       const delta = hs ? hs.strokes - hs.par : null
                       return (
-                        <div key={i} className="flex-1 h-[26px] rounded-[4px]" style={{ backgroundColor: holeBarColor(delta) }}/>
+                        <div key={holeNum} className="flex-1 h-[26px] rounded-[4px]" style={{ backgroundColor: holeBarColor(delta) }}/>
                       )
                     })}
                   </div>

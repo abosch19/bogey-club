@@ -10,14 +10,8 @@ async function buildActiveRound(ctx: QueryCtx, me: Doc<'profiles'>) {
     .query('round_players')
     .withIndex('by_profile', (q) => q.eq('profileId', me._id))
     .collect()
-  let active: Doc<'rounds'> | null = null
-  for (const rp of myRps) {
-    const r = await ctx.db.get(rp.roundId)
-    if (r && r.status === 'active') {
-      active = r
-      break
-    }
-  }
+  const myRounds = await Promise.all(myRps.map((rp) => ctx.db.get(rp.roundId)))
+  const active = myRounds.find((r) => r && r.status === 'active') ?? null
   if (!active) return null
 
   const course = await ctx.db.get(active.courseId)
@@ -67,14 +61,8 @@ async function buildActiveLeague(ctx: QueryCtx, me: Doc<'profiles'>) {
     .query('league_players')
     .withIndex('by_profile', (q) => q.eq('profileId', me._id))
     .collect()
-  let league: Doc<'leagues'> | null = null
-  for (const m of memberships) {
-    const l = await ctx.db.get(m.leagueId)
-    if (l && l.active) {
-      league = l
-      break
-    }
-  }
+  const myLeagues = await Promise.all(memberships.map((m) => ctx.db.get(m.leagueId)))
+  const league = myLeagues.find((l) => l && l.active) ?? null
   if (!league) return null
 
   const standings = (
@@ -115,7 +103,10 @@ async function buildActiveLeague(ctx: QueryCtx, me: Doc<'profiles'>) {
 
 async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
   const allHoles = await ctx.db.query('holes').collect()
-  const feed: Array<{
+  const holeByCourseAndNumber = new Map(
+    allHoles.map((h) => [`${h.courseId}:${h.hole_number}`, h]),
+  )
+  type FeedItem = {
     id: string
     round_id: Id<'rounds'>
     name: string
@@ -124,81 +115,86 @@ async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
     detail: string
     time: string
     badge: string | null
-  }> = []
-
-  for (const r of recent) {
-    const course = await ctx.db.get(r.courseId)
-    const rps = await ctx.db
-      .query('round_players')
-      .withIndex('by_round', (q) => q.eq('roundId', r._id))
-      .collect()
-    const rp = rps.find((x) => x.profileId)
-    if (!rp || !rp.profileId) continue
-    const p = await ctx.db.get(rp.profileId)
-    const pid = rp.profileId
-
-    const days = Math.floor((Date.now() - new Date(r.date).getTime()) / 86400000)
-    const timeStr = days <= 0 ? 'hoy' : days === 1 ? 'ayer' : `hace ${days} días`
-
-    const playerScores = (
-      await ctx.db
-        .query('scores')
-        .withIndex('by_round', (q) => q.eq('roundId', r._id))
-        .collect()
-    ).filter((s) => s.profileId === pid)
-    const total = playerScores.reduce((a, s) => a + (s.strokes ?? 0), 0)
-
-    let birdieHole: number | null = null
-    let eagleHole: number | null = null
-    for (const s of playerScores) {
-      const holeInfo = allHoles.find(
-        (h) => h.courseId === r.courseId && h.hole_number === s.hole_number,
-      )
-      if (!holeInfo || s.strokes == null) continue
-      const delta = s.strokes - holeInfo.par
-      if (delta <= -2 && eagleHole === null) eagleHole = s.hole_number
-      else if (delta === -1 && birdieHole === null) birdieHole = s.hole_number
-    }
-
-    let action = 'completó una ronda'
-    let badge: string | null = null
-    if (eagleHole !== null) {
-      action = `hizo eagle en el hoyo ${eagleHole}`
-      badge = '🦅'
-    } else if (birdieHole !== null) {
-      action = `hizo birdie en el hoyo ${birdieHole}`
-      badge = '🐦'
-    } else if (total > 0) {
-      const allScores = await ctx.db
-        .query('scores')
-        .withIndex('by_profile', (q) => q.eq('profileId', pid))
-        .collect()
-      const roundTotals: Record<string, number> = {}
-      for (const s of allScores) {
-        if (s.strokes == null) continue
-        roundTotals[s.roundId] = (roundTotals[s.roundId] ?? 0) + s.strokes
-      }
-      const pastBests = Object.entries(roundTotals)
-        .filter(([rid]) => rid !== r._id)
-        .map(([, v]) => v)
-        .filter((v) => v > 0)
-      if (pastBests.length > 0 && total <= Math.min(...pastBests)) {
-        action = 'batió su récord personal!'
-        badge = 'PB'
-      }
-    }
-
-    feed.push({
-      id: r._id + pid,
-      round_id: r._id,
-      name: p?.name ?? 'Jugador',
-      avatar_color: p?.avatar_color ?? '#6b7a72',
-      action,
-      detail: `${course?.name ?? 'Campo'} · ${timeStr}`,
-      time: timeStr,
-      badge,
-    })
   }
+
+  // Each round's feed entry is built independently; Promise.all preserves the
+  // original recent[] order. Rounds with no scoring player resolve to null.
+  const feedResults = await Promise.all(
+    recent.map(async (r): Promise<FeedItem | null> => {
+      const [course, rps] = await Promise.all([
+        ctx.db.get(r.courseId),
+        ctx.db
+          .query('round_players')
+          .withIndex('by_round', (q) => q.eq('roundId', r._id))
+          .collect(),
+      ])
+      const rp = rps.find((x) => x.profileId)
+      if (!rp || !rp.profileId) return null
+      const p = await ctx.db.get(rp.profileId)
+      const pid = rp.profileId
+
+      const days = Math.floor((Date.now() - new Date(r.date).getTime()) / 86400000)
+      const timeStr = days <= 0 ? 'hoy' : days === 1 ? 'ayer' : `hace ${days} días`
+
+      const playerScores = (
+        await ctx.db
+          .query('scores')
+          .withIndex('by_round', (q) => q.eq('roundId', r._id))
+          .collect()
+      ).filter((s) => s.profileId === pid)
+      const total = playerScores.reduce((a, s) => a + (s.strokes ?? 0), 0)
+
+      let birdieHole: number | null = null
+      let eagleHole: number | null = null
+      for (const s of playerScores) {
+        const holeInfo = holeByCourseAndNumber.get(`${r.courseId}:${s.hole_number}`)
+        if (!holeInfo || s.strokes == null) continue
+        const delta = s.strokes - holeInfo.par
+        if (delta <= -2 && eagleHole === null) eagleHole = s.hole_number
+        else if (delta === -1 && birdieHole === null) birdieHole = s.hole_number
+      }
+
+      let action = 'completó una ronda'
+      let badge: string | null = null
+      if (eagleHole !== null) {
+        action = `hizo eagle en el hoyo ${eagleHole}`
+        badge = '🦅'
+      } else if (birdieHole !== null) {
+        action = `hizo birdie en el hoyo ${birdieHole}`
+        badge = '🐦'
+      } else if (total > 0) {
+        const allScores = await ctx.db
+          .query('scores')
+          .withIndex('by_profile', (q) => q.eq('profileId', pid))
+          .collect()
+        const roundTotals: Record<string, number> = {}
+        for (const s of allScores) {
+          if (s.strokes == null) continue
+          roundTotals[s.roundId] = (roundTotals[s.roundId] ?? 0) + s.strokes
+        }
+        const pastBests: number[] = []
+        for (const [rid, v] of Object.entries(roundTotals)) {
+          if (rid !== r._id && v > 0) pastBests.push(v)
+        }
+        if (pastBests.length > 0 && total <= Math.min(...pastBests)) {
+          action = 'batió su récord personal!'
+          badge = 'PB'
+        }
+      }
+
+      return {
+        id: r._id + pid,
+        round_id: r._id,
+        name: p?.name ?? 'Jugador',
+        avatar_color: p?.avatar_color ?? '#6b7a72',
+        action,
+        detail: `${course?.name ?? 'Campo'} · ${timeStr}`,
+        time: timeStr,
+        badge,
+      }
+    }),
+  )
+  const feed = feedResults.filter((item): item is FeedItem => item !== null)
   return feed.slice(0, 4)
 }
 
@@ -266,11 +262,13 @@ export const recentRounds = query({
 
     return await Promise.all(
       completed.map(async (r) => {
-        const course = await ctx.db.get(r.courseId)
-        const courseHoles = await ctx.db
-          .query('holes')
-          .withIndex('by_course', (q) => q.eq('courseId', r.courseId))
-          .collect()
+        const [course, courseHoles] = await Promise.all([
+          ctx.db.get(r.courseId),
+          ctx.db
+            .query('holes')
+            .withIndex('by_course', (q) => q.eq('courseId', r.courseId))
+            .collect(),
+        ])
         const parOf = (hole: number) => courseHoles.find((h) => h.hole_number === hole)?.par ?? 4
 
         const rps = await ctx.db

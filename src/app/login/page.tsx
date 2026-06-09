@@ -51,10 +51,11 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
+              <label htmlFor="login-email" className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
                 Email
               </label>
               <input
+                id="login-email" aria-label="Email"
                 type="email" value={email} onChange={e => setEmail(e.target.value)}
                 required placeholder="tu@email.com"
                 className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
@@ -62,10 +63,11 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
+              <label htmlFor="login-password" className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
                 Contraseña
               </label>
               <input
+                id="login-password" aria-label="Contraseña"
                 type="password" value={password} onChange={e => setPassword(e.target.value)}
                 required placeholder="••••••••"
                 className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"

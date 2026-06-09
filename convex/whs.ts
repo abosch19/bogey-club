@@ -67,15 +67,17 @@ export async function recalcProfile(ctx: MutationCtx, profileId: Id<'profiles'>)
     pool: typeof everyDiff,
     field: 'handicap_index' | 'handicap_index_pp',
   ) => {
-    const last20 = [...pool].sort((a, b) => (a.played_at < b.played_at ? 1 : -1)).slice(0, 20)
+    const last20 = pool.toSorted((a, b) => (a.played_at < b.played_at ? 1 : -1)).slice(0, 20)
     if (last20.length === 0) return
     const nCount = countingRounds(last20.length)
-    const sorted = [...last20].sort((a, b) => a.differential - b.differential)
+    const sorted = last20.toSorted((a, b) => a.differential - b.differential)
     const countingIds = new Set(sorted.slice(0, nCount).map((d) => d._id))
-    for (const d of last20) {
-      const counting = countingIds.has(d._id)
-      if (d.is_counting !== counting) await ctx.db.patch(d._id, { is_counting: counting })
-    }
+    await Promise.all(
+      last20.map(async (d) => {
+        const counting = countingIds.has(d._id)
+        if (d.is_counting !== counting) await ctx.db.patch(d._id, { is_counting: counting })
+      }),
+    )
     const newIndex = calcHandicapIndex(last20.map((d) => d.differential))
     if (newIndex !== null) await ctx.db.patch(profileId, { [field]: newIndex })
   }

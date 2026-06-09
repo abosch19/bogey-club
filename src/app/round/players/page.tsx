@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useMemo, useRef, Suspense } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
@@ -13,27 +13,28 @@ function SeleccionarJugadoresPage() {
   const isPractice    = searchParams.get('practice') === 'true'
   const leagueId      = searchParams.get('league') ?? ''
   const holeMode      = searchParams.get('hole_mode') ?? 'all'
-  const prefillPlayers = searchParams.get('prefill_players')?.split(',').filter(Boolean) ?? []
+  const prefillPlayers = useMemo(
+    () => searchParams.get('prefill_players')?.split(',').filter(Boolean) ?? [],
+    [searchParams],
+  )
 
   const me = useQuery(api.profiles.me)
   const profiles = useQuery(api.players.all)
   const loading = me === undefined || profiles === undefined
 
-  const allPlayers: Player[] = (profiles ?? []).filter(p => p._id !== me?._id).map(p => ({
-    _id: p._id,
-    name: p.name,
-    handicap_index: p.handicap_index,
-    avatar_color: p.avatar_color,
-  }))
+  const allPlayers: Player[] = (profiles ?? []).flatMap(p =>
+    p._id === me?._id
+      ? []
+      : [{ _id: p._id, name: p.name, handicap_index: p.handicap_index, avatar_color: p.avatar_color }],
+  )
 
   const [selected, setSelected] = useState<Player[]>([])
-  const [selectionInit, setSelectionInit] = useState(false)
+  const selectionInit = useRef(false)
   const [search, setSearch] = useState('')
 
   // Guest form
-  const [showGuestForm, setShowGuestForm] = useState(false)
-  const [guestName, setGuestName] = useState('')
-  const [guestHcp, setGuestHcp] = useState('18')
+  const [guest, setGuest] = useState({ show: false, name: '', hcp: '18' })
+  const { show: showGuestForm, name: guestName, hcp: guestHcp } = guest
 
   const meParsed: Player | null = me
     ? { _id: me._id, name: me.name, handicap_index: me.handicap_index, avatar_color: me.avatar_color }
@@ -41,18 +42,20 @@ function SeleccionarJugadoresPage() {
 
   // Initialize selection once me + profiles are loaded
   useEffect(() => {
-    if (selectionInit || !me || !profiles) return
+    if (selectionInit.current || !me || !profiles) return
+    selectionInit.current = true
     const mePlayer: Player = { _id: me._id, name: me.name, handicap_index: me.handicap_index, avatar_color: me.avatar_color }
     if (prefillPlayers.length > 0) {
-      const prefilled = profiles
-        .filter(p => prefillPlayers.includes(p._id))
-        .map(p => ({ _id: p._id, name: p.name, handicap_index: p.handicap_index, avatar_color: p.avatar_color }))
+      const prefilled = profiles.flatMap(p =>
+        prefillPlayers.includes(p._id)
+          ? [{ _id: p._id, name: p.name, handicap_index: p.handicap_index, avatar_color: p.avatar_color }]
+          : [],
+      )
       setSelected(prefilled.length > 0 ? prefilled : [mePlayer])
     } else {
       setSelected([mePlayer])
     }
-    setSelectionInit(true)
-  }, [me, profiles, selectionInit, prefillPlayers])
+  }, [me, profiles, prefillPlayers])
 
   function togglePlayer(p: Player) {
     const totalWithMe = selected.length // me is always included
@@ -67,23 +70,21 @@ function SeleccionarJugadoresPage() {
   async function addGuest() {
     if (!guestName.trim()) return
     const hcp = parseFloat(guestHcp) || 18
-    const guest: Player = {
+    const guestPlayer: Player = {
       _id: `guest_${Date.now()}`,
       name: guestName.trim(),
       handicap_index: hcp,
       avatar_color: avatarColor(selected.length),
       isGuest: true,
     }
-    setSelected([...selected, guest])
-    setGuestName('')
-    setGuestHcp('18')
-    setShowGuestForm(false)
+    setSelected([...selected, guestPlayer])
+    setGuest({ show: false, name: '', hcp: '18' })
   }
 
   function handleNext() {
     if (selected.length === 0) return
-    const playerIds = selected.filter(p => !p.isGuest).map(p => p._id).join(',')
-    const guestData = selected.filter(p => p.isGuest).map(p => `${p.name}:${p.handicap_index}`).join('|')
+    const playerIds = selected.flatMap(p => (p.isGuest ? [] : [p._id])).join(',')
+    const guestData = selected.flatMap(p => (p.isGuest ? [`${p.name}:${p.handicap_index}`] : [])).join('|')
 
     // 5+ players → torneo automático
     if (selected.length >= 5) {
@@ -118,7 +119,7 @@ function SeleccionarJugadoresPage() {
     <div className="min-h-screen bg-[#f4f1e9] flex flex-col">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-5">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Atrás
           </button>
@@ -141,7 +142,7 @@ function SeleccionarJugadoresPage() {
                 </div>
                 <span className="text-[12px] font-semibold text-[#0e1a16]">{p.name.split(' ')[0]}</span>
                 {p._id !== meParsed?._id && (
-                  <button onClick={() => togglePlayer(p)} className="text-[#6b7a72] hover:text-[#c6432d] ml-0.5">
+                  <button type="button" onClick={() => togglePlayer(p)} aria-label={`Quitar a ${p.name}`} className="text-[#6b7a72] hover:text-[#c6432d] ml-0.5">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                   </button>
                 )}
@@ -154,6 +155,7 @@ function SeleccionarJugadoresPage() {
         <div className="flex items-center gap-3 bg-white rounded-full px-4 py-3 border border-[#e5e0d4]">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#6b7a72" strokeWidth="1.8"/><path d="M16 16L21 21" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round"/></svg>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar amigos…"
+            aria-label="Buscar amigos"
             className="flex-1 bg-transparent text-[14px] text-[#0e1a16] placeholder-[#a09a90] outline-none"/>
         </div>
       </div>
@@ -161,7 +163,7 @@ function SeleccionarJugadoresPage() {
       <div className="flex-1 px-[14px] pb-32 space-y-2 overflow-y-auto">
         {/* Guest button */}
         {!showGuestForm && selected.length < 4 && (
-          <button onClick={() => setShowGuestForm(true)}
+          <button type="button" onClick={() => setGuest(g => ({ ...g, show: true }))}
             className="w-full flex items-center gap-3 bg-white rounded-[16px] p-4 border border-dashed border-[#c4bfb5] text-[#6b7a72] text-[14px] font-semibold transition hover:border-[#1f8a5b] hover:text-[#1f8a5b]">
             <div className="w-11 h-11 rounded-full border-2 border-dashed border-current flex items-center justify-center text-[20px] font-light">+</div>
             Añadir invitado
@@ -172,13 +174,15 @@ function SeleccionarJugadoresPage() {
         {showGuestForm && (
           <div className="bg-white rounded-[16px] p-4 border border-[#1f8a5b]">
             <p className="text-[13px] font-bold text-[#0e1a16] mb-3">Datos del invitado</p>
-            <input value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Nombre"
+            <input value={guestName} onChange={e => setGuest(g => ({ ...g, name: e.target.value }))} placeholder="Nombre"
+              aria-label="Nombre del invitado"
               className="w-full border border-[#e5e0d4] rounded-[12px] px-4 py-2.5 text-[14px] outline-none focus:border-[#1f8a5b] mb-2"/>
-            <input value={guestHcp} onChange={e => setGuestHcp(e.target.value)} placeholder="Hándicap" type="number" min="0" max="54"
+            <input value={guestHcp} onChange={e => setGuest(g => ({ ...g, hcp: e.target.value }))} placeholder="Hándicap" type="number" min="0" max="54"
+              aria-label="Hándicap del invitado"
               className="w-full border border-[#e5e0d4] rounded-[12px] px-4 py-2.5 text-[14px] outline-none focus:border-[#1f8a5b] mb-3"/>
             <div className="flex gap-2">
-              <button onClick={() => setShowGuestForm(false)} className="flex-1 py-2.5 rounded-full border border-[#e5e0d4] text-[13px] font-semibold text-[#6b7a72]">Cancelar</button>
-              <button onClick={addGuest} className="flex-1 py-2.5 rounded-full text-[13px] font-bold text-[#0e1a16]" style={{ backgroundColor: '#1f8a5b' }}>Añadir</button>
+              <button type="button" onClick={() => setGuest(g => ({ ...g, show: false }))} className="flex-1 py-2.5 rounded-full border border-[#e5e0d4] text-[13px] font-semibold text-[#6b7a72]">Cancelar</button>
+              <button type="button" onClick={addGuest} className="flex-1 py-2.5 rounded-full text-[13px] font-bold text-[#0e1a16]" style={{ backgroundColor: '#1f8a5b' }}>Añadir</button>
             </div>
           </div>
         )}
@@ -190,7 +194,7 @@ function SeleccionarJugadoresPage() {
           const isSel = !!selected.find(s => s._id === p._id)
           const isDisabled = false // sin límite
           return (
-            <button key={p._id} onClick={() => !isDisabled && togglePlayer(p)}
+            <button type="button" key={p._id} onClick={() => !isDisabled && togglePlayer(p)}
               className={`w-full flex items-center gap-3 rounded-[16px] p-4 border transition-all ${isDisabled ? 'opacity-40' : 'active:scale-[0.99]'}`}
               style={{ backgroundColor: isSel ? '#0e1a16' : '#ffffff', borderColor: isSel ? '#0e1a16' : '#e5e0d4' }}>
               <div className="w-11 h-11 rounded-full flex items-center justify-center text-white text-[15px] font-bold flex-shrink-0"
@@ -223,7 +227,7 @@ function SeleccionarJugadoresPage() {
             </p>
           </div>
         )}
-        <button onClick={handleNext} disabled={selected.length === 0}
+        <button type="button" onClick={handleNext} disabled={selected.length === 0}
           className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-40"
           style={{ backgroundColor: selected.length >= 5 ? '#2a6fdb' : '#1f8a5b', color: selected.length >= 5 ? '#fff' : '#0e1a16' }}>
           <span>{selected.length} jugador{selected.length !== 1 ? 'es' : ''}</span>

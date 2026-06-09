@@ -1,0 +1,6 @@
+{
+  "deadCode": false,
+  "ignore": {
+    "files": ["convex/**"]
+  }
+}

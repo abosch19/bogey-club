@@ -34,20 +34,21 @@ export const listForUser = query({
       .query('league_players')
       .withIndex('by_profile', (q) => q.eq('profileId', me._id))
       .collect()
-    const out = []
-    for (const m of memberships) {
-      const league = await ctx.db.get(m.leagueId)
-      if (!league || !league.active) continue
-      const standings = await standingsFor(ctx, league._id)
-      const jornadas = (
-        await ctx.db
-          .query('league_rounds')
-          .withIndex('by_league', (q) => q.eq('leagueId', league._id))
-          .collect()
-      ).length
-      out.push({ league, standings, jornadas, is_admin: m.is_admin })
-    }
-    return out
+    const out = await Promise.all(
+      memberships.map(async (m) => {
+        const league = await ctx.db.get(m.leagueId)
+        if (!league || !league.active) return null
+        const [standings, jornadaRows] = await Promise.all([
+          standingsFor(ctx, league._id),
+          ctx.db
+            .query('league_rounds')
+            .withIndex('by_league', (q) => q.eq('leagueId', league._id))
+            .collect(),
+        ])
+        return { league, standings, jornadas: jornadaRows.length, is_admin: m.is_admin }
+      }),
+    )
+    return out.filter((x) => x !== null)
   },
 })
 
@@ -82,17 +83,18 @@ export const create = mutation({
 export const remove = mutation({
   args: { league_id: v.id('leagues') },
   handler: async (ctx, { league_id }) => {
-    const me = await requireProfile(ctx)
-    const league = await ctx.db.get(league_id)
+    const [me, league] = await Promise.all([requireProfile(ctx), ctx.db.get(league_id)])
     if (!league || league.createdBy !== me._id) throw new Error('Sin permisos')
 
-    for (const table of ['league_standings', 'league_players', 'league_rounds'] as const) {
-      const rows = await ctx.db
-        .query(table)
-        .withIndex('by_league', (q) => q.eq('leagueId', league_id))
-        .collect()
-      for (const r of rows) await ctx.db.delete(r._id)
-    }
+    await Promise.all(
+      (['league_standings', 'league_players', 'league_rounds'] as const).map(async (table) => {
+        const rows = await ctx.db
+          .query(table)
+          .withIndex('by_league', (q) => q.eq('leagueId', league_id))
+          .collect()
+        await Promise.all(rows.map((r) => ctx.db.delete(r._id)))
+      }),
+    )
     await ctx.db.delete(league_id)
     return { ok: true }
   },

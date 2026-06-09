@@ -1,20 +1,3 @@
-// ─── Score labels ────────────────────────────────────────────
-export function scoreLabel(strokes: number, par: number): string {
-  if (strokes === 1) return 'Hoyo en uno'
-  const d = strokes - par
-  if (d <= -3) return 'Albatros'
-  if (d === -2) return 'Eagle'
-  if (d === -1) return 'Birdie'
-  if (d === 0)  return 'Par'
-  if (d === 1)  return 'Bogey'
-  if (d === 2)  return 'Doble'
-  return `+${d}`
-}
-
-export function scoreDelta(strokes: number, par: number): number {
-  return strokes - par
-}
-
 // Returns Tailwind classes for score chip
 export function scoreChipClass(delta: number): string {
   if (delta <= -1) return 'bg-[#dde7fb] text-[#2a6fdb]'
@@ -67,32 +50,9 @@ export function calcHandicapIndex(differentials: number[]): number | null {
   const n = differentials.length
   const count = countingRounds(n)
   if (count === 0) return null
-  const sorted = [...differentials].sort((a, b) => a - b)
-  const best = sorted.slice(0, count)
+  const best = differentials.toSorted((a, b) => a - b).slice(0, count)
   const avg = best.reduce((a, b) => a + b, 0) / count
   return parseFloat(avg.toFixed(1))
-}
-
-// ─── Liga ────────────────────────────────────────────────────
-export const F1_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
-
-export function leagueScorers(nPlayers: number): number {
-  return Math.ceil(nPlayers / 2)
-}
-
-export function assignLeaguePoints(
-  results: { profileId: string; score: number; handicap: number }[],
-  nPlayers: number
-): { profileId: string; points: number }[] {
-  const scorers = leagueScorers(nPlayers)
-  // Sort: lowest score wins (stroke play), tiebreak by handicap (lower = better)
-  const sorted = [...results].sort((a, b) =>
-    a.score !== b.score ? a.score - b.score : a.handicap - b.handicap
-  )
-  return sorted.map((r, i) => ({
-    profileId: r.profileId,
-    points: i < scorers ? (F1_POINTS[i] ?? 0) : 0,
-  }))
 }
 
 // ─── Formatting ──────────────────────────────────────────────
@@ -113,7 +73,7 @@ export function getInitials(name: string): string {
 }
 
 // Player avatar colors (cycle)
-export const AVATAR_COLORS = [
+const AVATAR_COLORS = [
   '#2a6fdb', '#1f8a5b', '#d4a24a', '#c6432d',
   '#7a3fc4', '#0f9c7a', '#e84a7a', '#3aa0c4',
 ]

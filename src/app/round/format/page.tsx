@@ -103,7 +103,7 @@ function SeleccionarModalidadPage() {
     <div className="min-h-screen bg-[#f4f1e9] flex flex-col">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-5">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Atrás
           </button>
@@ -149,18 +149,27 @@ function SeleccionarModalidadPage() {
           const isSelected = extras.includes(mode.id)
           const isMaxed = extras.length >= 2 && !isSelected
 
+          const isDisabled = !compatible || isMaxed
+          const activate = () => { if (!isDisabled) toggleExtra(mode.id) }
           return (
-            <button
+            <div
               key={mode.id}
-              onClick={() => compatible && !isMaxed && toggleExtra(mode.id)}
-              disabled={!compatible || isMaxed}
-              className="w-full text-left rounded-[16px] p-4 border transition-all active:scale-[0.99] disabled:opacity-35"
+              className="relative w-full text-left rounded-[16px] p-4 border transition-all active:scale-[0.99]"
               style={{
                 backgroundColor: isSelected ? '#0e1a16' : '#ffffff',
                 borderColor: isSelected ? '#0e1a16' : '#e5e0d4',
+                opacity: isDisabled ? 0.35 : 1,
               }}
             >
-              <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={activate}
+                disabled={isDisabled}
+                aria-label={mode.name}
+                className="absolute inset-0 rounded-[16px]"
+                style={{ cursor: isDisabled ? 'default' : 'pointer' }}
+              />
+              <div className="relative pointer-events-none flex items-center gap-3">
                 <div className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.12)' : mode.color + '22' }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isSelected ? '#fff' : mode.color} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -182,8 +191,10 @@ function SeleccionarModalidadPage() {
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {isSelected && (mode.id === 'wolf' || mode.id === 'bbb') && (
                     <button
+                      type="button"
+                      aria-label="Cómo funciona esta modalidad"
                       onClick={e => { e.stopPropagation(); setExpandedMode(expandedMode === mode.id ? null : mode.id) }}
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-white/70 font-bold text-[12px]"
+                      className="pointer-events-auto relative w-6 h-6 rounded-full flex items-center justify-center text-white/70 font-bold text-[12px]"
                       style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
                       ?
                     </button>
@@ -211,7 +222,7 @@ function SeleccionarModalidadPage() {
                   )}
                 </div>
               )}
-            </button>
+            </div>
           )
         })}
         {/* Hint: añade Stableford si solo tienes Stroke */}
@@ -226,10 +237,11 @@ function SeleccionarModalidadPage() {
 
         {/* Apuesta */}
         <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
-          <label className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2">
+          <label htmlFor="apuesta" className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2">
             Apuesta (opcional)
           </label>
           <input
+            id="apuesta" aria-label="Apuesta (opcional)"
             value={bet}
             onChange={e => setBet(e.target.value)}
             placeholder="El que pierde paga las cervezas..."
@@ -240,7 +252,7 @@ function SeleccionarModalidadPage() {
 
       {/* CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
-        <button onClick={handleStart} disabled={loading}
+        <button type="button" onClick={handleStart} disabled={loading}
           className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-60"
           style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}>
           <span>

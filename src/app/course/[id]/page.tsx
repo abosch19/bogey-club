@@ -59,11 +59,11 @@ export default function EditCampoPage() {
     <div className="min-h-screen bg-[#f4f1e9] pb-8">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-4">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Atrás
           </button>
-          <button onClick={handleSave} disabled={saving}
+          <button type="button" onClick={handleSave} disabled={saving}
             className="px-4 py-2 rounded-full font-bold text-[13px] text-white disabled:opacity-60"
             style={{ backgroundColor: '#1f8a5b' }}>
             {saving ? 'Guardando…' : 'Guardar'}
@@ -72,8 +72,8 @@ export default function EditCampoPage() {
 
         {/* Course name */}
         <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4 mb-3">
-          <label className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2">Nombre del campo</label>
-          <input value={courseName} onChange={e => setCourseName(e.target.value)}
+          <label htmlFor="course-name" className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2">Nombre del campo</label>
+          <input id="course-name" value={courseName} onChange={e => setCourseName(e.target.value)}
             className="w-full text-[16px] font-bold text-[#0e1a16] bg-transparent outline-none border-b border-[#e5e0d4] pb-1"/>
         </div>
 
@@ -82,8 +82,8 @@ export default function EditCampoPage() {
         {/* Holes table */}
         <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
           <div className="grid grid-cols-5 gap-0 border-b border-[#efebe1] bg-[#f4f1e9]">
-            {['Hoyo', 'Par', 'HCP (SI)', 'Dist (m)', ''].map((h, i) => (
-              <div key={i} className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide py-2.5 px-2 text-center">{h}</div>
+            {['Hoyo', 'Par', 'HCP (SI)', 'Dist (m)', 'Zona'].map(h => (
+              <div key={h} className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide py-2.5 px-2 text-center">{h === 'Zona' ? '' : h}</div>
             ))}
           </div>
           {holes.map((h, i) => (
@@ -93,6 +93,7 @@ export default function EditCampoPage() {
                 <div key={field} className="py-1.5 px-2">
                   <input
                     type="number"
+                    aria-label={`${field === 'par' ? 'Par' : field === 'stroke_index' ? 'Stroke index' : 'Distancia en metros'} del hoyo ${h.hole_number}`}
                     value={field === 'distance_m' ? (h.distance_m ?? '') : h[field]}
                     onChange={e => updateHole(h._id, field, e.target.value)}
                     className="w-full text-center font-mono text-[13px] text-[#0e1a16] bg-[#f4f1e9] rounded-[8px] py-1.5 outline-none focus:bg-[#d9eedd] transition"

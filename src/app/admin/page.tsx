@@ -66,7 +66,7 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4] mb-4">
           {(['usuarios', 'ligas', 'campos'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)}
+            <button type="button" key={t} onClick={() => setTab(t)}
               className="flex-1 py-1.5 rounded-full text-[12px] font-bold capitalize transition"
               style={{ backgroundColor: tab === t ? '#0e1a16' : 'transparent', color: tab === t ? '#fff' : '#6b7a72' }}>
               {t} {t === 'usuarios' ? `(${users.length})` : t === 'ligas' ? `(${leagues.length})` : `(${courses.length})`}
@@ -89,8 +89,10 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-[11px] text-[#6b7a72] font-medium">Editar HCP:</label>
+                  <label htmlFor={`hcp-${u._id}`} className="text-[11px] text-[#6b7a72] font-medium">Editar HCP:</label>
                   <input
+                    id={`hcp-${u._id}`}
+                    aria-label={`Editar handicap de ${u.name}`}
                     type="number" step="0.1" min="0" max="54"
                     defaultValue={u.handicap_index.toFixed(1)}
                     onBlur={e => updateHandicap(u._id, e.target.value)}
@@ -118,7 +120,7 @@ export default function AdminPage() {
                       {l.active ? 'Activa' : 'Inactiva'}
                     </span>
                   </div>
-                  <button onClick={() => deleteLeague(l._id)}
+                  <button type="button" onClick={() => deleteLeague(l._id)}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#c6432d] border border-[#c6432d] hover:bg-[#fadcd6] transition">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#c6432d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     Borrar

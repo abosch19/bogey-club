@@ -44,13 +44,15 @@ export const editCourseHoles = mutation({
   },
   handler: async (ctx, { holes }) => {
     await requireAdmin(ctx)
-    for (const h of holes) {
-      await ctx.db.patch(h.holeId, {
-        par: h.par,
-        stroke_index: h.stroke_index,
-        distance_m: h.distance_m,
-      })
-    }
+    await Promise.all(
+      holes.map((h) =>
+        ctx.db.patch(h.holeId, {
+          par: h.par,
+          stroke_index: h.stroke_index,
+          distance_m: h.distance_m,
+        }),
+      ),
+    )
     return { ok: true }
   },
 })

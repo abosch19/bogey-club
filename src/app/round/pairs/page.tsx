@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useMemo, Suspense } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
@@ -18,29 +18,29 @@ function ParejasPage() {
   const [searchParams] = useSearchParams()
   const courseId   = searchParams.get('course') ?? ''
   const isPractice = searchParams.get('practice') === 'true'
-  const playerIds  = searchParams.get('players')?.split(',').filter(Boolean) ?? []
+  const playersParam = searchParams.get('players') ?? ''
   const holeMode   = searchParams.get('hole_mode') ?? 'all'
   const leagueId   = searchParams.get('league') ?? ''
 
   const allProfiles = useQuery(api.players.all)
   const loading = allProfiles === undefined
 
-  const [players, setPlayers] = useState<Player[]>([])
-  const [assigned, setAssigned] = useState(false)
+  // User-applied overrides on top of the default pairing: { [playerId]: team }
+  const [overrides, setOverrides] = useState<Record<string, 1 | 2>>({})
+  const [swapped, setSwapped] = useState(false)
   const [saving, setSaving]   = useState(false)
 
-  useEffect(() => {
-    if (assigned || !allProfiles) return
-
+  // Default pairing derived from profiles + selected players (no init effect).
+  const basePlayers = useMemo<Player[]>(() => {
+    if (!allProfiles) return []
+    const playerIds = playersParam.split(',').filter(Boolean)
     const profiles = allProfiles
       .filter(p => playerIds.includes(p._id))
       .sort((a, b) => a.handicap_index - b.handicap_index)
 
-    if (!profiles.length) { setAssigned(true); return }
-
     // Default assignment: sorted by handicap, snake → best+worst in same team
     // e.g. 4 players sorted [1,2,3,4] → team1: [1,4], team2: [2,3]
-    const players: Player[] = profiles.map((p, i) => ({
+    return profiles.map((p, i) => ({
       _id: p._id,
       name: p.name,
       handicap_index: p.handicap_index,
@@ -48,16 +48,27 @@ function ParejasPage() {
       // Snake: index 0,3 → team 1; index 1,2 → team 2 (for 4 players)
       team: (i % 2 === 0 ? 1 : 2) as 1 | 2,
     }))
-    setPlayers(players)
-    setAssigned(true)
-  }, [allProfiles, assigned, playerIds])
+  }, [allProfiles, playersParam])
+
+  // Final pairing = default, flipped if "swap all" is active, then per-player overrides.
+  const players = useMemo<Player[]>(() => basePlayers.map(p => {
+    const base = swapped ? ((p.team === 1 ? 2 : 1) as 1 | 2) : p.team
+    return { ...p, team: overrides[p._id] ?? base }
+  }), [basePlayers, swapped, overrides])
 
   function moveToTeam(playerId: string, team: 1 | 2) {
-    setPlayers(prev => prev.map(p => p._id === playerId ? { ...p, team } : p))
+    setOverrides(prev => ({ ...prev, [playerId]: team }))
   }
 
   function swapTeams() {
-    setPlayers(prev => prev.map(p => ({ ...p, team: p.team === 1 ? 2 : 1 })))
+    // Flip the base assignment and re-flip any existing overrides so the whole
+    // current layout inverts (preserving previous "intercambiar todos" behavior).
+    setSwapped(s => !s)
+    setOverrides(prev => {
+      const next: Record<string, 1 | 2> = {}
+      for (const id in prev) next[id] = (prev[id] === 1 ? 2 : 1) as 1 | 2
+      return next
+    })
   }
 
   async function handleStart() {
@@ -65,7 +76,7 @@ function ParejasPage() {
     const params = new URLSearchParams({
       course: courseId,
       practice: String(isPractice),
-      players: playerIds.join(','),
+      players: playersParam,
       hole_mode: holeMode,
       scramble_teams: players.map(p => `${p._id}:${p.team}`).join(','),
       ...(leagueId ? { league: leagueId } : {}),
@@ -83,7 +94,7 @@ function ParejasPage() {
     <div className="min-h-screen bg-[#f4f1e9] flex flex-col">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-5">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Atrás
           </button>
@@ -140,7 +151,7 @@ function ParejasPage() {
         <div className="bg-white rounded-[18px] border border-[#e5e0d4] overflow-hidden mb-3">
           <div className="px-4 py-3 border-b border-[#efebe1] flex items-center justify-between">
             <p className="font-bold text-[14px] text-[#0e1a16]">Cambiar de equipo</p>
-            <button onClick={swapTeams}
+            <button type="button" onClick={swapTeams}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border border-[#e5e0d4] text-[#6b7a72] bg-[#f4f1e9] active:opacity-70">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Intercambiar todos
@@ -158,7 +169,7 @@ function ParejasPage() {
               {/* Team toggle */}
               <div className="flex gap-1.5">
                 {([1, 2] as const).map(t => (
-                  <button key={t} onClick={() => moveToTeam(p._id, t)}
+                  <button type="button" key={t} onClick={() => moveToTeam(p._id, t)}
                     className="w-9 h-9 rounded-full font-black text-[13px] transition active:scale-90"
                     style={{
                       backgroundColor: p.team === t ? TEAM_COLORS[t].bg : '#f4f1e9',
@@ -181,7 +192,7 @@ function ParejasPage() {
 
       {/* CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
-        <button onClick={handleStart} disabled={!balanced || saving}
+        <button type="button" onClick={handleStart} disabled={!balanced || saving}
           className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-40"
           style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}>
           <span>

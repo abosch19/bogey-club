@@ -14,6 +14,193 @@ type ScoreRow = { profile_id: string; hole_number: number; strokes: number | nul
 
 type Tab = 'stroke' | 'stableford' | 'clasificacion'
 
+const TAB_LABELS: Record<Tab, string> = { stroke: 'Stroke', stableford: 'Stableford', clasificacion: 'Clasificación' }
+
+function getBlockPar(group: HoleRow[]) {
+  return group.reduce((a, h) => a + h.par, 0)
+}
+
+function deltaStr(val: number) {
+  return val > 0 ? `+${val}` : val === 0 ? 'E' : `${val}`
+}
+
+type StrokeScorecardProps = {
+  players: Player[]
+  front: HoleRow[]
+  back: HoleRow[]
+  getScore: (pid: string, holeNum: number) => ScoreRow | undefined
+  getBlockTotal: (pid: string, group: HoleRow[]) => number
+}
+
+function StrokeScorecard({ players, front, back, getScore, getBlockTotal }: StrokeScorecardProps) {
+  return (
+    <>
+      {[{ label: 'OUT', group: front }, { label: 'IN', group: back }].map(({ label, group }) => {
+        const blockPar = getBlockPar(group)
+        return (
+          <div key={label} className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-center" style={{ minWidth: `${group.length * 30 + 90}px` }}>
+                <thead>
+                  <tr className="border-b border-[#efebe1]">
+                    <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2 text-left">H</td>
+                    {group.map(h => <td key={h.hole_number} className="font-mono text-[11px] font-bold text-[#0e1a16] py-2 px-1">{h.hole_number}</td>)}
+                    <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2">{label}</td>
+                  </tr>
+                  <tr className="border-b border-[#efebe1]">
+                    <td className="font-mono text-[9px] text-[#6b7a72] px-2 py-1 text-left">PAR</td>
+                    {group.map(h => <td key={h.hole_number} className="font-mono text-[10px] text-[#6b7a72] py-1 px-1">{h.par}</td>)}
+                    <td className="font-mono text-[11px] font-bold text-[#0e1a16] py-1 px-2">{blockPar}</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {players.map(p => {
+                    const blockTotal = getBlockTotal(p.id, group)
+                    const blockDelta = blockTotal ? blockTotal - blockPar : null
+                    return (
+                      <tr key={p.id} className="border-t border-[#efebe1]">
+                        <td className="px-2 py-1.5">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                        </td>
+                        {group.map(h => {
+                          const s = getScore(p.id, h.hole_number)
+                          const d = s?.strokes != null ? s.strokes - h.par : null
+                          return (
+                            <td key={h.hole_number} className="py-1.5 px-0.5">
+                              {s?.strokes != null
+                                ? <div className={`mx-auto w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s.strokes}</div>
+                                : <span className="text-[#c4bfb5] text-[13px]">·</span>}
+                            </td>
+                          )
+                        })}
+                        {/* OUT/IN: total + delta */}
+                        <td className="px-2 py-1.5 min-w-[44px]">
+                          {blockTotal > 0 ? (
+                            <div className="text-center">
+                              <p className="font-mono text-[13px] font-black text-[#0e1a16] leading-none">{blockTotal}</p>
+                              {blockDelta !== null && (
+                                <p className="font-mono text-[10px] font-bold mt-0.5" style={{ color: blockDelta <= 0 ? '#1f8a5b' : '#9b6e1a' }}>
+                                  {deltaStr(blockDelta)}
+                                </p>
+                              )}
+                            </div>
+                          ) : <span className="text-[#c4bfb5]">–</span>}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
+type StablefordTableProps = {
+  players: Player[]
+  front: HoleRow[]
+  back: HoleRow[]
+  getScore: (pid: string, holeNum: number) => ScoreRow | undefined
+  getStablefordBlock: (pid: string, courseHcp: number, group: HoleRow[]) => number
+}
+
+function StablefordTable({ players, front, back, getScore, getStablefordBlock }: StablefordTableProps) {
+  return (
+    <>
+      {[{ label: 'OUT', group: front }, { label: 'IN', group: back }].map(({ label, group }) => (
+        <div key={label} className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-center" style={{ minWidth: `${group.length * 30 + 90}px` }}>
+              <thead>
+                <tr className="border-b border-[#efebe1]">
+                  <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2 text-left">H</td>
+                  {group.map(h => <td key={h.hole_number} className="font-mono text-[11px] font-bold text-[#0e1a16] py-2 px-1">{h.hole_number}</td>)}
+                  <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2">{label}</td>
+                </tr>
+                <tr className="border-b border-[#efebe1]">
+                  <td className="font-mono text-[9px] text-[#6b7a72] px-2 py-1 text-left">SI</td>
+                  {group.map(h => <td key={h.hole_number} className="font-mono text-[9px] text-[#6b7a72] py-1 px-1">{h.stroke_index}</td>)}
+                  <td aria-label="Puntos Stableford"/>
+                </tr>
+              </thead>
+              <tbody>
+                {players.map(p => {
+                  const blockPts = getStablefordBlock(p.id, p.course_handicap, group)
+                  return (
+                    <tr key={p.id} className="border-t border-[#efebe1]">
+                      <td className="px-2 py-1.5">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                      </td>
+                      {group.map(h => {
+                        const s = getScore(p.id, h.hole_number)
+                        const rcv = strokesReceived(p.course_handicap, h.stroke_index)
+                        const pts = s?.strokes ? stablefordPts(s.strokes, h.par, rcv) : null
+                        return (
+                          <td key={h.hole_number} className="py-1.5 px-0.5">
+                            {pts != null ? (
+                              <div className={`mx-auto w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${pts >= 3 ? 'bg-[#dde7fb] text-[#2a6fdb]' : pts === 2 ? 'bg-[#d9eedd] text-[#1f8a5b]' : pts === 1 ? 'bg-[#f6e6c4] text-[#9b6e1a]' : 'bg-[#fadcd6] text-[#a83a25]'}`}>{pts}</div>
+                            ) : <span className="text-[#c4bfb5] text-[13px]">·</span>}
+                          </td>
+                        )
+                      })}
+                      <td className="font-mono text-[14px] font-black text-[#1f8a5b] px-2 min-w-[36px]">{blockPts}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </>
+  )
+}
+
+type ClasificacionProps = {
+  ranking: Player[]
+  getTotal: (pid: string) => number
+  realPar: number
+}
+
+function Clasificacion({ ranking, getTotal, realPar }: ClasificacionProps) {
+  return (
+    <div className="space-y-2">
+      {ranking.map((p, i) => {
+        const total = getTotal(p.id)
+        const delta = total && realPar > 0 ? total - realPar : null
+        const isFirst = i === 0
+        return (
+          <div key={p.id} className="rounded-[16px] p-4 border flex items-center gap-3"
+            style={{ backgroundColor: isFirst ? '#0e1a16' : '#fff', borderColor: isFirst ? '#0e1a16' : '#e5e0d4' }}>
+            <div className="w-8 h-8 rounded-[8px] flex items-center justify-center font-mono font-black text-[14px]"
+              style={{ backgroundColor: isFirst ? '#e8b75a' : '#f4f1e9', color: isFirst ? '#0e1a16' : '#6b7a72' }}>
+              {i + 1}
+            </div>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold" style={{ backgroundColor: p.avatar_color }}>
+              {p.name[0].toUpperCase()}
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-[15px]" style={{ color: isFirst ? '#fff' : '#0e1a16' }}>{p.name}</p>
+              <p className="font-mono text-[10px]" style={{ color: isFirst ? 'rgba(255,255,255,0.5)' : '#6b7a72' }}>Hcp {p.course_handicap}</p>
+            </div>
+            <div className="text-right">
+              <p className="font-mono text-[22px] font-black leading-none" style={{ color: isFirst ? '#fff' : '#0e1a16' }}>{total || '–'}</p>
+              {delta !== null && (
+                <p className="font-mono text-[11px] font-bold mt-0.5" style={{ color: delta <= 0 ? '#1f8a5b' : '#e8b75a' }}>
+                  {delta > 0 ? `+${delta}` : delta === 0 ? 'E' : delta}
+                </p>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function ResumenPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -33,8 +220,9 @@ function ResumenPage() {
   const players: Player[] = (data?.players ?? []).map(rp => ({ id: rp.profileId ?? '', name: rp.name ?? 'Inv', avatar_color: rp.avatar_color ?? '#6b7a72', course_handicap: rp.course_handicap ?? 0 }))
   const courseHoles: HoleRow[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
   // 9_twice: a 9-hole course played twice — show holes 1-18 (10-18 reuse 1-9).
+  const front9 = courseHoles.filter(h => h.hole_number <= 9)
   const holes: HoleRow[] = round?.notes === '9_twice'
-    ? [...courseHoles.filter(h => h.hole_number <= 9), ...courseHoles.filter(h => h.hole_number <= 9).map(h => ({ ...h, hole_number: h.hole_number + 9 }))]
+    ? [...front9, ...front9.map(h => ({ ...h, hole_number: h.hole_number + 9 }))]
     : courseHoles
   const scores: ScoreRow[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null, putts: s.putts ?? null, gir: s.gir ?? null, fairway: s.fairway ?? null }))
   const modes = (data?.modes ?? []).length ? (data?.modes ?? []) : ['stroke']
@@ -49,9 +237,6 @@ function ResumenPage() {
   const realPar = holes.reduce((a, h) => a + h.par, 0)
   function getBlockTotal(pid: string, group: HoleRow[]) {
     return group.reduce((a, h) => { const s = getScore(pid, h.hole_number); return s?.strokes ? a + s.strokes : a }, 0)
-  }
-  function getBlockPar(group: HoleRow[]) {
-    return group.reduce((a, h) => a + h.par, 0)
   }
   function getStablefordBlock(pid: string, courseHcp: number, group: HoleRow[]) {
     return group.reduce((a, h) => {
@@ -78,21 +263,15 @@ function ResumenPage() {
   const back  = holes.filter(h => h.hole_number > 9)
 
   // Clasificación general (stroke play)
-  const ranking = [...players].sort((a, b) => {
+  const ranking = players.toSorted((a, b) => {
     const ta = getTotal(a.id) || 999
     const tb = getTotal(b.id) || 999
     return ta - tb
   })
 
-  function deltaStr(val: number) {
-    return val > 0 ? `+${val}` : val === 0 ? 'E' : `${val}`
-  }
-
   const availableTabs: Tab[] = ['stroke']
   if (modes.includes('stableford')) availableTabs.push('stableford')
   if (players.length >= 3) availableTabs.push('clasificacion')
-
-  const TAB_LABELS: Record<Tab, string> = { stroke: 'Stroke', stableford: 'Stableford', clasificacion: 'Clasificación' }
 
   const firstPlayer = players[0]
   const firstTotal = firstPlayer ? getTotal(firstPlayer.id) : 0
@@ -103,7 +282,8 @@ function ResumenPage() {
     <div className="min-h-screen bg-[#f4f1e9] pb-32">
       {celebrating && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0e1a16]">
-          <div className="text-[80px] animate-bounce">&#9971;</div>
+          <style>{`@keyframes summary-pop { from { transform: scale(0.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }`}</style>
+          <div className="text-[80px]" style={{ animation: 'summary-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both' }}>&#9971;</div>
           <p className="text-white text-[28px] font-black mt-4">Ronda firmada!</p>
           <p className="text-white/60 text-[14px] mt-2">{firstTotal} golpes · {celebrationDeltaStr}</p>
         </div>
@@ -152,7 +332,8 @@ function ResumenPage() {
         {availableTabs.length > 1 && (
           <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4]">
             {availableTabs.map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)}
+              <button key={tab} type="button" onClick={() => setActiveTab(tab)}
+                aria-label={`Ver clasificación ${TAB_LABELS[tab]}`}
                 className="flex-1 py-2 rounded-full text-[12px] font-bold transition"
                 style={{ backgroundColor: activeTab === tab ? '#0e1a16' : 'transparent', color: activeTab === tab ? '#fff' : '#6b7a72' }}>
                 {TAB_LABELS[tab]}
@@ -165,147 +346,18 @@ function ResumenPage() {
       <div className="px-[14px] space-y-3">
 
         {/* STROKE PLAY scorecard */}
-        {activeTab === 'stroke' && [front, back].map((group, gi) => {
-          const blockPar = getBlockPar(group)
-          return (
-            <div key={gi} className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-center" style={{ minWidth: `${group.length * 30 + 90}px` }}>
-                  <thead>
-                    <tr className="border-b border-[#efebe1]">
-                      <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2 text-left">H</td>
-                      {group.map(h => <td key={h.hole_number} className="font-mono text-[11px] font-bold text-[#0e1a16] py-2 px-1">{h.hole_number}</td>)}
-                      <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2">{gi === 0 ? 'OUT' : 'IN'}</td>
-                    </tr>
-                    <tr className="border-b border-[#efebe1]">
-                      <td className="font-mono text-[9px] text-[#6b7a72] px-2 py-1 text-left">PAR</td>
-                      {group.map(h => <td key={h.hole_number} className="font-mono text-[10px] text-[#6b7a72] py-1 px-1">{h.par}</td>)}
-                      <td className="font-mono text-[11px] font-bold text-[#0e1a16] py-1 px-2">{blockPar}</td>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {players.map(p => {
-                      const blockTotal = getBlockTotal(p.id, group)
-                      const blockDelta = blockTotal ? blockTotal - blockPar : null
-                      return (
-                        <tr key={p.id} className="border-t border-[#efebe1]">
-                          <td className="px-2 py-1.5">
-                            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
-                          </td>
-                          {group.map(h => {
-                            const s = getScore(p.id, h.hole_number)
-                            const d = s?.strokes != null ? s.strokes - h.par : null
-                            return (
-                              <td key={h.hole_number} className="py-1.5 px-0.5">
-                                {s?.strokes != null
-                                  ? <div className={`mx-auto w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s.strokes}</div>
-                                  : <span className="text-[#c4bfb5] text-[13px]">·</span>}
-                              </td>
-                            )
-                          })}
-                          {/* OUT/IN: total + delta */}
-                          <td className="px-2 py-1.5 min-w-[44px]">
-                            {blockTotal > 0 ? (
-                              <div className="text-center">
-                                <p className="font-mono text-[13px] font-black text-[#0e1a16] leading-none">{blockTotal}</p>
-                                {blockDelta !== null && (
-                                  <p className="font-mono text-[10px] font-bold mt-0.5" style={{ color: blockDelta <= 0 ? '#1f8a5b' : '#9b6e1a' }}>
-                                    {deltaStr(blockDelta)}
-                                  </p>
-                                )}
-                              </div>
-                            ) : <span className="text-[#c4bfb5]">–</span>}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )
-        })}
+        {activeTab === 'stroke' && (
+          <StrokeScorecard players={players} front={front} back={back} getScore={getScore} getBlockTotal={getBlockTotal} />
+        )}
 
         {/* STABLEFORD — split front/back like stroke */}
-        {activeTab === 'stableford' && [front, back].map((group, gi) => (
-          <div key={gi} className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-center" style={{ minWidth: `${group.length * 30 + 90}px` }}>
-                <thead>
-                  <tr className="border-b border-[#efebe1]">
-                    <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2 text-left">H</td>
-                    {group.map(h => <td key={h.hole_number} className="font-mono text-[11px] font-bold text-[#0e1a16] py-2 px-1">{h.hole_number}</td>)}
-                    <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2">{gi === 0 ? 'OUT' : 'IN'}</td>
-                  </tr>
-                  <tr className="border-b border-[#efebe1]">
-                    <td className="font-mono text-[9px] text-[#6b7a72] px-2 py-1 text-left">SI</td>
-                    {group.map(h => <td key={h.hole_number} className="font-mono text-[9px] text-[#6b7a72] py-1 px-1">{h.stroke_index}</td>)}
-                    <td/>
-                  </tr>
-                </thead>
-                <tbody>
-                  {players.map(p => {
-                    const blockPts = getStablefordBlock(p.id, p.course_handicap, group)
-                    return (
-                      <tr key={p.id} className="border-t border-[#efebe1]">
-                        <td className="px-2 py-1.5">
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
-                        </td>
-                        {group.map(h => {
-                          const s = getScore(p.id, h.hole_number)
-                          const rcv = strokesReceived(p.course_handicap, h.stroke_index)
-                          const pts = s?.strokes ? stablefordPts(s.strokes, h.par, rcv) : null
-                          return (
-                            <td key={h.hole_number} className="py-1.5 px-0.5">
-                              {pts != null ? (
-                                <div className={`mx-auto w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${pts >= 3 ? 'bg-[#dde7fb] text-[#2a6fdb]' : pts === 2 ? 'bg-[#d9eedd] text-[#1f8a5b]' : pts === 1 ? 'bg-[#f6e6c4] text-[#9b6e1a]' : 'bg-[#fadcd6] text-[#a83a25]'}`}>{pts}</div>
-                              ) : <span className="text-[#c4bfb5] text-[13px]">·</span>}
-                            </td>
-                          )
-                        })}
-                        <td className="font-mono text-[14px] font-black text-[#1f8a5b] px-2 min-w-[36px]">{blockPts}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ))}
+        {activeTab === 'stableford' && (
+          <StablefordTable players={players} front={front} back={back} getScore={getScore} getStablefordBlock={getStablefordBlock} />
+        )}
 
         {/* CLASIFICACIÓN */}
         {activeTab === 'clasificacion' && (
-          <div className="space-y-2">
-            {ranking.map((p, i) => {
-              const total = getTotal(p.id)
-              const delta = total && realPar > 0 ? total - realPar : null
-              const isFirst = i === 0
-              return (
-                <div key={p.id} className="rounded-[16px] p-4 border flex items-center gap-3"
-                  style={{ backgroundColor: isFirst ? '#0e1a16' : '#fff', borderColor: isFirst ? '#0e1a16' : '#e5e0d4' }}>
-                  <div className="w-8 h-8 rounded-[8px] flex items-center justify-center font-mono font-black text-[14px]"
-                    style={{ backgroundColor: isFirst ? '#e8b75a' : '#f4f1e9', color: isFirst ? '#0e1a16' : '#6b7a72' }}>
-                    {i + 1}
-                  </div>
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold" style={{ backgroundColor: p.avatar_color }}>
-                    {p.name[0].toUpperCase()}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-[15px]" style={{ color: isFirst ? '#fff' : '#0e1a16' }}>{p.name}</p>
-                    <p className="font-mono text-[10px]" style={{ color: isFirst ? 'rgba(255,255,255,0.5)' : '#6b7a72' }}>Hcp {p.course_handicap}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-mono text-[22px] font-black leading-none" style={{ color: isFirst ? '#fff' : '#0e1a16' }}>{total || '–'}</p>
-                    {delta !== null && (
-                      <p className="font-mono text-[11px] font-bold mt-0.5" style={{ color: delta <= 0 ? '#1f8a5b' : '#e8b75a' }}>
-                        {delta > 0 ? `+${delta}` : delta === 0 ? 'E' : delta}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          <Clasificacion ranking={ranking} getTotal={getTotal} realPar={realPar} />
         )}
       </div>
 
@@ -321,7 +373,7 @@ function ResumenPage() {
       )}
       {!readonly && round?.status !== 'completed' && !signed && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
-          <button onClick={handleSign} disabled={saving}
+          <button type="button" onClick={handleSign} disabled={saving}
             className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-60"
             style={{ backgroundColor: '#e8b75a', color: '#0e1a16' }}>
             <span>Firmar y guardar ronda</span>
@@ -346,7 +398,10 @@ function ResumenPage() {
                   <p className="font-bold text-[15px] text-[#0e1a16]">{round.notes}</p>
                   {/* Winner */}
                   {(() => {
-                    const sorted = [...players].map(p => ({ ...p, total: scores.filter(s => s.profile_id === p.id).reduce((a,s) => a + (s.strokes ?? 0), 0) })).filter(p => p.total > 0).sort((a,b) => a.total - b.total)
+                    const sorted = players.flatMap(p => {
+                      const total = scores.filter(s => s.profile_id === p.id).reduce((a, s) => a + (s.strokes ?? 0), 0)
+                      return total > 0 ? [{ ...p, total }] : []
+                    }).toSorted((a, b) => a.total - b.total)
                     if (sorted.length >= 2 && sorted[0].total < sorted[1].total) {
                       const loser = sorted[sorted.length - 1]
                       return <p className="text-[13px] text-[#9b6e1a] mt-1 font-semibold">{loser.name}, te toca a ti. 😏</p>

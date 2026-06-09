@@ -22,9 +22,11 @@ export const forUser = query({
       .slice(0, 20)
       .map((d) => ({ differential: d.differential, played_at: d.played_at, is_pp: d.is_pp ?? false }))
 
-    const otherPlayers = (await ctx.db.query('profiles').collect())
-      .filter((p) => p._id !== me._id)
-      .map((p) => ({ id: p._id, name: p.name, avatar_color: p.avatar_color }))
+    const otherPlayers = (await ctx.db.query('profiles').collect()).flatMap((p) =>
+      p._id !== me._id
+        ? [{ id: p._id, name: p.name, avatar_color: p.avatar_color }]
+        : [],
+    )
 
     const myRps = await ctx.db
       .query('round_players')
@@ -47,13 +49,25 @@ export const forUser = query({
     )
     const courseById = new Map(courses.map((c) => [c._id, c]))
 
+    const perRound = await Promise.all(
+      rounds.map(async (r) => {
+        const [rScores, rPlayers] = await Promise.all([
+          ctx.db
+            .query('scores')
+            .withIndex('by_round', (q) => q.eq('roundId', r._id))
+            .collect(),
+          ctx.db
+            .query('round_players')
+            .withIndex('by_round', (q) => q.eq('roundId', r._id))
+            .collect(),
+        ])
+        return { r, rScores, rPlayers }
+      }),
+    )
+
     const scores: Array<Record<string, unknown>> = []
     const roundPlayers: Array<{ round_id: string; profile_id: string }> = []
-    for (const r of rounds) {
-      const rScores = await ctx.db
-        .query('scores')
-        .withIndex('by_round', (q) => q.eq('roundId', r._id))
-        .collect()
+    for (const { r, rScores, rPlayers } of perRound) {
       for (const s of rScores) {
         scores.push({
           round_id: s.roundId,
@@ -67,10 +81,6 @@ export const forUser = query({
           in_bunker: s.in_bunker,
         })
       }
-      const rPlayers = await ctx.db
-        .query('round_players')
-        .withIndex('by_round', (q) => q.eq('roundId', r._id))
-        .collect()
       for (const rp of rPlayers) {
         if (rp.profileId && rp.profileId !== me._id) {
           roundPlayers.push({ round_id: r._id, profile_id: rp.profileId })
@@ -78,12 +88,17 @@ export const forUser = query({
       }
     }
 
+    const perCourse = await Promise.all(
+      courseIds.map((cid) =>
+        ctx.db
+          .query('holes')
+          .withIndex('by_course', (q) => q.eq('courseId', cid))
+          .collect(),
+      ),
+    )
+
     const holes: Array<{ course_id: string; hole_number: number; par: number; stroke_index: number }> = []
-    for (const cid of courseIds) {
-      const cHoles = await ctx.db
-        .query('holes')
-        .withIndex('by_course', (q) => q.eq('courseId', cid))
-        .collect()
+    for (const cHoles of perCourse) {
       for (const h of cHoles) {
         holes.push({
           course_id: h.courseId,

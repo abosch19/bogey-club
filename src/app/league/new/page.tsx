@@ -3,14 +3,23 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 
+const MODES = [
+  { id: 'stroke',        name: 'Stroke Play',         desc: 'Menos golpes gana. El clásico.' },
+  { id: 'stableford',    name: 'Stableford',           desc: 'Puntos por hoyo. Premia la regularidad.' },
+  { id: 'matchplay',     name: 'Matchplay',            desc: 'Gana hoyos, sin handicap. Solo 2 jugadores.' },
+  { id: 'matchplay_hcp', name: 'Matchplay c/ Hcp',    desc: 'Matchplay con golpes de ventaja por handicap.' },
+  { id: 'bbb',           name: 'Bingo Bango Bongo',   desc: '3 puntos por hoyo: 1º en green, más cerca, 1º en meter.' },
+  { id: 'scramble',      name: 'Scramble',             desc: 'Mejor bola en cada golpe. Por parejas si son 4+.' },
+]
+
 export default function NuevaLigaPage() {
   const navigate = useNavigate()
   const createLeague = useMutation(api.leagues.create)
-  const [name, setName]     = useState('')
-  const [rounds, setRounds] = useState(8)
-  const [mode, setMode]     = useState('stroke')
+  const [form, setForm] = useState({ name: '', rounds: 8, mode: 'stroke' })
   const [loading, setLoading] = useState(false)
   const [error, setError]   = useState('')
+
+  const { name, rounds, mode } = form
 
   async function handleCreate() {
     if (!name.trim()) { setError('Ponle un nombre a la liga.'); return }
@@ -25,20 +34,11 @@ export default function NuevaLigaPage() {
     }
   }
 
-  const MODES = [
-    { id: 'stroke',        name: 'Stroke Play',         desc: 'Menos golpes gana. El clásico.' },
-    { id: 'stableford',    name: 'Stableford',           desc: 'Puntos por hoyo. Premia la regularidad.' },
-    { id: 'matchplay',     name: 'Matchplay',            desc: 'Gana hoyos, sin handicap. Solo 2 jugadores.' },
-    { id: 'matchplay_hcp', name: 'Matchplay c/ Hcp',    desc: 'Matchplay con golpes de ventaja por handicap.' },
-    { id: 'bbb',           name: 'Bingo Bango Bongo',   desc: '3 puntos por hoyo: 1º en green, más cerca, 1º en meter.' },
-    { id: 'scramble',      name: 'Scramble',             desc: 'Mejor bola en cada golpe. Por parejas si son 4+.' },
-  ]
-
   return (
     <div className="min-h-screen bg-[#f4f1e9]">
       <div className="safe-top px-[14px] pt-3 pb-8">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Atrás
           </button>
@@ -50,8 +50,8 @@ export default function NuevaLigaPage() {
 
         <div className="space-y-3">
           <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
-            <label className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2">Nombre</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Liga Bogey 2026"
+            <label htmlFor="league-name" className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2">Nombre</label>
+            <input id="league-name" value={name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Liga Bogey 2026"
               className="w-full text-[18px] font-bold text-[#0e1a16] bg-transparent outline-none placeholder-[#c4bfb5]"/>
           </div>
 
@@ -61,9 +61,9 @@ export default function NuevaLigaPage() {
               <p className="text-[12px] text-[#6b7a72] mt-0.5">Cuántas jornadas dura</p>
             </div>
             <div className="flex items-center gap-3">
-              <button onClick={() => setRounds(Math.max(2, rounds - 1))} className="w-9 h-9 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-[18px] text-[#6b7a72]">−</button>
+              <button type="button" onClick={() => setForm(f => ({ ...f, rounds: Math.max(2, f.rounds - 1) }))} className="w-9 h-9 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-[18px] text-[#6b7a72]">−</button>
               <span className="font-mono text-[22px] font-black text-[#0e1a16] w-8 text-center">{rounds}</span>
-              <button onClick={() => setRounds(Math.min(30, rounds + 1))} className="w-9 h-9 rounded-full flex items-center justify-center text-[18px] text-white" style={{ backgroundColor: '#0e1a16' }}>+</button>
+              <button type="button" onClick={() => setForm(f => ({ ...f, rounds: Math.min(30, f.rounds + 1) }))} className="w-9 h-9 rounded-full flex items-center justify-center text-[18px] text-white" style={{ backgroundColor: '#0e1a16' }}>+</button>
             </div>
           </div>
 
@@ -71,7 +71,7 @@ export default function NuevaLigaPage() {
             <p className="font-bold text-[14px] text-[#0e1a16] mb-3">Modalidad de la liga</p>
             <div className="space-y-2">
               {MODES.map(m => (
-                <button key={m.id} onClick={() => setMode(m.id)}
+                <button type="button" key={m.id} onClick={() => setForm(f => ({ ...f, mode: m.id }))}
                   className="w-full flex items-center justify-between p-3 rounded-[12px] border transition text-left"
                   style={{ backgroundColor: mode === m.id ? '#0e1a16' : '#fff', borderColor: mode === m.id ? '#0e1a16' : '#e5e0d4' }}>
                   <div>
@@ -94,7 +94,7 @@ export default function NuevaLigaPage() {
 
           {error && <p className="text-[13px] text-[#c6432d] bg-[#fadcd6] rounded-[10px] px-4 py-2.5">{error}</p>}
 
-          <button onClick={handleCreate} disabled={loading}
+          <button type="button" onClick={handleCreate} disabled={loading}
             className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-60"
             style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}>
             <span>Crear liga · {MODES.find(m => m.id === mode)?.name}</span>

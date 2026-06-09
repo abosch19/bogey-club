@@ -16,6 +16,8 @@ type Course = {
   myScores: number[]
 }
 
+const isPP = (name: string) => name.startsWith('P&P')
+
 function SeleccionarCampoPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -25,17 +27,24 @@ function SeleccionarCampoPage() {
   const courses = useQuery(api.courses.listForNewRound) as Course[] | undefined
   const loading = courses === undefined
   const [search, setSearch]   = useState('')
-  const [selected, setSelected] = useState<Course | null>(null)
   const [tab, setTab]         = useState<'golf' | 'pp'>('golf')
-  // For hole selection modal
-  const [showHoleModal, setShowHoleModal] = useState(false)
-  const [holeMode, setHoleMode] = useState<'all' | 'front' | 'back' | '9_once' | '9_twice'>('all')
+  // Hole-selection modal state grouped into one object
+  type HoleMode = 'all' | 'front' | 'back' | '9_once' | '9_twice'
+  const [modal, setModal] = useState<{ selected: Course | null; show: boolean; holeMode: HoleMode }>({
+    selected: null,
+    show: false,
+    holeMode: 'all',
+  })
+  const { selected, show: showHoleModal, holeMode } = modal
+  const setSelected = (selected: Course | null) => setModal(m => ({ ...m, selected }))
+  const setShowHoleModal = (show: boolean) => setModal(m => ({ ...m, show }))
+  const setHoleMode = (holeMode: HoleMode) => setModal(m => ({ ...m, holeMode }))
 
-  const isPP = (name: string) => name.startsWith('P&P')
-
-  const filtered = (courses ?? [])
-    .filter(c => tab === 'pp' ? isPP(c.name) : !isPP(c.name))
-    .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+  const searchLower = search.toLowerCase()
+  const filtered = (courses ?? []).filter(c =>
+    (tab === 'pp' ? isPP(c.name) : !isPP(c.name)) &&
+    c.name.toLowerCase().includes(searchLower)
+  )
 
   function handleCourseSelect(course: Course) {
     setSelected(course)
@@ -60,7 +69,7 @@ function SeleccionarCampoPage() {
       {/* Header */}
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-5">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Atrás
           </button>
@@ -76,7 +85,7 @@ function SeleccionarCampoPage() {
         {/* Golf / P&P tabs */}
         <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4] mt-4 mb-3">
           {([['golf', 'Golf'], ['pp', 'Pitch & Putt']] as const).map(([key, label]) => (
-            <button key={key} onClick={() => { setTab(key); setSelected(null) }}
+            <button type="button" key={key} onClick={() => { setTab(key); setSelected(null) }}
               className="flex-1 py-2 rounded-full text-[13px] font-bold transition"
               style={{ backgroundColor: tab === key ? '#0e1a16' : 'transparent', color: tab === key ? '#fff' : '#6b7a72' }}>
               {label}
@@ -89,6 +98,7 @@ function SeleccionarCampoPage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#6b7a72" strokeWidth="1.8"/><path d="M16 16L21 21" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round"/></svg>
           <input
             value={search} onChange={e => setSearch(e.target.value)}
+            aria-label="Buscar campo"
             placeholder="Buscar campo…"
             className="flex-1 bg-transparent text-[14px] text-[#0e1a16] placeholder-[#a09a90] outline-none"
           />
@@ -106,16 +116,21 @@ function SeleccionarCampoPage() {
         ) : filtered.map(course => {
           const isSel = selected?._id === course._id
           return (
-            <button
+            <div
               key={course._id}
-              onClick={() => handleCourseSelect(course)}
-              className="w-full text-left rounded-[16px] p-4 border transition-all active:scale-[0.99]"
+              className="relative w-full text-left rounded-[16px] p-4 border transition-all active:scale-[0.99]"
               style={{
                 backgroundColor: isSel ? '#0e1a16' : '#ffffff',
                 borderColor: isSel ? '#0e1a16' : '#e5e0d4',
               }}
             >
-              <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleCourseSelect(course)}
+                aria-label={`Seleccionar ${course.name}`}
+                className="absolute inset-0 rounded-[16px] cursor-pointer"
+              />
+              <div className="relative pointer-events-none flex items-center gap-3">
                 {/* Icon */}
                 <div className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: isSel ? 'rgba(255,255,255,0.12)' : '#d9eedd' }}>
@@ -130,8 +145,8 @@ function SeleccionarCampoPage() {
                     <p className="font-bold text-[15px] leading-tight" style={{ color: isSel ? '#fff' : '#0e1a16' }}>
                       {course.name}
                     </p>
-                    <button onClick={e => { e.stopPropagation(); navigate(`/course/${course._id}`) }}
-                      className="font-mono text-[9px] px-2 py-0.5 rounded-full font-bold transition"
+                    <button type="button" onClick={e => { e.stopPropagation(); navigate(`/course/${course._id}`) }}
+                      className="pointer-events-auto relative font-mono text-[9px] px-2 py-0.5 rounded-full font-bold transition"
                       style={{ backgroundColor: isSel ? 'rgba(255,255,255,0.15)' : '#f4f1e9', color: isSel ? '#fff' : '#6b7a72' }}>
                       Editar
                     </button>
@@ -146,7 +161,7 @@ function SeleccionarCampoPage() {
                   {course.myScores?.length > 0 && (
                     <div className="flex gap-1 mt-1">
                       {course.myScores.slice(0, 3).map((s, i) => (
-                        <span key={i} className="font-mono text-[9px] px-1.5 py-0.5 rounded-full"
+                        <span key={`${s}-${i}`} className="font-mono text-[9px] px-1.5 py-0.5 rounded-full"
                           style={{ backgroundColor: isSel ? 'rgba(255,255,255,0.18)' : '#d9eedd', color: isSel ? '#fff' : '#1f8a5b' }}>
                           {s}
                         </span>
@@ -165,7 +180,7 @@ function SeleccionarCampoPage() {
                   )}
                 </div>
               </div>
-            </button>
+            </div>
           )
         })}
       </div>
@@ -185,7 +200,7 @@ function SeleccionarCampoPage() {
             <div className="space-y-2 mb-5">
               {selected.holes_count === 9 ? (
                 <>
-                  <button onClick={() => setHoleMode('9_once')}
+                  <button type="button" onClick={() => setHoleMode('9_once')}
                     className="w-full flex items-center justify-between p-4 rounded-[16px] border transition"
                     style={{ backgroundColor: holeMode === '9_once' ? '#0e1a16' : '#fff', borderColor: holeMode === '9_once' ? '#0e1a16' : '#e5e0d4' }}>
                     <div className="text-left">
@@ -194,7 +209,7 @@ function SeleccionarCampoPage() {
                     </div>
                     {holeMode === '9_once' && <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                   </button>
-                  <button onClick={() => setHoleMode('9_twice')}
+                  <button type="button" onClick={() => setHoleMode('9_twice')}
                     className="w-full flex items-center justify-between p-4 rounded-[16px] border transition"
                     style={{ backgroundColor: holeMode === '9_twice' ? '#0e1a16' : '#fff', borderColor: holeMode === '9_twice' ? '#0e1a16' : '#e5e0d4' }}>
                     <div className="text-left">
@@ -211,7 +226,7 @@ function SeleccionarCampoPage() {
                     { key: 'front', label: 'Primera vuelta',      sub: 'Solo los hoyos 1-9' },
                     { key: 'back',  label: 'Segunda vuelta',      sub: 'Solo los hoyos 10-18' },
                   ].map(opt => (
-                    <button key={opt.key} onClick={() => setHoleMode(opt.key as any)}
+                    <button type="button" key={opt.key} onClick={() => setHoleMode(opt.key as any)}
                       className="w-full flex items-center justify-between p-4 rounded-[16px] border transition"
                       style={{ backgroundColor: holeMode === opt.key ? '#0e1a16' : '#fff', borderColor: holeMode === opt.key ? '#0e1a16' : '#e5e0d4' }}>
                       <div className="text-left">
@@ -225,11 +240,11 @@ function SeleccionarCampoPage() {
               )}
             </div>
             <div className="flex gap-2">
-              <button onClick={() => { setShowHoleModal(false); setSelected(null) }}
+              <button type="button" onClick={() => { setShowHoleModal(false); setSelected(null) }}
                 className="flex-1 py-3.5 rounded-full border border-[#e5e0d4] font-semibold text-[14px] text-[#6b7a72]">
                 Cancelar
               </button>
-              <button onClick={() => { setShowHoleModal(false); handleNext() }}
+              <button type="button" onClick={() => { setShowHoleModal(false); handleNext() }}
                 className="flex-1 py-3.5 rounded-full font-bold text-[14px] text-[#0e1a16]"
                 style={{ backgroundColor: '#1f8a5b' }}>
                 Siguiente →
@@ -243,6 +258,7 @@ function SeleccionarCampoPage() {
       {selected && !showHoleModal && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
           <button
+            type="button"
             onClick={() => setShowHoleModal(true)}
             className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] text-[#0e1a16] transition active:scale-[0.98]"
             style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}

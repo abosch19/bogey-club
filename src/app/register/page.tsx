@@ -19,13 +19,13 @@ function LogoPin() {
 }
 
 export default function RegistroPage() {
-  const [name, setName]         = useState('')
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
   const { signIn } = useAuthActions()
   const navigate = useNavigate()
+
+  const { name, email, password } = form
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -61,33 +61,36 @@ export default function RegistroPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
+              <label htmlFor="register-name" className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
                 Nombre
               </label>
               <input
-                type="text" value={name} onChange={e => setName(e.target.value)}
+                id="register-name"
+                type="text" value={name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 required placeholder="Tu nombre o apodo"
                 className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
+              <label htmlFor="register-email" className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
                 Email
               </label>
               <input
-                type="email" value={email} onChange={e => setEmail(e.target.value)}
+                id="register-email"
+                type="email" value={email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                 required placeholder="tu@email.com"
                 className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
+              <label htmlFor="register-password" className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
                 Contraseña
               </label>
               <input
-                type="password" value={password} onChange={e => setPassword(e.target.value)}
+                id="register-password"
+                type="password" value={password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                 required placeholder="Mínimo 8 caracteres"
                 className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />

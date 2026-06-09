@@ -35,7 +35,7 @@ export default function JugadoresPage() {
         {/* Search */}
         <div className="flex items-center gap-3 bg-white rounded-full px-4 py-3 border border-[#e5e0d4] mb-4">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#6b7a72" strokeWidth="1.8"/><path d="M16 16L21 21" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round"/></svg>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar jugador…"
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar jugador…" aria-label="Buscar jugador"
             className="flex-1 bg-transparent text-[14px] text-[#0e1a16] placeholder-[#a09a90] outline-none"/>
         </div>
 

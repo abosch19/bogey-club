@@ -72,19 +72,19 @@ export default function OnboardingPage() {
           {/* Stepper */}
           <div className="flex items-center justify-center gap-5 mb-5">
             <button
-              onClick={() => adjust(-0.1)}
+              type="button" onClick={() => adjust(-0.1)} aria-label="Reducir hándicap"
               className="w-12 h-12 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-[22px] text-[#6b7a72] font-light hover:border-[#1f8a5b] hover:text-[#1f8a5b] transition active:scale-95"
             >−</button>
 
             <input
               type="number" min={0} max={54} step={0.1}
-              value={hcp}
+              value={hcp} aria-label="Hándicap"
               onChange={e => setHcp(e.target.value)}
               className="w-28 text-center text-[52px] font-black text-[#0e1a16] bg-transparent border-b-2 border-[#1f8a5b] focus:outline-none tabular-nums py-1"
             />
 
             <button
-              onClick={() => adjust(0.1)}
+              type="button" onClick={() => adjust(0.1)} aria-label="Aumentar hándicap"
               className="w-12 h-12 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-[22px] text-[#6b7a72] font-light hover:border-[#1f8a5b] hover:text-[#1f8a5b] transition active:scale-95"
             >+</button>
           </div>
@@ -93,6 +93,7 @@ export default function OnboardingPage() {
           <div className="px-2 mb-6">
             <input
               type="range" min={0} max={54} step={0.1} value={num}
+              aria-label="Ajustar hándicap con el deslizador"
               onChange={e => setHcp(parseFloat(e.target.value).toFixed(1))}
               className="w-full accent-[#1f8a5b]"
             />
@@ -114,7 +115,7 @@ export default function OnboardingPage() {
           )}
 
           <button
-            onClick={handleStart} disabled={loading}
+            type="button" onClick={handleStart} disabled={loading}
             className="w-full py-3.5 rounded-[14px] font-semibold text-[15px] text-white transition active:scale-[0.98] disabled:opacity-60"
             style={{ backgroundColor: '#1f8a5b' }}
           >

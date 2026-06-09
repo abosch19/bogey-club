@@ -59,16 +59,16 @@ export const remove = mutation({
       .query('scores')
       .withIndex('by_round', (q) => q.eq('roundId', roundId))
       .collect()
-    for (const s of scores) {
-      if (s.profileId === profileId) await ctx.db.delete(s._id)
-    }
+    await Promise.all(
+      scores.flatMap((s) => (s.profileId === profileId ? [ctx.db.delete(s._id)] : [])),
+    )
     const rps = await ctx.db
       .query('round_players')
       .withIndex('by_round_and_profile', (q) =>
         q.eq('roundId', roundId).eq('profileId', profileId),
       )
       .collect()
-    for (const rp of rps) await ctx.db.delete(rp._id)
+    await Promise.all(rps.map((rp) => ctx.db.delete(rp._id)))
     return { ok: true }
   },
 })

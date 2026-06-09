@@ -115,6 +115,7 @@ export default function LigaPage() {
                           <p className="text-white text-[20px] font-black tracking-tight mt-1">{league.name}</p>
                         </div>
                         <button
+                          type="button"
                           onClick={() => handleDelete(league._id)}
                           disabled={deleting === league._id}
                           className="mt-1 flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#c6432d]/80 hover:bg-[#c6432d] transition disabled:opacity-50 text-white text-[11px] font-semibold"

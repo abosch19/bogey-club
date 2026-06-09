@@ -13,11 +13,14 @@ export const all = query({
 export const directory = query({
   args: {},
   handler: async (ctx) => {
-    const profiles = await ctx.db.query('profiles').collect()
-
     // Pre-compute which rounds are completed.
-    const rounds = await ctx.db.query('rounds').collect()
-    const completed = new Set(rounds.filter((r) => r.status === 'completed').map((r) => r._id))
+    const [profiles, rounds] = await Promise.all([
+      ctx.db.query('profiles').collect(),
+      ctx.db.query('rounds').collect(),
+    ])
+    const completed = new Set(
+      rounds.flatMap((r) => (r.status === 'completed' ? [r._id] : [])),
+    )
 
     const out = await Promise.all(
       profiles.map(async (p) => {

@@ -68,22 +68,28 @@ export const deleteMe = mutation({
     const id = me._id
 
     // Owned rows reachable by a by_profile index.
-    for (const table of ['scores', 'round_players', 'whs_differentials', 'league_players'] as const) {
-      const rows = await ctx.db
-        .query(table)
-        .withIndex('by_profile', (q) => q.eq('profileId', id))
-        .collect()
-      for (const r of rows) await ctx.db.delete(r._id)
-    }
+    await Promise.all(
+      (['scores', 'round_players', 'whs_differentials', 'league_players'] as const).map(
+        async (table) => {
+          const rows = await ctx.db
+            .query(table)
+            .withIndex('by_profile', (q) => q.eq('profileId', id))
+            .collect()
+          await Promise.all(rows.map((r) => ctx.db.delete(r._id)))
+        },
+      ),
+    )
 
     // Tables without a by_profile index — scan + filter.
-    for (const table of ['league_standings', 'tournament_players'] as const) {
-      const rows = await ctx.db
-        .query(table)
-        .filter((q) => q.eq(q.field('profileId'), id))
-        .collect()
-      for (const r of rows) await ctx.db.delete(r._id)
-    }
+    await Promise.all(
+      (['league_standings', 'tournament_players'] as const).map(async (table) => {
+        const rows = await ctx.db
+          .query(table)
+          .filter((q) => q.eq(q.field('profileId'), id))
+          .collect()
+        await Promise.all(rows.map((r) => ctx.db.delete(r._id)))
+      }),
+    )
 
     await ctx.db.delete(id)
     return { ok: true }

@@ -25,26 +25,27 @@ export const get = query({
       .query('round_players')
       .withIndex('by_round', (q) => q.eq('roundId', roundId))
       .collect()
-    const players = await Promise.all(
-      rps.map(async (rp) => ({
-        _id: rp._id,
-        profileId: rp.profileId ?? null,
-        guestId: rp.guestId ?? null,
-        is_guest: rp.is_guest,
-        course_handicap: rp.course_handicap,
-        ...(await resolvePlayer(ctx, rp)),
-      })),
-    )
-    const scores = await ctx.db
-      .query('scores')
-      .withIndex('by_round', (q) => q.eq('roundId', roundId))
-      .collect()
-    const modes = (
-      await ctx.db
+    const [players, scores, rawModes] = await Promise.all([
+      Promise.all(
+        rps.map(async (rp) => ({
+          _id: rp._id,
+          profileId: rp.profileId ?? null,
+          guestId: rp.guestId ?? null,
+          is_guest: rp.is_guest,
+          course_handicap: rp.course_handicap,
+          ...(await resolvePlayer(ctx, rp)),
+        })),
+      ),
+      ctx.db
+        .query('scores')
+        .withIndex('by_round', (q) => q.eq('roundId', roundId))
+        .collect(),
+      ctx.db
         .query('round_modes')
         .withIndex('by_round', (q) => q.eq('roundId', roundId))
-        .collect()
-    ).map((m) => m.mode)
+        .collect(),
+    ])
+    const modes = rawModes.map((m) => m.mode)
 
     return { round, course, holes, players, scores, modes }
   },
@@ -60,11 +61,8 @@ export const activeIdForUser = query({
       .query('round_players')
       .withIndex('by_profile', (q) => q.eq('profileId', me._id))
       .collect()
-    for (const rp of rps) {
-      const round = await ctx.db.get(rp.roundId)
-      if (round && round.status === 'active') return round._id
-    }
-    return null
+    const rounds = await Promise.all(rps.map((rp) => ctx.db.get(rp.roundId)))
+    return rounds.find((round) => round && round.status === 'active')?._id ?? null
   },
 })
 
@@ -80,8 +78,7 @@ export const create = mutation({
     scramble_teams: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const me = await requireProfile(ctx)
-    const course = await ctx.db.get(args.course_id)
+    const [me, course] = await Promise.all([requireProfile(ctx), ctx.db.get(args.course_id)])
 
     const roundId = await ctx.db.insert('rounds', {
       courseId: args.course_id,
@@ -109,50 +106,54 @@ export const create = mutation({
       } else {
         const idxOf = (p: (typeof profiles)[number]) =>
           course ? indexForCourse(p, course.name) : p.handicap_index
-        const sorted = [...profiles].sort((a, b) => idxOf(a) - idxOf(b))
+        const sorted = profiles.toSorted((a, b) => idxOf(a) - idxOf(b))
         if (sorted.length === 2) sorted.forEach((p) => (teamMap[p._id] = 1))
         else sorted.forEach((p, i) => (teamMap[p._id] = i % 2 === 0 ? 1 : 2))
       }
     }
 
-    for (const p of profiles) {
-      await ctx.db.insert('round_players', {
-        roundId,
-        profileId: p._id,
-        guestId: null,
-        is_guest: false,
-        course_handicap:
-          isScramble && teamMap[p._id]
-            ? teamMap[p._id]
-            : course
-              ? courseHandicap(indexForCourse(p, course.name), course.slope, course.course_rating, course.par)
-              : Math.round(p.handicap_index),
-      })
-    }
+    await Promise.all(
+      profiles.map((p) =>
+        ctx.db.insert('round_players', {
+          roundId,
+          profileId: p._id,
+          guestId: null,
+          is_guest: false,
+          course_handicap:
+            isScramble && teamMap[p._id]
+              ? teamMap[p._id]
+              : course
+                ? courseHandicap(indexForCourse(p, course.name), course.slope, course.course_rating, course.par)
+                : Math.round(p.handicap_index),
+        }),
+      ),
+    )
 
-    for (const g of args.guests ?? []) {
-      const [name, hcpStr] = String(g).split(':')
-      const hcp = parseFloat(hcpStr) || 18
-      const guestId = await ctx.db.insert('guest_players', {
-        name: name.trim(),
-        handicap_index: hcp,
-        createdBy: me._id,
-      })
-      await ctx.db.insert('round_players', {
-        roundId,
-        profileId: null,
-        guestId,
-        is_guest: true,
-        course_handicap: course
-          ? courseHandicap(hcp, course.slope, course.course_rating, course.par)
-          : Math.round(hcp),
-      })
-    }
+    await Promise.all(
+      (args.guests ?? []).map(async (g) => {
+        const [name, hcpStr] = String(g).split(':')
+        const hcp = parseFloat(hcpStr) || 18
+        const guestId = await ctx.db.insert('guest_players', {
+          name: name.trim(),
+          handicap_index: hcp,
+          createdBy: me._id,
+        })
+        await ctx.db.insert('round_players', {
+          roundId,
+          profileId: null,
+          guestId,
+          is_guest: true,
+          course_handicap: course
+            ? courseHandicap(hcp, course.slope, course.course_rating, course.par)
+            : Math.round(hcp),
+        })
+      }),
+    )
 
     const modes = args.modes ?? ['stroke']
-    for (let i = 0; i < modes.length; i++) {
-      await ctx.db.insert('round_modes', { roundId, mode: modes[i], is_primary: i === 0 })
-    }
+    await Promise.all(
+      modes.map((mode, i) => ctx.db.insert('round_modes', { roundId, mode, is_primary: i === 0 })),
+    )
 
     if (args.league_id) {
       const last = await ctx.db
@@ -184,14 +185,16 @@ export const finalize = mutation({
     const course = await ctx.db.get(round.courseId)
     if (!course) return { ok: true }
 
-    const rps = await ctx.db
-      .query('round_players')
-      .withIndex('by_round', (q) => q.eq('roundId', round_id))
-      .collect()
-    const scores = await ctx.db
-      .query('scores')
-      .withIndex('by_round', (q) => q.eq('roundId', round_id))
-      .collect()
+    const [rps, scores] = await Promise.all([
+      ctx.db
+        .query('round_players')
+        .withIndex('by_round', (q) => q.eq('roundId', round_id))
+        .collect(),
+      ctx.db
+        .query('scores')
+        .withIndex('by_round', (q) => q.eq('roundId', round_id))
+        .collect(),
+    ])
 
     for (const rp of rps) {
       if (rp.is_guest || !rp.profileId) continue
@@ -237,27 +240,27 @@ export const remove = mutation({
         .withIndex('by_round', (q) => q.eq('roundId', round_id))
         .collect()
 
-    for (const s of await byRound('scores')) await ctx.db.delete(s._id)
-    for (const m of await byRound('round_modes')) await ctx.db.delete(m._id)
-    for (const rp of await byRound('round_players')) await ctx.db.delete(rp._id)
+    await Promise.all((await byRound('scores')).map((s) => ctx.db.delete(s._id)))
+    await Promise.all((await byRound('round_modes')).map((m) => ctx.db.delete(m._id)))
+    await Promise.all((await byRound('round_players')).map((rp) => ctx.db.delete(rp._id)))
 
     const diffs = await ctx.db
       .query('whs_differentials')
       .filter((q) => q.eq(q.field('roundId'), round_id))
       .collect()
-    for (const d of diffs) await ctx.db.delete(d._id)
+    await Promise.all(diffs.map((d) => ctx.db.delete(d._id)))
 
     const tgs = await ctx.db
       .query('tournament_groups')
       .withIndex('by_round', (q) => q.eq('roundId', round_id))
       .collect()
-    for (const tg of tgs) await ctx.db.delete(tg._id)
+    await Promise.all(tgs.map((tg) => ctx.db.delete(tg._id)))
 
     const lrs = await ctx.db
       .query('league_rounds')
       .withIndex('by_round', (q) => q.eq('roundId', round_id))
       .collect()
-    for (const lr of lrs) await ctx.db.delete(lr._id)
+    await Promise.all(lrs.map((lr) => ctx.db.delete(lr._id)))
 
     await ctx.db.delete(round_id)
     return { ok: true }

@@ -164,7 +164,7 @@ export default function PerfilPage() {
               </div>
               <div className="space-y-1">
                 {diffs.map((d, i) => (
-                  <div key={i} className="flex items-center gap-3 py-2 border-b border-[#efebe1] last:border-0">
+                  <div key={`${d.played_at}-${d.diff}`} className="flex items-center gap-3 py-2 border-b border-[#efebe1] last:border-0">
                     <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: d.counting ? '#1f8a5b' : '#f4f1e9' }}>
                       {d.counting
@@ -188,12 +188,12 @@ export default function PerfilPage() {
         </div>
 
         {/* Recalcular WHS + editar hándicaps (golf / P&P) */}
-        <button onClick={recalculate} disabled={recalculating}
+        <button type="button" onClick={recalculate} disabled={recalculating}
           className="w-full py-3 rounded-[14px] text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60 mb-2">
           {recalculating ? 'Calculando...' : 'Recalcular WHS'}
         </button>
         <div className="grid grid-cols-2 gap-2 mb-3">
-          <button onClick={() => {
+          <button type="button" onClick={() => {
             const val = prompt(`Hándicap de golf (0–54):\nActual: ${profile.handicap_index?.toFixed(1) ?? '–'}`)
             if (val === null) return
             const num = parseFloat(val)
@@ -203,7 +203,7 @@ export default function PerfilPage() {
             className="py-3 rounded-[14px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80">
             Editar golf
           </button>
-          <button onClick={() => {
+          <button type="button" onClick={() => {
             const val = prompt(`Hándicap de Pitch & Putt (0–54):\nActual: ${profile.handicap_index_pp?.toFixed(1) ?? '–'}`)
             if (val === null) return
             const num = parseFloat(val)
@@ -257,13 +257,13 @@ export default function PerfilPage() {
         </div>
 
         {/* Sign out */}
-        <button onClick={handleSignOut}
+        <button type="button" onClick={handleSignOut}
           className="w-full py-3.5 rounded-[16px] font-semibold text-[15px] border-2 border-[#c6432d] text-[#c6432d] bg-white transition active:opacity-80">
           Cerrar sesión
         </button>
 
         {/* Delete profile — discreet */}
-        <button onClick={handleDeleteProfile}
+        <button type="button" onClick={handleDeleteProfile}
           className="block mx-auto mt-4 text-[12px] font-semibold text-[#a09a90] hover:text-[#c6432d] underline underline-offset-2 transition">
           Borrar perfil
         </button>
