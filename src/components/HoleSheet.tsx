@@ -42,10 +42,14 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
 
   const roundModes = data?.modes ?? []
-  const totalHoles = data?.course?.holes_count ?? 18
-  const holeRow = (data?.holes ?? []).find(h => h.hole_number === holeNum) ?? null
+  // 9_twice: a 9-hole course played twice — holes 10-18 reuse the par/SI of 1-9
+  // but keep their own displayed number and stored score.
+  const is9Twice = data?.round.notes === '9_twice'
+  const totalHoles = is9Twice ? 18 : data?.course?.holes_count ?? 18
+  const physicalHole = is9Twice && holeNum > 9 ? holeNum - 9 : holeNum
+  const holeRow = (data?.holes ?? []).find(h => h.hole_number === physicalHole) ?? null
   const hole: Hole | null = holeRow
-    ? { hole_number: holeRow.hole_number, par: holeRow.par, stroke_index: holeRow.stroke_index, distance_m: holeRow.distance_m ?? null }
+    ? { hole_number: holeNum, par: holeRow.par, stroke_index: holeRow.stroke_index, distance_m: holeRow.distance_m ?? null }
     : null
 
   const players: Player[] = (data?.players ?? []).map(rp => ({

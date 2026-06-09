@@ -77,11 +77,9 @@ function TarjetaPage() {
     return allHoles
   })()
 
-  const getScore  = (pid: string, h: number) => {
-    // For 9_twice, holes 10-18 map to 1-9
-    const actualHole = (holeMode === '9_twice' && h > 9) ? h - 9 : h
-    return scores.find(s => s.profile_id === pid && s.hole_number === actualHole)?.strokes ?? null
-  }
+  const getScore  = (pid: string, h: number) =>
+    // Each displayed hole (incl. 10-18 in 9_twice) has its own stored score.
+    scores.find(s => s.profile_id === pid && s.hole_number === h)?.strokes ?? null
   const getTotal  = (pid: string) => holes.reduce((a, h) => { const s = getScore(pid, h.hole_number); return s ? a + s : a }, 0)
   const getRealPar = (group: Hole[]) => group.reduce((a, h) => a + h.par, 0)
 

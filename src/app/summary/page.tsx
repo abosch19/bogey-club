@@ -31,7 +31,11 @@ function ResumenPage() {
   const round   = data?.round ?? null
   const course  = data?.course ?? null
   const players: Player[] = (data?.players ?? []).map(rp => ({ id: rp.profileId ?? '', name: rp.name ?? 'Inv', avatar_color: rp.avatar_color ?? '#6b7a72', course_handicap: rp.course_handicap ?? 0 }))
-  const holes: HoleRow[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
+  const courseHoles: HoleRow[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
+  // 9_twice: a 9-hole course played twice — show holes 1-18 (10-18 reuse 1-9).
+  const holes: HoleRow[] = round?.notes === '9_twice'
+    ? [...courseHoles.filter(h => h.hole_number <= 9), ...courseHoles.filter(h => h.hole_number <= 9).map(h => ({ ...h, hole_number: h.hole_number + 9 }))]
+    : courseHoles
   const scores: ScoreRow[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null, putts: s.putts ?? null, gir: s.gir ?? null, fairway: s.fairway ?? null }))
   const modes = (data?.modes ?? []).length ? (data?.modes ?? []) : ['stroke']
 
