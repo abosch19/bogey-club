@@ -5,7 +5,7 @@ import { api } from '@convex/_generated/api'
 import { formatHandicap } from '@/lib/golf'
 import { Avatar } from '@/components/ui/avatar'
 
-type Player = { _id: string; name: string; handicap_index: number; avatar_color: string; team: 1 | 2 }
+type Player = { _id: string; name: string; handicap_index: number; team: 1 | 2 }
 
 const SPINNER = <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
@@ -45,7 +45,6 @@ function ParejasPage() {
       _id: p._id,
       name: p.name,
       handicap_index: p.handicap_index,
-      avatar_color: p.avatar_color,
       // Snake: index 0,3 → team 1; index 1,2 → team 2 (for 4 players)
       team: (i % 2 === 0 ? 1 : 2) as 1 | 2,
     }))

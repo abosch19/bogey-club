@@ -2,7 +2,6 @@ export type Profile = {
   id: string
   name: string
   handicap_index: number
-  avatar_color: string
   created_at: string
 }
 

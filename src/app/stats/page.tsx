@@ -47,14 +47,14 @@ type RoundStat = {
   penalties: number; bunkers: number; players: string[]; won: boolean
   scores: { hole_number: number; strokes: number; par: number }[]
 }
-type OtherPlayer = { id: string; name: string; avatar_color: string }
+type OtherPlayer = { id: string; name: string }
 type StatScore = {
   round_id: string; profile_id: string; hole_number: number
   strokes: number | null; putts: number | null; gir: boolean | null
   fairway: boolean | null; penalties: number | null; in_bunker: boolean | null
 }
 type CourseStat = { name: string; best: number; avg: number; par: number; rounds: number; record: number | null; last3: number[] }
-type Companion = { id: string; name: string; avatar_color: string; wins: number; draws: number; losses: number; rounds: number }
+type Companion = { id: string; name: string; wins: number; draws: number; losses: number; rounds: number }
 type HoleAvg = { hole: number; avg: number }
 
 export default function StatsPage() {
@@ -161,13 +161,13 @@ export default function StatsPage() {
   const worstHole = holeAvgList.length ? holeAvgList.reduce((worst, x) => x.avg > worst.avg ? x : worst) : undefined
 
   // Social: head-to-head
-  const playerMap: Record<string, { name: string; avatar_color: string; wins: number; draws: number; losses: number; rounds: number }> = {}
+  const playerMap: Record<string, { name: string; wins: number; draws: number; losses: number; rounds: number }> = {}
   const playersById = new Map(allPlayers.map(x => [x.id, x]))
   for (const r of rounds) {
     for (const pid of r.players) {
       if (!playerMap[pid]) {
         const p = playersById.get(pid)
-        playerMap[pid] = { name: p?.name ?? 'Jugador', avatar_color: p?.avatar_color ?? '#6b7a72', wins: 0, draws: 0, losses: 0, rounds: 0 }
+        playerMap[pid] = { name: p?.name ?? 'Jugador', wins: 0, draws: 0, losses: 0, rounds: 0 }
       }
       playerMap[pid].rounds++
       if (r.won) playerMap[pid].wins++
@@ -544,7 +544,7 @@ function SocialSection({
                 <p className="font-mono text-[9px] text-[#1f8a5b] font-bold uppercase">Tú</p>
               </div>
               <div className="py-2 px-2 text-center">
-                <p className="font-mono text-[9px] font-bold uppercase truncate" style={{ color: other.avatar_color }}>{other.name.split(' ')[0]}</p>
+                <p className="font-mono text-[9px] font-bold uppercase truncate" style={{ color: avatarColor(other.name) }}>{other.name.split(' ')[0]}</p>
               </div>
             </div>
           ) : null

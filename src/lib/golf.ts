@@ -67,17 +67,3 @@ export function formatDate(dateStr: string): string {
     day: 'numeric', month: 'short', year: 'numeric',
   })
 }
-
-export function getInitials(name: string): string {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
-
-// Player avatar colors (cycle)
-const AVATAR_COLORS = [
-  '#2a6fdb', '#1f8a5b', '#d4a24a', '#c6432d',
-  '#7a3fc4', '#0f9c7a', '#e84a7a', '#3aa0c4',
-]
-
-export function avatarColor(index: number): string {
-  return AVATAR_COLORS[index % AVATAR_COLORS.length]
-}

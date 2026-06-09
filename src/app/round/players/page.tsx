@@ -2,10 +2,9 @@ import { useState, useEffect, useMemo, useRef, Suspense } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { getInitials, avatarColor } from '@/lib/golf'
 import { Avatar } from '@/components/ui/avatar'
 
-type Player = { _id: string; name: string; handicap_index: number; avatar_color: string; isGuest?: boolean }
+type Player = { _id: string; name: string; handicap_index: number; isGuest?: boolean }
 
 function SeleccionarJugadoresPage() {
   const navigate = useNavigate()
@@ -26,7 +25,7 @@ function SeleccionarJugadoresPage() {
   const allPlayers: Player[] = (profiles ?? []).flatMap(p =>
     p._id === me?._id
       ? []
-      : [{ _id: p._id, name: p.name, handicap_index: p.handicap_index, avatar_color: p.avatar_color }],
+      : [{ _id: p._id, name: p.name, handicap_index: p.handicap_index }],
   )
 
   const [selected, setSelected] = useState<Player[]>([])
@@ -38,18 +37,18 @@ function SeleccionarJugadoresPage() {
   const { show: showGuestForm, name: guestName, hcp: guestHcp } = guest
 
   const meParsed: Player | null = me
-    ? { _id: me._id, name: [me.name, me.last_name].filter(Boolean).join(' '), handicap_index: me.handicap_index, avatar_color: me.avatar_color }
+    ? { _id: me._id, name: [me.name, me.last_name].filter(Boolean).join(' '), handicap_index: me.handicap_index }
     : null
 
   // Initialize selection once me + profiles are loaded
   useEffect(() => {
     if (selectionInit.current || !me || !profiles) return
     selectionInit.current = true
-    const mePlayer: Player = { _id: me._id, name: [me.name, me.last_name].filter(Boolean).join(' '), handicap_index: me.handicap_index, avatar_color: me.avatar_color }
+    const mePlayer: Player = { _id: me._id, name: [me.name, me.last_name].filter(Boolean).join(' '), handicap_index: me.handicap_index }
     if (prefillPlayers.length > 0) {
       const prefilled = profiles.flatMap(p =>
         prefillPlayers.includes(p._id)
-          ? [{ _id: p._id, name: p.name, handicap_index: p.handicap_index, avatar_color: p.avatar_color }]
+          ? [{ _id: p._id, name: p.name, handicap_index: p.handicap_index }]
           : [],
       )
       setSelected(prefilled.length > 0 ? prefilled : [mePlayer])
@@ -75,7 +74,6 @@ function SeleccionarJugadoresPage() {
       _id: `guest_${Date.now()}`,
       name: guestName.trim(),
       handicap_index: hcp,
-      avatar_color: avatarColor(selected.length),
       isGuest: true,
     }
     setSelected([...selected, guestPlayer])

@@ -84,7 +84,7 @@ export const importAll = internalMutation({
       if (existing) { profileMap.set(pr.id, existing._id); return }
       const id = await ctx.db.insert('profiles', {
         name: str(pr.name, 'Jugador'), email: pr.email ? str(pr.email) : undefined,
-        handicap_index: num(pr.handicap_index, 54), avatar_color: str(pr.avatar_color, '#2a6fdb'),
+        handicap_index: num(pr.handicap_index, 54),
         supabaseId: pr.id,
       })
       profileMap.set(pr.id, id); bump('profiles')

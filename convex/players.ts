@@ -35,7 +35,6 @@ export const directory = query({
           id: p._id,
           name: [p.name, p.last_name].filter(Boolean).join(' '),
           handicap_index: p.handicap_index,
-          avatar_color: p.avatar_color,
           rounds_played,
         }
       }),

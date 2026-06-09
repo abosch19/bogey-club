@@ -7,7 +7,7 @@ import { Drawer } from 'vaul'
 import { Avatar } from '@/components/ui/avatar'
 
 type Hole   = { hole_number: number; par: number; stroke_index: number; distance_m: number | null }
-type Player = { id: string; name: string; avatar_color: string; course_handicap: number }
+type Player = { id: string; name: string; course_handicap: number }
 type PlayerScore = {
   strokes: number | null
   putts: number | null
@@ -293,7 +293,6 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
   const players: Player[] = (data?.players ?? []).map(rp => ({
     id: rp.profileId ?? `guest_${rp._id}`,
     name: rp.name ?? 'Invitado',
-    avatar_color: rp.avatar_color ?? '#6b7a72',
     course_handicap: rp.course_handicap ?? 0,
   }))
   const activePlayer = players.find((p) => p.id === selectedPlayerId) ?? players[0]

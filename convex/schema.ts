@@ -18,7 +18,9 @@ export default defineSchema({
     last_name: v.optional(v.string()),
     handicap_index: v.number(),
     handicap_index_pp: v.optional(v.number()),
-    avatar_color: v.string(),
+    // Legacy: avatars now derive their color from the name (src/components/ui/avatar.tsx).
+    // Kept optional because existing documents still carry the value.
+    avatar_color: v.optional(v.string()),
     supabaseId: v.optional(v.string()),
   })
     .index('by_userId', ['userId'])

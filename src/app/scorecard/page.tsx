@@ -9,7 +9,7 @@ import { Drawer } from 'vaul'
 import { HoleSheet } from '@/components/HoleSheet'
 import { Avatar, avatarColor } from '@/components/ui/avatar'
 
-type Player = { id: string; name: string; avatar_color: string; course_handicap: number; is_guest: boolean }
+type Player = { id: string; name: string; course_handicap: number; is_guest: boolean }
 type Hole   = { hole_number: number; par: number; stroke_index: number }
 type Score  = { profile_id: string; hole_number: number; strokes: number | null; putts: number | null; gir: boolean | null; fairway: boolean | null; penalties: number | null }
 
@@ -363,7 +363,7 @@ type EditPlayersControlProps = {
   roundId: string
   myId: string
   players: Player[]
-  allProfiles: { _id: string; name: string; avatar_color: string }[] | undefined
+  allProfiles: { _id: string; name: string }[] | undefined
   isPractice: boolean
   isActive: boolean
 }
@@ -468,7 +468,7 @@ type ScorecardHeaderProps = {
   modes: string[]
   players: Player[]
   customBet: string
-  allProfiles: { _id: string; name: string; avatar_color: string }[] | undefined
+  allProfiles: { _id: string; name: string }[] | undefined
   isPractice: boolean
   isActive: boolean
   completed: boolean
@@ -679,7 +679,7 @@ function TarjetaPage() {
   const base        = data?.course?.holes_count ?? 18
   const totalHoles  = holeMode === '9_twice' ? 18 : holeMode === 'front' || holeMode === 'back' ? 9 : base
   const allHoles: Hole[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
-  const players: Player[] = (data?.players ?? []).map(p => ({ id: p.profileId ?? '', name: p.name ?? 'Inv', avatar_color: p.avatar_color ?? '#6b7a72', course_handicap: p.course_handicap ?? 0, is_guest: p.is_guest }))
+  const players: Player[] = (data?.players ?? []).map(p => ({ id: p.profileId ?? '', name: p.name ?? 'Inv', course_handicap: p.course_handicap ?? 0, is_guest: p.is_guest }))
   const scores: Score[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null, putts: s.putts ?? null, gir: s.gir ?? null, fairway: s.fairway ?? null, penalties: s.penalties ?? null }))
   const modes = (data?.modes ?? []).length ? (data?.modes ?? []) : ['stroke']
 

@@ -49,7 +49,6 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         last_name,
         handicap_index: 54.0,
         handicap_index_pp: 54.0,
-        avatar_color: '#2a6fdb',
       })
     },
   },

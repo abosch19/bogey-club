@@ -5,7 +5,7 @@ import { api } from '@convex/_generated/api'
 import { scoreChipClass } from '@/lib/golf'
 import { Avatar } from '@/components/ui/avatar'
 
-type LeagueStanding = { profile_id: string; name: string; avatar_color: string; total_points: number }
+type LeagueStanding = { profile_id: string; name: string; total_points: number }
 
 const GOLF_QUOTES = [
   { text: "El golf es el único deporte donde puedes hacer trampa y luego confesar en el hoyo 18.", author: "Anónimo del vestuario" },
@@ -42,7 +42,7 @@ function fmtRoundDate(date: string): string {
 
 type RoundHole   = { hole_number: number; par: number }
 type RoundPlayer = {
-  name: string; avatar_color: string; is_guest: boolean
+  name: string; is_guest: boolean
   total: number | null; delta: number | null; holes_played: number
   hole_scores: { hole_number: number; strokes: number }[]
 }

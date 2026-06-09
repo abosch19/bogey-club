@@ -7,7 +7,7 @@ import { formatHandicap } from '@/lib/golf'
 import { Avatar } from '@/components/ui/avatar'
 
 type Course  = { id: Id<'courses'>; name: string; par: number; holes_count: number }
-type Player  = { id: Id<'profiles'>; name: string; handicap_index: number; avatar_color: string; group: number }
+type Player  = { id: Id<'profiles'>; name: string; handicap_index: number; group: number }
 
 const MODES = [
   { id: 'stableford', name: 'Stableford', desc: 'Puntos por hoyo. Gana quien más acumule.' },
@@ -62,7 +62,7 @@ function NuevoTorneoPage() {
   const createTournament = useMutation(api.tournaments.create)
 
   const courses: Course[] = (coursesData ?? []).map(c => ({ id: c._id, name: c.name, par: c.par, holes_count: c.holes_count }))
-  const allProfiles: Player[] = (profilesData ?? []).map(p => ({ id: p._id, name: p.name, handicap_index: p.handicap_index, avatar_color: p.avatar_color, group: 1 }))
+  const allProfiles: Player[] = (profilesData ?? []).map(p => ({ id: p._id, name: p.name, handicap_index: p.handicap_index, group: 1 }))
 
   const loading = me === undefined || coursesData === undefined || profilesData === undefined
 
@@ -71,7 +71,7 @@ function NuevoTorneoPage() {
     if (me === undefined || coursesData === undefined || profilesData === undefined) return
     if (me === null) { navigate('/login'); return }
 
-    const allP: Player[] = (profilesData ?? []).map(p => ({ id: p._id, name: p.name, handicap_index: p.handicap_index, avatar_color: p.avatar_color, group: 1 }))
+    const allP: Player[] = (profilesData ?? []).map(p => ({ id: p._id, name: p.name, handicap_index: p.handicap_index, group: 1 }))
 
     // Pre-select players from URL params
     const preselectedIds = searchParams.get('players')?.split(',').filter(Boolean) ?? []

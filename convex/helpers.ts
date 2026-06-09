@@ -42,27 +42,25 @@ export function publicProfile(p: Doc<'profiles'> | null) {
   return {
     id: p._id,
     name: p.name,
-    avatar_color: p.avatar_color,
     handicap_index: p.handicap_index,
   }
 }
 
-/** Resolve the display name + color for a round_player (registered or guest). */
+/** Resolve the display name for a round_player (registered or guest). */
 export async function resolvePlayer(
   ctx: QueryCtx,
   rp: Doc<'round_players'>,
 ): Promise<{
   name: string
-  avatar_color: string
   handicap_index: number
 }> {
   if (!rp.is_guest && rp.profileId) {
     const p = await ctx.db.get(rp.profileId as Id<'profiles'>)
-    if (p) return { name: [p.name, p.last_name].filter(Boolean).join(' '), avatar_color: p.avatar_color, handicap_index: p.handicap_index }
+    if (p) return { name: [p.name, p.last_name].filter(Boolean).join(' '), handicap_index: p.handicap_index }
   }
   if (rp.guestId) {
     const g = await ctx.db.get(rp.guestId as Id<'guest_players'>)
-    if (g) return { name: g.name, avatar_color: '#6b7a72', handicap_index: g.handicap_index }
+    if (g) return { name: g.name, handicap_index: g.handicap_index }
   }
-  return { name: 'Jugador', avatar_color: '#6b7a72', handicap_index: 36 }
+  return { name: 'Jugador', handicap_index: 36 }
 }

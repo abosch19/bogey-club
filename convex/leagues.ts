@@ -15,7 +15,6 @@ async function standingsFor(ctx: QueryCtx, leagueId: Id<'leagues'>) {
       return {
         profile_id: s.profileId,
         name: p ? [p.name, p.last_name].filter(Boolean).join(' ') : 'Jugador',
-        avatar_color: p?.avatar_color ?? '#6b7a72',
         total_points: s.total_points,
         rounds_played: s.rounds_played,
         wins: s.wins,

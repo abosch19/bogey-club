@@ -7,7 +7,7 @@ import { Id } from '@convex/_generated/dataModel'
 import { stablefordPts, strokesReceived } from '@/lib/golf'
 import { Avatar } from '@/components/ui/avatar'
 
-type TPlayer = { id: string; name: string; avatar_color: string; group: number; handicap: number; round_id: string | null; course_handicap: number }
+type TPlayer = { id: string; name: string; group: number; handicap: number; round_id: string | null; course_handicap: number }
 type Score   = { profile_id: string; hole_number: number; strokes: number }
 type Hole    = { hole_number: number; par: number; stroke_index: number }
 type Ranked  = TPlayer & { score: number | null; holesPlayed: number }
@@ -197,7 +197,6 @@ export default function TorneoPage() {
         id: tp.profileId ?? '',
         group: tp.group_number,
         name: gp?.name ?? 'J',
-        avatar_color: gp?.avatar_color ?? '#6b7a72',
         handicap: gp?.handicap_index ?? 0,
         round_id: group?.roundId ?? null,
         course_handicap: gp?.course_handicap ?? Math.round(gp?.handicap_index ?? 0),
