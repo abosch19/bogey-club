@@ -234,8 +234,8 @@ export default function StatsPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
-      {/* Header fijo */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-[#f4f1e9] z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
+      {/* Header sticky */}
+      <div className="sticky top-0 bg-[#f4f1e9] z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
         <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16] mb-2">Stats</h1>
         <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4]">
@@ -248,10 +248,7 @@ export default function StatsPage() {
           ))}
         </div>
       </div>
-      {/* Spacer */}
-      <div style={{ height: 'calc(max(14px, env(safe-area-inset-top)) + 88px)' }}/>
-
-      <div className="px-[14px] pb-4">
+      <div className="px-[14px] pt-4 pb-4">
         {/* ── GENERAL ── */}
         {section === 'general' && (
           <div className="space-y-3">

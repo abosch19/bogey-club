@@ -142,8 +142,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
-      {/* Header FIJO — no se mueve al hacer scroll */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-[#f4f1e9] z-40 flex items-center justify-between px-[14px] pb-2 border-b border-[#e5e0d4]"
+      {/* Header sticky — se mantiene arriba al hacer scroll */}
+      <div className="sticky top-0 bg-[#f4f1e9] z-40 flex items-center justify-between px-[14px] pb-2 border-b border-[#e5e0d4]"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
         <div className="flex items-center gap-2">
           <svg width="26" height="26" viewBox="0 0 64 64" fill="none">
@@ -164,9 +164,6 @@ export default function HomePage() {
           </Link>
         </div>
       </div>
-
-      {/* Spacer para compensar el header fijo */}
-      <div style={{ height: 'calc(max(14px, env(safe-area-inset-top)) + 44px)' }}/>
 
       <div>
 

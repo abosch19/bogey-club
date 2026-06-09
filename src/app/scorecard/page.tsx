@@ -42,6 +42,7 @@ function TarjetaPage() {
   const holeMode    = data?.round.notes ?? 'all'
   const notesVal    = data?.round.notes ?? ''
   const isPractice  = !!data?.round.is_practice
+  const isActive    = data?.round.status === 'active'
   const base        = data?.course?.holes_count ?? 18
   const totalHoles  = holeMode === '9_twice' ? 18 : holeMode === 'front' || holeMode === 'back' ? 9 : base
   const allHoles: Hole[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
@@ -421,20 +422,23 @@ function TarjetaPage() {
               ))}
             </div>
 
-            {/* Danger zone — solo práctica */}
+            {/* Danger zone — práctica o ronda en curso */}
             <div className="mt-5 pt-4 border-t border-[#efebe1]">
-              {isPractice ? (
+              {isPractice || isActive ? (
                 <button onClick={async () => {
-                  if (!confirm('¿Borrar esta ronda de práctica? Se eliminarán todos los golpes.')) return
+                  const msg = isPractice
+                    ? '¿Borrar esta ronda de práctica? Se eliminarán todos los golpes.'
+                    : '¿Descartar esta ronda en curso? Se eliminarán todos los golpes anotados y no se podrá recuperar.'
+                  if (!confirm(msg)) return
                   await removeRoundMut({ round_id: roundId as Id<'rounds'> })
                   navigate('/')
                 }}
                   className="w-full py-3 rounded-full border-2 border-[#c6432d] text-[#c6432d] font-bold text-[14px] transition active:opacity-80">
-                  Borrar ronda de práctica
+                  {isPractice ? 'Borrar ronda de práctica' : 'Descartar ronda en curso'}
                 </button>
               ) : (
                 <div className="bg-[#f4f1e9] rounded-[12px] px-4 py-3 text-center">
-                  <p className="text-[12px] text-[#6b7a72] font-semibold">Ronda competitiva — no se puede borrar</p>
+                  <p className="text-[12px] text-[#6b7a72] font-semibold">Ronda competitiva finalizada — no se puede borrar</p>
                   <p className="font-mono text-[10px] text-[#6b7a72] mt-0.5">Contacta al admin si hay un error</p>
                 </div>
               )}
