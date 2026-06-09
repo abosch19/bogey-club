@@ -48,3 +48,9 @@ html, body {
 /* Safe area */
 .safe-top { padding-top: max(54px, env(safe-area-inset-top)); }
 .safe-bottom { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+
+/* Tab bar: a little bottom padding in browser, more when installed as a PWA. */
+.tabbar-pb { padding-bottom: 8px; }
+@media (display-mode: standalone) {
+  .tabbar-pb { padding-bottom: max(22px, calc(env(safe-area-inset-bottom) + 8px)); }
+}

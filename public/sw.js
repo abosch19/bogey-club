@@ -1,5 +1,6 @@
-/* Bogey Club service worker — app-shell cache for installability + basic offline. */
-const CACHE = 'bogey-club-v1'
+/* Bogey Club service worker — keeps navigations fresh so the installed PWA
+   picks up new deploys, with an offline fallback. Bump CACHE to invalidate. */
+const CACHE = 'bogey-club-v2'
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -36,15 +37,22 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin requests; let Convex (other origins) pass through.
   if (url.origin !== self.location.origin) return
 
-  // SPA navigations: network-first, fall back to the cached app shell offline.
+  // SPA navigations: always go to the network and refresh the cached shell,
+  // so a new deploy is picked up; fall back to the cached shell when offline.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html').then((r) => r || caches.match('/'))),
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone()
+          caches.open(CACHE).then((cache) => cache.put('/index.html', copy))
+          return response
+        })
+        .catch(() => caches.match('/index.html').then((r) => r || caches.match('/'))),
     )
     return
   }
 
-  // Static assets: cache-first, then network (and cache the response).
+  // Hashed static assets are immutable: cache-first, then network (and cache it).
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached
