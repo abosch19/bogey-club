@@ -1,5 +1,5 @@
 import { useSearchParams, useNavigate } from 'react-router'
-import { useState, Suspense } from 'react'
+import { useState, Suspense, Fragment } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -220,10 +220,11 @@ function Clasificacion({ ranking, getTotal, realPar }: ClasificacionProps) {
   )
 }
 
-type RoundStatsProps = { players: Player[]; scores: Score[] }
+type RoundStatsProps = { players: Player[]; scores: Score[]; holes: Hole[] }
 
-/** Per-player stats of a finished round (putts, fairways, GIR, penalties). */
-function RoundStats({ players, scores }: RoundStatsProps) {
+/** Per-player stats of a finished round (putts, fairways, GIR, penalties, score distribution). */
+function RoundStats({ players, scores, holes }: RoundStatsProps) {
+  const parByHole = new Map(holes.map(h => [h.hole_number, h.par]))
   const rows = players.map(p => {
     const mine     = scores.filter(s => s.profile_id === p.id && s.strokes != null)
     const putts    = mine.some(s => s.putts != null) ? mine.reduce((a, s) => a + (s.putts ?? 0), 0) : null
@@ -232,9 +233,20 @@ function RoundStats({ players, scores }: RoundStatsProps) {
     const gir      = mine.some(s => s.gir !== null) && mine.length > 0
       ? Math.round(mine.filter(s => s.gir === true).length / mine.length * 100) : null
     const penalties = mine.some(s => s.penalties != null) ? mine.reduce((a, s) => a + (s.penalties ?? 0), 0) : null
-    return { p, putts, fw, gir, penalties }
+    // Score distribution vs par (same buckets and colors as the stats page).
+    const deltas = mine.flatMap(s => {
+      const par = parByHole.get(s.hole_number)
+      return par != null ? [s.strokes! - par] : []
+    })
+    const dist = [
+      { label: 'Birdie', n: deltas.filter(d => d <= -1).length, color: '#2a6fdb', bg: '#dde7fb' },
+      { label: 'Par',    n: deltas.filter(d => d === 0).length,  color: '#1f8a5b', bg: '#d9eedd' },
+      { label: 'Bogey',  n: deltas.filter(d => d === 1).length,  color: '#9b6e1a', bg: '#f6e6c4' },
+      { label: 'Doble+', n: deltas.filter(d => d >= 2).length,   color: '#a83a25', bg: '#fadcd6' },
+    ]
+    return { p, putts, fw, gir, penalties, dist, played: mine.length }
   })
-  if (!rows.some(r => r.putts != null || r.fw != null || r.gir != null || r.penalties != null)) return null
+  if (!rows.some(r => r.played > 0)) return null
 
   return (
     <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
@@ -250,19 +262,32 @@ function RoundStats({ players, scores }: RoundStatsProps) {
           </tr>
         </thead>
         <tbody>
-          {rows.map(({ p, putts, fw, gir, penalties }) => (
-            <tr key={p.id} className="border-t border-[#efebe1]">
-              <td className="py-2 text-left">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
-                  <span className="font-semibold text-[12px] text-[#0e1a16]">{p.name.split(' ')[0]}</span>
-                </div>
-              </td>
-              <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{putts ?? '–'}</td>
-              <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{fw != null ? `${fw}%` : '–'}</td>
-              <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{gir != null ? `${gir}%` : '–'}</td>
-              <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{penalties ?? '–'}</td>
-            </tr>
+          {rows.map(({ p, putts, fw, gir, penalties, dist }) => (
+            <Fragment key={p.id}>
+              <tr className="border-t border-[#efebe1]">
+                <td className="pt-2 pb-1 text-left">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                    <span className="font-semibold text-[12px] text-[#0e1a16]">{p.name.split(' ')[0]}</span>
+                  </div>
+                </td>
+                <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{putts ?? '–'}</td>
+                <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{fw != null ? `${fw}%` : '–'}</td>
+                <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{gir != null ? `${gir}%` : '–'}</td>
+                <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{penalties ?? '–'}</td>
+              </tr>
+              <tr>
+                <td colSpan={5} className="pb-2.5 text-left">
+                  <div className="flex gap-1.5 flex-wrap pl-8">
+                    {dist.map(c => (
+                      <span key={c.label} className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: c.bg, color: c.color }}>
+                        {c.n} {c.label}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+              </tr>
+            </Fragment>
           ))}
         </tbody>
       </table>
@@ -825,7 +850,7 @@ function TarjetaPage() {
         )}
 
         {/* Stats of the finished round */}
-        {completed && <RoundStats players={players} scores={scores} />}
+        {completed && <RoundStats players={players} scores={scores} holes={holes} />}
       </div>
 
       {/* CTA */}
