@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router'
 import { useConvexAuth, useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { TabBar } from '@/components/ui/tab-bar'

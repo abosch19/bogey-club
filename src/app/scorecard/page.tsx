@@ -1,10 +1,10 @@
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router'
 import { useState, Suspense } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { scoreChipClass, stablefordPts, strokesReceived } from '@/lib/golf'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { Drawer } from 'vaul'
 import { HoleSheet } from '@/components/HoleSheet'
 

@@ -1,10 +1,10 @@
 import { useState, Suspense } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { scoreChipClass, formatDate, stablefordPts, strokesReceived } from '@/lib/golf'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 
 const SPINNER = <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
