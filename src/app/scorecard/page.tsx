@@ -7,6 +7,7 @@ import { scoreChipClass, stablefordPts, strokesReceived } from '@/lib/golf'
 import { Link } from 'react-router'
 import { Drawer } from 'vaul'
 import { HoleSheet } from '@/components/HoleSheet'
+import { Avatar, avatarColor } from '@/components/ui/avatar'
 
 type Player = { id: string; name: string; avatar_color: string; course_handicap: number; is_guest: boolean }
 type Hole   = { hole_number: number; par: number; stroke_index: number }
@@ -58,7 +59,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                 const blockDelta = blockTotal ? blockTotal - blockPar : null
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
-                    <td className="px-2 py-1.5"><div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div></td>
+                    <td className="px-2 py-1.5"><Avatar name={p.name} size={24} /></td>
                     {group.map(h => {
                       const s = getScore(p.id, h.hole_number)
                       const d = s != null ? s - h.par : null
@@ -90,7 +91,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
                     <td className="px-2 py-1">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                      <Avatar name={p.name} size={24} />
                     </td>
                     {group.map(h => {
                       const s = getScore(p.id, h.hole_number)
@@ -101,7 +102,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                           {/* Asterisks for handicap strokes */}
                           {rcv > 0 && (
                             <div className="flex justify-center mb-0.5">
-                              <span className="text-[8px] font-black leading-none tracking-[1px]" style={{ color: p.avatar_color }}>{'*'.repeat(rcv)}</span>
+                              <span className="text-[8px] font-black leading-none tracking-[1px]" style={{ color: avatarColor(p.name) }}>{'*'.repeat(rcv)}</span>
                             </div>
                           )}
                           {s != null ? (
@@ -139,13 +140,13 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                 const endSt = lastScored ? matchState.get(lastScored.hole_number) : undefined
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
-                    <td className="px-2 py-1.5"><div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div></td>
+                    <td className="px-2 py-1.5"><Avatar name={p.name} size={24} /></td>
                     {group.map(h => {
                       const st = matchState.get(h.hole_number)
                       const cell = !st
                         ? <span className="text-[#c4bfb5] text-[13px]">·</span>
                         : st.leader?.id === p.id
-                          ? <div className="mx-auto w-[26px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[8px] font-black text-white" style={{ backgroundColor: p.avatar_color }}>{st.n}UP</div>
+                          ? <div className="mx-auto w-[26px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[8px] font-black text-white" style={{ backgroundColor: avatarColor(p.name) }}>{st.n}UP</div>
                           : !st.leader
                             ? <div className="mx-auto w-[26px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[8px] font-bold bg-[#f4f1e9] text-[#6b7a72]">AS</div>
                             : null
@@ -161,7 +162,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                     })}
                     <td className="px-2 py-1.5 min-w-[40px]">
                       {endSt && (endSt.leader?.id === p.id || !endSt.leader) ? (
-                        <p className="font-mono text-[10px] font-black text-center" style={{ color: endSt.leader ? p.avatar_color : '#6b7a72' }}>
+                        <p className="font-mono text-[10px] font-black text-center" style={{ color: endSt.leader ? avatarColor(p.name) : '#6b7a72' }}>
                           {endSt.leader ? `${endSt.n} UP` : 'AS'}
                         </p>
                       ) : <p className="text-center text-[#c4bfb5]">–</p>}
@@ -198,9 +199,7 @@ function Clasificacion({ ranking, getTotal, realPar }: ClasificacionProps) {
               style={{ backgroundColor: isFirst ? '#e8b75a' : '#f4f1e9', color: isFirst ? '#0e1a16' : '#6b7a72' }}>
               {i + 1}
             </div>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold" style={{ backgroundColor: p.avatar_color }}>
-              {p.name[0].toUpperCase()}
-            </div>
+            <Avatar name={p.name} size={40} />
             <div className="flex-1">
               <p className="font-bold text-[15px]" style={{ color: isFirst ? '#fff' : '#0e1a16' }}>{p.name}</p>
               <p className="font-mono text-[10px]" style={{ color: isFirst ? 'rgba(255,255,255,0.5)' : '#6b7a72' }}>Hcp {p.course_handicap}</p>
@@ -267,7 +266,7 @@ function RoundStats({ players, scores, holes }: RoundStatsProps) {
               <tr className="border-t border-[#efebe1]">
                 <td className="pt-2 pb-1 text-left">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                    <Avatar name={p.name} size={24} />
                     <span className="font-semibold text-[12px] text-[#0e1a16]">{p.name.split(' ')[0]}</span>
                   </div>
                 </td>
@@ -408,7 +407,7 @@ function EditPlayersControl({ roundId, myId, players, allProfiles, isPractice, i
             <div className="space-y-2 mb-4">
               {players.map(p => (
                 <div key={p.id} className="flex items-center gap-3 bg-[#f4f1e9] rounded-[12px] px-3 py-2.5">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                  <Avatar name={p.name} size={32} />
                   <span className="flex-1 font-semibold text-[13px] text-[#0e1a16]">{p.name}</span>
                   <span className="font-mono text-[10px] text-[#6b7a72]">hcp {p.course_handicap}</span>
                   {p.id !== myId && (
@@ -425,7 +424,7 @@ function EditPlayersControl({ roundId, myId, players, allProfiles, isPractice, i
               {(allProfiles ?? []).flatMap(p => players.find(rp => rp.id === p._id) ? [] : [(
                 <button type="button" key={p._id} onClick={() => addPlayer(p._id)}
                   className="w-full flex items-center gap-3 bg-white rounded-[12px] px-3 py-2.5 border border-[#e5e0d4] text-left active:opacity-70">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                  <Avatar name={p.name} size={32} />
                   <span className="flex-1 font-semibold text-[13px] text-[#0e1a16]">{p.name}</span>
                   <span className="font-mono text-[10px] text-[#1f8a5b] font-bold">+ Añadir</span>
                 </button>
@@ -514,7 +513,7 @@ function ScorecardHeader({
             const total = getTotal(p.id)
             return (
               <div key={p.id} className="text-center">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold mx-auto" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                <Avatar name={p.name} size={28} className="mx-auto" />
                 {total > 0 && <p className="font-mono text-[11px] font-black text-[#0e1a16] mt-0.5">{total}</p>}
               </div>
             )
@@ -546,7 +545,7 @@ function ScorecardHeader({
         <div className="bg-white rounded-[14px] px-4 py-3 border border-[#e5e0d4] mb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: matchplayResult.a.avatar_color }}>{matchplayResult.a.name[0]}</div>
+              <Avatar name={matchplayResult.a.name} size={32} />
               <span className="font-bold text-[13px] text-[#0e1a16]">{matchplayResult.a.name.split(' ')[0]}</span>
             </div>
             <div className="text-center px-4">
@@ -555,7 +554,7 @@ function ScorecardHeader({
             </div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-[13px] text-[#0e1a16]">{matchplayResult.b.name.split(' ')[0]}</span>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: matchplayResult.b.avatar_color }}>{matchplayResult.b.name[0]}</div>
+              <Avatar name={matchplayResult.b.name} size={32} />
             </div>
           </div>
         </div>

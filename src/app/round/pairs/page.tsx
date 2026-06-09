@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { formatHandicap } from '@/lib/golf'
+import { Avatar } from '@/components/ui/avatar'
 
 type Player = { _id: string; name: string; handicap_index: number; avatar_color: string; team: 1 | 2 }
 
@@ -126,9 +127,7 @@ function ParejasPage() {
                 <div className="space-y-2">
                   {members.map(p => (
                     <div key={p._id} className="flex items-center gap-2 bg-white rounded-[10px] px-2.5 py-2">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold" style={{ backgroundColor: p.avatar_color }}>
-                        {p.name[0]}
-                      </div>
+                      <Avatar name={p.name} size={28} />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-[12px] text-[#0e1a16] truncate">{p.name.split(' ')[0]}</p>
                         <p className="font-mono text-[9px] text-[#6b7a72]">h{formatHandicap(p.handicap_index)}</p>
@@ -159,9 +158,7 @@ function ParejasPage() {
           </div>
           {players.map((p, i) => (
             <div key={p._id} className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold" style={{ backgroundColor: p.avatar_color }}>
-                {p.name[0]}
-              </div>
+              <Avatar name={p.name} size={36} />
               <div className="flex-1">
                 <p className="font-semibold text-[13px] text-[#0e1a16]">{p.name}</p>
                 <p className="font-mono text-[10px] text-[#6b7a72]">h{formatHandicap(p.handicap_index)}</p>

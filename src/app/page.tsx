@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { scoreChipClass } from '@/lib/golf'
+import { Avatar } from '@/components/ui/avatar'
 
 type LeagueStanding = { profile_id: string; name: string; avatar_color: string; total_points: number }
 
@@ -75,9 +76,7 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
           return (
             <tr key={p.name} className="border-t border-[#efebe1]">
               <td className="px-2 py-1.5">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: p.avatar_color }}>
-                  {p.name[0]?.toUpperCase()}
-                </div>
+                <Avatar name={p.name} size={20} />
               </td>
               {holes.map(h => {
                 const s = byHole.get(h.hole_number)
@@ -273,7 +272,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-2">
                   {activeLeague.top3.map((p: LeagueStanding) => (
                     <div key={p.profile_id} className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}>
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                      <Avatar name={p.name} size={20} />
                       <span className="font-mono text-[10px] font-bold text-white">{p.total_points}</span>
                     </div>
                   ))}
@@ -312,9 +311,7 @@ export default function HomePage() {
                 {feed.map((item, i) => (
                   <Link key={item.id} to={`/scorecard?round=${item.round_id}`}
                     className={`flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0" style={{ backgroundColor: item.avatar_color }}>
-                      {item.name[0].toUpperCase()}
-                    </div>
+                    <Avatar name={item.name} size={36} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-[13px] text-[#0e1a16] leading-tight">

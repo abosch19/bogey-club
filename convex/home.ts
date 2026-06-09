@@ -76,7 +76,7 @@ async function buildActiveLeague(ctx: QueryCtx, me: Doc<'profiles'>) {
       const p = await ctx.db.get(s.profileId)
       return {
         profile_id: s.profileId,
-        name: p?.name ?? 'J',
+        name: p ? [p.name, p.last_name].filter(Boolean).join(' ') : 'J',
         avatar_color: p?.avatar_color ?? '#6b7a72',
         total_points: s.total_points,
       }
@@ -185,7 +185,7 @@ async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
       return {
         id: r._id + pid,
         round_id: r._id,
-        name: p?.name ?? 'Jugador',
+        name: p ? [p.name, p.last_name].filter(Boolean).join(' ') : 'Jugador',
         avatar_color: p?.avatar_color ?? '#6b7a72',
         action,
         detail: `${course?.name ?? 'Campo'} · ${timeStr}`,
@@ -230,7 +230,7 @@ export const dashboard = query({
     return {
       profile: {
         id: me._id,
-        name: me.name,
+        name: [me.name, me.last_name].filter(Boolean).join(' '),
         handicap_index: me.handicap_index,
         avatar_color: me.avatar_color,
       },

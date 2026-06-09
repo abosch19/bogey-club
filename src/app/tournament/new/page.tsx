@@ -4,6 +4,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { formatHandicap } from '@/lib/golf'
+import { Avatar } from '@/components/ui/avatar'
 
 type Course  = { id: Id<'courses'>; name: string; par: number; holes_count: number }
 type Player  = { id: Id<'profiles'>; name: string; handicap_index: number; avatar_color: string; group: number }
@@ -229,7 +230,7 @@ function NuevoTorneoPage() {
                       <button type="button" key={p.id} onClick={() => togglePlayer(p)}
                         className="w-full flex items-center gap-3 rounded-[14px] p-3 border transition"
                         style={{ backgroundColor: isSel ? '#0e1a16' : '#fff', borderColor: isSel ? '#0e1a16' : '#e5e0d4' }}>
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                        <Avatar name={p.name} size={36} />
                         <div className="flex-1 text-left">
                           <p className="font-bold text-[13px]" style={{ color: isSel ? '#fff' : '#0e1a16' }}>{p.name}</p>
                           <p className="font-mono text-[10px]" style={{ color: isSel ? 'rgba(255,255,255,0.5)' : '#6b7a72' }}>HCP {formatHandicap(p.handicap_index)}</p>
@@ -281,7 +282,7 @@ function NuevoTorneoPage() {
                     <div className="divide-y divide-[#efebe1]">
                       {gPlayers.map(p => (
                         <div key={p.id} className="flex items-center gap-3 px-4 py-2.5">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                          <Avatar name={p.name} size={32} />
                           <div className="flex-1">
                             <p className="font-semibold text-[13px] text-[#0e1a16]">{p.name}</p>
                             <p className="font-mono text-[10px] text-[#6b7a72]">HCP {formatHandicap(p.handicap_index)}</p>

@@ -4,9 +4,10 @@ import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { strokesReceived, stablefordPts } from '@/lib/golf'
 import { Drawer } from 'vaul'
+import { Avatar } from '@/components/ui/avatar'
 
 type Hole   = { hole_number: number; par: number; stroke_index: number; distance_m: number | null }
-type Player = { id: string; name: string; short: string; avatar_color: string; course_handicap: number }
+type Player = { id: string; name: string; avatar_color: string; course_handicap: number }
 type PlayerScore = {
   strokes: number | null
   putts: number | null
@@ -73,10 +74,7 @@ function ScrambleSection({ players, par, holeNum, get, setScore, set }: Scramble
             <div className="flex items-center gap-3 px-4 py-3" style={{ backgroundColor: light }}>
               <div className="flex -space-x-2">
                 {members.map(m => (
-                  <div key={m.id} className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold border-[3px] border-white"
-                    style={{ backgroundColor: m.avatar_color }}>
-                    {m.short}
-                  </div>
+                  <Avatar key={m.id} name={m.name} size={36} className="border-[3px] border-white" />
                 ))}
               </div>
               <div className="flex-1">
@@ -163,9 +161,7 @@ function PlayerCard({ player: p, par, hole, roundModes, expanded: isExp, onToggl
     <div className="bg-white rounded-[18px] border border-[#e5e0d4] overflow-hidden">
       <div className="flex items-center gap-2.5 px-3 pt-3 pb-2.5">
         <div className="flex-shrink-0 text-center" style={{ minWidth: 44 }}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold mx-auto" style={{ backgroundColor: p.avatar_color }}>
-            {p.short}
-          </div>
+          <Avatar name={p.name} size={40} className="mx-auto" />
           <p className="font-mono text-[9px] text-[#6b7a72] mt-0.5">
             h{p.course_handicap}
             {(() => { const rcv = strokesReceived(p.course_handicap, hole?.stroke_index ?? 18); return rcv > 0 ? <span className="text-[#1f8a5b] font-black"> +{rcv}</span> : null })()}
@@ -297,7 +293,6 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
   const players: Player[] = (data?.players ?? []).map(rp => ({
     id: rp.profileId ?? `guest_${rp._id}`,
     name: rp.name ?? 'Invitado',
-    short: (rp.name ?? 'I')[0].toUpperCase(),
     avatar_color: rp.avatar_color ?? '#6b7a72',
     course_handicap: rp.course_handicap ?? 0,
   }))
@@ -390,10 +385,8 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
               <button key={p.id} type="button" onClick={() => setSelectedPlayerId(p.id)}
                 className="flex flex-col items-center gap-1 flex-shrink-0 transition active:scale-95" style={{ width: 56 }}>
                 <div className="relative">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-[16px] font-bold"
-                    style={{ backgroundColor: p.avatar_color, outline: isActive ? '3px solid #0e1a16' : '3px solid transparent', outlineOffset: 2 }}>
-                    {p.short}
-                  </div>
+                  <Avatar name={p.name} size={48}
+                    style={{ outline: isActive ? '3px solid #0e1a16' : '3px solid transparent', outlineOffset: 2 }} />
                   {psc.strokes != null && pd && (
                     <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-black border-2 border-white"
                       style={{ backgroundColor: pd.bg, color: pd.text }}>{psc.strokes}</div>

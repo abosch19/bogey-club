@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { getInitials, avatarColor } from '@/lib/golf'
+import { Avatar } from '@/components/ui/avatar'
 
 type Player = { _id: string; name: string; handicap_index: number; avatar_color: string; isGuest?: boolean }
 
@@ -37,14 +38,14 @@ function SeleccionarJugadoresPage() {
   const { show: showGuestForm, name: guestName, hcp: guestHcp } = guest
 
   const meParsed: Player | null = me
-    ? { _id: me._id, name: me.name, handicap_index: me.handicap_index, avatar_color: me.avatar_color }
+    ? { _id: me._id, name: [me.name, me.last_name].filter(Boolean).join(' '), handicap_index: me.handicap_index, avatar_color: me.avatar_color }
     : null
 
   // Initialize selection once me + profiles are loaded
   useEffect(() => {
     if (selectionInit.current || !me || !profiles) return
     selectionInit.current = true
-    const mePlayer: Player = { _id: me._id, name: me.name, handicap_index: me.handicap_index, avatar_color: me.avatar_color }
+    const mePlayer: Player = { _id: me._id, name: [me.name, me.last_name].filter(Boolean).join(' '), handicap_index: me.handicap_index, avatar_color: me.avatar_color }
     if (prefillPlayers.length > 0) {
       const prefilled = profiles.flatMap(p =>
         prefillPlayers.includes(p._id)
@@ -136,10 +137,7 @@ function SeleccionarJugadoresPage() {
           <div className="flex items-center gap-2 mb-4 flex-wrap">
             {selected.map((p, i) => (
               <div key={p._id} className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 border border-[#e5e0d4]">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
-                  style={{ backgroundColor: p.avatar_color ?? avatarColor(i) }}>
-                  {getInitials(p.name)}
-                </div>
+                <Avatar name={p.name} size={20} />
                 <span className="text-[12px] font-semibold text-[#0e1a16]">{p.name.split(' ')[0]}</span>
                 {p._id !== meParsed?._id && (
                   <button type="button" onClick={() => togglePlayer(p)} aria-label={`Quitar a ${p.name}`} className="text-[#6b7a72] hover:text-[#c6432d] ml-0.5">
@@ -197,10 +195,7 @@ function SeleccionarJugadoresPage() {
             <button type="button" key={p._id} onClick={() => !isDisabled && togglePlayer(p)}
               className={`w-full flex items-center gap-3 rounded-[16px] p-4 border transition-all ${isDisabled ? 'opacity-40' : 'active:scale-[0.99]'}`}
               style={{ backgroundColor: isSel ? '#0e1a16' : '#ffffff', borderColor: isSel ? '#0e1a16' : '#e5e0d4' }}>
-              <div className="w-11 h-11 rounded-full flex items-center justify-center text-white text-[15px] font-bold flex-shrink-0"
-                style={{ backgroundColor: p.avatar_color ?? avatarColor(i) }}>
-                {getInitials(p.name)}
-              </div>
+              <Avatar name={p.name} size={44} />
               <div className="flex-1 text-left min-w-0">
                 <p className="font-bold text-[14px]" style={{ color: isSel ? '#fff' : '#0e1a16' }}>{p.name}</p>
                 <p className="font-mono text-[10px] mt-0.5" style={{ color: isSel ? 'rgba(255,255,255,0.55)' : '#6b7a72' }}>

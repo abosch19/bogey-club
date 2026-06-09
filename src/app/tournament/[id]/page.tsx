@@ -5,6 +5,7 @@ import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { stablefordPts, strokesReceived } from '@/lib/golf'
+import { Avatar } from '@/components/ui/avatar'
 
 type TPlayer = { id: string; name: string; avatar_color: string; group: number; handicap: number; round_id: string | null; course_handicap: number }
 type Score   = { profile_id: string; hole_number: number; strokes: number }
@@ -40,9 +41,7 @@ function LeaderboardTab({ rankings, myId, mode, coursePar }: { rankings: Ranked[
             </div>
             {/* Group color dot */}
             <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: GROUP_COLORS[p.group - 1] }}/>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: p.avatar_color }}>
-              {p.name[0]}
-            </div>
+            <Avatar name={p.name} size={32} />
             <div className="flex-1 min-w-0">
               <p className="font-bold text-[14px]" style={{ color: isFirst ? '#fff' : '#0e1a16' }}>
                 {p.name}{isMe ? ' (tú)' : ''}
@@ -139,7 +138,7 @@ function GruposTab({ players, scores, holes, mode, myId, tournamentId, nGroups, 
               return (
                 <div key={p.id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                    <Avatar name={p.name} size={40} />
                     <div className="flex-1">
                       <p className="font-bold text-[14px] text-[#0e1a16]">{p.name}{p.id === myId ? ' (tú)' : ''}</p>
                       <p className="font-mono text-[10px] text-[#6b7a72]">HCP {p.handicap} · {pScores.length} hoyos</p>

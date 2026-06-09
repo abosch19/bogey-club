@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { formatHandicap } from '@/lib/golf'
+import { Avatar } from '@/components/ui/avatar'
 
 export default function JugadoresPage() {
   const players = useQuery(api.players.directory)
@@ -10,10 +11,8 @@ export default function JugadoresPage() {
   const [search, setSearch]   = useState('')
 
   const myId = me?._id ?? ''
-  const fullName = (p: { name: string; last_name?: string }) =>
-    [p.name, p.last_name].filter(Boolean).join(' ')
   const filtered = (players ?? []).filter(p =>
-    fullName(p).toLowerCase().includes(search.toLowerCase())
+    p.name.toLowerCase().includes(search.toLowerCase())
   )
 
   if (players === undefined) return (
@@ -45,13 +44,10 @@ export default function JugadoresPage() {
           {filtered.map((p, i) => (
             <div key={p.id} className={`bg-white rounded-[16px] p-4 border flex items-center gap-3 ${p.id === myId ? 'border-[#1f8a5b]' : 'border-[#e5e0d4]'}`}>
               <span className="font-mono text-[12px] font-bold text-[#6b7a72] w-5 text-center">{i + 1}</span>
-              <div className="w-11 h-11 rounded-full flex items-center justify-center text-white text-[15px] font-bold flex-shrink-0"
-                style={{ backgroundColor: p.avatar_color }}>
-                {p.name[0].toUpperCase()}
-              </div>
+              <Avatar name={p.name} size={44} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="font-bold text-[14px] text-[#0e1a16]">{fullName(p)}</p>
+                  <p className="font-bold text-[14px] text-[#0e1a16]">{p.name}</p>
                   {p.id === myId && <span className="font-mono text-[8px] text-[#1f8a5b] bg-[#d9eedd] px-1.5 py-0.5 rounded-full uppercase">Tú</span>}
                 </div>
                 <p className="text-[11px] text-[#6b7a72] mt-0.5">{p.rounds_played} ronda{p.rounds_played !== 1 ? 's' : ''}</p>

@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { formatDate, formatHandicap } from '@/lib/golf'
+import { Avatar, avatarColor } from '@/components/ui/avatar'
 
 function Sparkline({ values, color = '#1f8a5b' }: { values: number[]; color?: string }) {
   if (values.length < 2) return null
@@ -623,9 +624,7 @@ function SocialNemesis({ nemesis }: { nemesis: Companion | null }) {
     <div className="bg-white rounded-[16px] p-4 border border-[#fadcd6]">
       <p className="font-mono text-[9px] text-[#a83a25] uppercase tracking-wide mb-2">Tu némesis</p>
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-full flex items-center justify-center text-white text-[15px] font-bold" style={{ backgroundColor: nemesis.avatar_color }}>
-          {nemesis.name[0].toUpperCase()}
-        </div>
+        <Avatar name={nemesis.name} size={44} />
         <div className="flex-1">
           <p className="font-bold text-[15px] text-[#0e1a16]">{nemesis.name}</p>
           <p className="text-[12px] text-[#6b7a72]">{nemesis.rounds} rondas juntos</p>
@@ -652,10 +651,8 @@ function SocialCompareMetrics({
         {companions.map(c => (
           <button type="button" key={c.id} onClick={() => setComparePlayerId(comparePlayerId === c.id ? null : c.id)}
             className="flex items-center gap-2 px-3 py-2 rounded-full border transition text-[12px] font-bold"
-            style={{ backgroundColor: comparePlayerId === c.id ? c.avatar_color : '#fff', borderColor: comparePlayerId === c.id ? c.avatar_color : '#e5e0d4', color: comparePlayerId === c.id ? '#fff' : '#0e1a16' }}>
-            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: comparePlayerId === c.id ? 'rgba(255,255,255,0.3)' : c.avatar_color }}>
-              {c.name[0]}
-            </div>
+            style={{ backgroundColor: comparePlayerId === c.id ? avatarColor(c.name) : '#fff', borderColor: comparePlayerId === c.id ? avatarColor(c.name) : '#e5e0d4', color: comparePlayerId === c.id ? '#fff' : '#0e1a16' }}>
+            <Avatar name={c.name} size={20} />
             {c.name.split(' ')[0]}
           </button>
         ))}
@@ -685,15 +682,11 @@ function SocialCompareMetrics({
             <div className="grid grid-cols-3 border-b border-[#efebe1]">
               <div className="py-3 px-3"/>
               <div className="py-3 px-3 text-center border-l border-[#efebe1]">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold mx-auto mb-0.5" style={{ backgroundColor: '#1f8a5b' }}>
-                  {(allPlayers.find(p => p.id === myId) as any)?.name?.[0] ?? 'T'}
-                </div>
+                <Avatar name={(allPlayers.find(p => p.id === myId) as any)?.name ?? 'Tú'} size={28} className="mx-auto mb-0.5" />
                 <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Tú</p>
               </div>
               <div className="py-3 px-3 text-center border-l border-[#efebe1]">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold mx-auto mb-0.5" style={{ backgroundColor: other.avatar_color }}>
-                  {other.name[0]}
-                </div>
+                <Avatar name={other.name} size={28} className="mx-auto mb-0.5" />
                 <p className="font-mono text-[9px] text-[#6b7a72] uppercase truncate">{other.name.split(' ')[0]}</p>
               </div>
             </div>
@@ -742,9 +735,7 @@ function SocialHeadToHead({ companions }: { companions: Companion[] }) {
           return (
             <div key={c.id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold" style={{ backgroundColor: c.avatar_color }}>
-                  {c.name[0].toUpperCase()}
-                </div>
+                <Avatar name={c.name} size={40} />
                 <div className="flex-1">
                   <p className="font-bold text-[14px] text-[#0e1a16]">{c.name}</p>
                   <p className="text-[11px] text-[#6b7a72]">{c.rounds} ronda{c.rounds !== 1 ? 's' : ''} juntos</p>

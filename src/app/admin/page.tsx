@@ -4,6 +4,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { formatHandicap } from '@/lib/golf'
+import { Avatar } from '@/components/ui/avatar'
 
 export default function AdminPage() {
   const [tab, setTab]         = useState<'usuarios'|'ligas'|'campos'>('usuarios')
@@ -80,9 +81,7 @@ export default function AdminPage() {
             {users.map(u => (
               <div key={u._id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold" style={{ backgroundColor: u.avatar_color }}>
-                    {u.name[0].toUpperCase()}
-                  </div>
+                  <Avatar name={[u.name, u.last_name].filter(Boolean).join(' ')} size={40} />
                   <div className="flex-1">
                     <p className="font-bold text-[14px] text-[#0e1a16]">{[u.name, u.last_name].filter(Boolean).join(' ')}</p>
                     <p className="text-[11px] text-[#6b7a72]">HCP {formatHandicap(u.handicap_index)}</p>

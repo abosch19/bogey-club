@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
+import { Avatar } from '@/components/ui/avatar'
 
 export default function LigaPage() {
   const data = useQuery(api.leagues.listForUser)
@@ -89,7 +90,7 @@ export default function LigaPage() {
                   <div key={p.pos} className="flex items-center gap-3 py-1.5 px-2 rounded-[10px]"
                     style={{ backgroundColor: p.highlight ? '#d9eedd' : 'transparent' }}>
                     <span className="font-mono text-[12px] font-bold w-5 text-center" style={{ color: p.highlight ? '#1f8a5b' : '#6b7a72' }}>{p.pos}</span>
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold" style={{ backgroundColor: p.color }}>{p.name[0]}</div>
+                    <Avatar name={p.name} size={28} />
                     <span className="flex-1 text-[13px] font-semibold text-[#0e1a16]">{p.name}</span>
                     <span className="font-mono text-[14px] font-black text-[#0e1a16]">{p.pts}</span>
                     <span className="font-mono text-[9px] text-[#6b7a72]">PTS</span>
@@ -143,7 +144,7 @@ export default function LigaPage() {
                         <div key={s.profile_id} className="flex items-center gap-3 py-1.5 px-2 rounded-[12px]"
                           style={{ backgroundColor: i === 0 ? '#f6e6c4' : 'transparent' }}>
                           <span className="font-mono text-[12px] font-bold w-5 text-center" style={{ color: i === 0 ? '#9b6e1a' : '#6b7a72' }}>{i+1}</span>
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold" style={{ backgroundColor: s.avatar_color }}>{s.name[0]}</div>
+                          <Avatar name={s.name} size={28} />
                           <span className="flex-1 text-[13px] font-semibold text-[#0e1a16]">{s.name}</span>
                           <span className="font-mono text-[14px] font-black text-[#0e1a16]">{s.total_points}</span>
                           <span className="font-mono text-[9px] text-[#6b7a72]">PTS</span>

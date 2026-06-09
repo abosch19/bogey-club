@@ -24,7 +24,7 @@ export const forUser = query({
 
     const otherPlayers = (await ctx.db.query('profiles').collect()).flatMap((p) =>
       p._id !== me._id
-        ? [{ id: p._id, name: p.name, avatar_color: p.avatar_color }]
+        ? [{ id: p._id, name: [p.name, p.last_name].filter(Boolean).join(' '), avatar_color: p.avatar_color }]
         : [],
     )
 

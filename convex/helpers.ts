@@ -58,7 +58,7 @@ export async function resolvePlayer(
 }> {
   if (!rp.is_guest && rp.profileId) {
     const p = await ctx.db.get(rp.profileId as Id<'profiles'>)
-    if (p) return { name: p.name, avatar_color: p.avatar_color, handicap_index: p.handicap_index }
+    if (p) return { name: [p.name, p.last_name].filter(Boolean).join(' '), avatar_color: p.avatar_color, handicap_index: p.handicap_index }
   }
   if (rp.guestId) {
     const g = await ctx.db.get(rp.guestId as Id<'guest_players'>)
