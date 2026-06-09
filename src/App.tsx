@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { useConvexAuth } from 'convex/react'
+import { useConvexAuth, useQuery } from 'convex/react'
+import { api } from '@convex/_generated/api'
 import { TabBar } from '@/components/ui/tab-bar'
 
 import HomePage from '@/app/page'
@@ -60,9 +61,27 @@ function PersistentTabBar() {
   return <TabBar />
 }
 
+/** Subscribes to every tab's queries so they stay cached — switching tabs
+ *  then renders from cache instantly instead of flashing a loading spinner. */
+function WarmQueries() {
+  useQuery(api.home.dashboard)
+  useQuery(api.home.recentRounds)
+  useQuery(api.stats.forUser)
+  useQuery(api.leagues.listForUser)
+  useQuery(api.profiles.me)
+  useQuery(api.profiles.myDifferentials)
+  return null
+}
+
+function KeepWarm() {
+  const { isAuthenticated } = useConvexAuth()
+  return isAuthenticated ? <WarmQueries /> : null
+}
+
 export function App() {
   return (
     <div className="mx-auto max-w-[430px] min-h-screen relative">
+      <KeepWarm />
       <AuthGuard>
         <Routes>
           <Route path="/" element={<HomePage />} />
