@@ -310,7 +310,7 @@ export default function HomePage() {
               </div>
               <div className="space-y-0">
                 {feed.map((item, i) => (
-                  <Link key={item.id} to={`/summary?round=${item.round_id}&readonly=true`}
+                  <Link key={item.id} to={`/scorecard?round=${item.round_id}`}
                     className={`flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0" style={{ backgroundColor: item.avatar_color }}>
                       {item.name[0].toUpperCase()}

@@ -1,5 +1,5 @@
 import { ReactNode, useEffect } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router'
+import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router'
 import { useConvexAuth, useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { TabBar } from '@/components/ui/tab-bar'
@@ -11,7 +11,6 @@ import OnboardingPage from '@/app/onboarding/page'
 import ProfilePage from '@/app/profile/page'
 import StatsPage from '@/app/stats/page'
 import PlayersPage from '@/app/players/page'
-import SummaryPage from '@/app/summary/page'
 import ScorecardPage from '@/app/scorecard/page'
 import CoursePage from '@/app/course/[id]/page'
 import AdminPage from '@/app/admin/page'
@@ -24,6 +23,13 @@ import RoundCoursePage from '@/app/round/course/page'
 import RoundPlayersPage from '@/app/round/players/page'
 import RoundFormatPage from '@/app/round/format/page'
 import RoundPairsPage from '@/app/round/pairs/page'
+
+/** Legacy route — the summary screen merged into /scorecard. */
+function SummaryRedirect() {
+  const [searchParams] = useSearchParams()
+  const round = searchParams.get('round')
+  return <Navigate to={round ? `/scorecard?round=${round}` : '/'} replace />
+}
 
 const PUBLIC_ROUTES = ['/login', '/register', '/onboarding']
 /** Routes that show the persistent bottom tab bar. */
@@ -101,7 +107,7 @@ export function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/stats" element={<StatsPage />} />
           <Route path="/players" element={<PlayersPage />} />
-          <Route path="/summary" element={<SummaryPage />} />
+          <Route path="/summary" element={<SummaryRedirect />} />
           <Route path="/scorecard" element={<ScorecardPage />} />
           <Route path="/course/:id" element={<CoursePage />} />
           <Route path="/admin" element={<AdminPage />} />

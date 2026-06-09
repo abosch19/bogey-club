@@ -315,7 +315,7 @@ function GeneralSection({
               {rounds.slice(0, 6).map(r => {
                 const delta = r.total - r.real_par
                 return (
-                  <Link key={r.id} to={`/summary?round=${r.id}`}
+                  <Link key={r.id} to={`/scorecard?round=${r.id}`}
                     className="bg-white rounded-[16px] p-3.5 border flex items-center gap-3 block"
                     style={{ borderColor: r.total === bestScore ? '#e8b75a' : '#e5e0d4' }}>
                     <div className="flex-1 min-w-0">

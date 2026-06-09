@@ -10,11 +10,11 @@ import { HoleSheet } from '@/components/HoleSheet'
 
 type Player = { id: string; name: string; avatar_color: string; course_handicap: number; is_guest: boolean }
 type Hole   = { hole_number: number; par: number; stroke_index: number }
-type Score  = { profile_id: string; hole_number: number; strokes: number | null }
+type Score  = { profile_id: string; hole_number: number; strokes: number | null; putts: number | null; gir: boolean | null; fairway: boolean | null; penalties: number | null }
 
 const SPINNER = <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
-type ViewMode = 'stroke' | 'stableford' | 'matchplay_hcp' | 'matchplay' | 'bbb' | 'wolf'
+type ViewMode = 'stroke' | 'stableford' | 'matchplay_hcp' | 'matchplay' | 'bbb' | 'wolf' | 'clasificacion'
 
 type ScoreTableProps = {
   group: Hole[]
@@ -23,10 +23,11 @@ type ScoreTableProps = {
   players: Player[]
   viewMode: ViewMode
   getScore: (pid: string, holeNumber: number) => number | null
-  onEditHole: (holeNumber: number) => void
+  matchState: Map<number, { n: number; leader: Player | null }>
+  onEditHole?: (holeNumber: number) => void
 }
 
-function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, onEditHole }: ScoreTableProps) {
+function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, matchState, onEditHole }: ScoreTableProps) {
   const blockPar = group.reduce((a, h) => a + h.par, 0)
   const label    = gi === 0 && groupsCount > 1 ? 'OUT' : groupsCount > 1 ? 'IN' : 'TOT'
   return (
@@ -61,13 +62,16 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, onEdi
                     {group.map(h => {
                       const s = getScore(p.id, h.hole_number)
                       const d = s != null ? s - h.par : null
+                      const chip = s != null
+                        ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
+                        : <span className="text-[#c4bfb5] text-[13px]">·</span>
                       return (
                         <td key={h.hole_number} className="py-1.5 px-0.5">
-                          <button type="button" onClick={() => onEditHole(h.hole_number)} aria-label={`Editar hoyo ${h.hole_number}`} className="mx-auto block active:scale-95 transition">
-                            {s != null
-                              ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
-                              : <span className="text-[#c4bfb5] text-[13px]">·</span>}
-                          </button>
+                          {onEditHole ? (
+                            <button type="button" onClick={() => onEditHole(h.hole_number)} aria-label={`Editar hoyo ${h.hole_number}`} className="mx-auto block active:scale-95 transition">
+                              {chip}
+                            </button>
+                          ) : <div className="mx-auto w-fit">{chip}</div>}
                         </td>
                       )
                     })}
@@ -92,33 +96,76 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, onEdi
                       const s = getScore(p.id, h.hole_number)
                       const rcv = strokesReceived(p.course_handicap, h.stroke_index)
                       const pts = s ? stablefordPts(s, h.par, rcv) : null
+                      const cell = (
+                        <>
+                          {/* Asterisks for handicap strokes */}
+                          {rcv > 0 && (
+                            <div className="flex justify-center mb-0.5">
+                              <span className="text-[8px] font-black leading-none tracking-[1px]" style={{ color: p.avatar_color }}>{'*'.repeat(rcv)}</span>
+                            </div>
+                          )}
+                          {s != null ? (
+                            <div className="text-center">
+                              <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold mx-auto ${scoreChipClass(s - h.par)}`}>{s}</div>
+                              {pts !== null && (
+                                <p className="font-mono text-[9px] font-black leading-none mt-0.5"
+                                  style={{ color: pts>=3?'#2a6fdb':pts===2?'#1f8a5b':pts===1?'#9b6e1a':'#a83a25' }}>
+                                  {pts}pt
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[#c4bfb5] text-[13px]">·</span>
+                          )}
+                        </>
+                      )
                       return (
                         <td key={h.hole_number} className="py-1 px-0.5">
-                          <button type="button" onClick={() => onEditHole(h.hole_number)} aria-label={`Editar hoyo ${h.hole_number}`} className="mx-auto block text-center relative">
-                            {/* Asterisks for handicap strokes */}
-                            {rcv > 0 && (
-                              <div className="flex justify-center mb-0.5">
-                                <span className="text-[8px] font-black leading-none tracking-[1px]" style={{ color: p.avatar_color }}>{'*'.repeat(rcv)}</span>
-                              </div>
-                            )}
-                            {s != null ? (
-                              <div className="text-center">
-                                <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold mx-auto ${scoreChipClass(s - h.par)}`}>{s}</div>
-                                {pts !== null && (
-                                  <p className="font-mono text-[9px] font-black leading-none mt-0.5"
-                                    style={{ color: pts>=3?'#2a6fdb':pts===2?'#1f8a5b':pts===1?'#9b6e1a':'#a83a25' }}>
-                                    {pts}pt
-                                  </p>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-[#c4bfb5] text-[13px]">·</span>
-                            )}
-                          </button>
+                          {onEditHole ? (
+                            <button type="button" onClick={() => onEditHole(h.hole_number)} aria-label={`Editar hoyo ${h.hole_number}`} className="mx-auto block text-center relative">
+                              {cell}
+                            </button>
+                          ) : <div className="mx-auto text-center relative">{cell}</div>}
                         </td>
                       )
                     })}
                     <td className="font-mono text-[13px] font-black text-[#1f8a5b] px-2">{blockPts || '–'}</td>
+                  </tr>
+                )
+              } else if (viewMode === 'matchplay' || viewMode === 'matchplay_hcp') {
+                // One row per player; the running state (1UP, 2UP, AS) is marked
+                // on the cell of whoever leads the match after that hole.
+                const lastScored = [...group].reverse().find(h => matchState.get(h.hole_number))
+                const endSt = lastScored ? matchState.get(lastScored.hole_number) : undefined
+                return (
+                  <tr key={p.id} className="border-t border-[#efebe1]">
+                    <td className="px-2 py-1.5"><div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div></td>
+                    {group.map(h => {
+                      const st = matchState.get(h.hole_number)
+                      const cell = !st
+                        ? <span className="text-[#c4bfb5] text-[13px]">·</span>
+                        : st.leader?.id === p.id
+                          ? <div className="mx-auto w-[26px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[8px] font-black text-white" style={{ backgroundColor: p.avatar_color }}>{st.n}UP</div>
+                          : !st.leader
+                            ? <div className="mx-auto w-[26px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[8px] font-bold bg-[#f4f1e9] text-[#6b7a72]">AS</div>
+                            : null
+                      return (
+                        <td key={h.hole_number} className="py-1.5 px-0.5">
+                          {onEditHole ? (
+                            <button type="button" onClick={() => onEditHole(h.hole_number)} aria-label={`Editar hoyo ${h.hole_number}`} className="mx-auto block min-w-[26px] min-h-[22px] active:scale-95 transition">
+                              {cell}
+                            </button>
+                          ) : <div className="mx-auto w-fit min-h-[22px] flex items-center">{cell}</div>}
+                        </td>
+                      )
+                    })}
+                    <td className="px-2 py-1.5 min-w-[40px]">
+                      {endSt && (endSt.leader?.id === p.id || !endSt.leader) ? (
+                        <p className="font-mono text-[10px] font-black text-center" style={{ color: endSt.leader ? p.avatar_color : '#6b7a72' }}>
+                          {endSt.leader ? `${endSt.n} UP` : 'AS'}
+                        </p>
+                      ) : <p className="text-center text-[#c4bfb5]">–</p>}
+                    </td>
                   </tr>
                 )
               }
@@ -127,6 +174,98 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, onEdi
           </tbody>
         </table>
       </div>
+    </div>
+  )
+}
+
+type ClasificacionProps = {
+  ranking: Player[]
+  getTotal: (pid: string) => number
+  realPar: number
+}
+
+function Clasificacion({ ranking, getTotal, realPar }: ClasificacionProps) {
+  return (
+    <div className="space-y-2">
+      {ranking.map((p, i) => {
+        const total = getTotal(p.id)
+        const delta = total && realPar > 0 ? total - realPar : null
+        const isFirst = i === 0
+        return (
+          <div key={p.id} className="rounded-[16px] p-4 border flex items-center gap-3"
+            style={{ backgroundColor: isFirst ? '#0e1a16' : '#fff', borderColor: isFirst ? '#0e1a16' : '#e5e0d4' }}>
+            <div className="w-8 h-8 rounded-[8px] flex items-center justify-center font-mono font-black text-[14px]"
+              style={{ backgroundColor: isFirst ? '#e8b75a' : '#f4f1e9', color: isFirst ? '#0e1a16' : '#6b7a72' }}>
+              {i + 1}
+            </div>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold" style={{ backgroundColor: p.avatar_color }}>
+              {p.name[0].toUpperCase()}
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-[15px]" style={{ color: isFirst ? '#fff' : '#0e1a16' }}>{p.name}</p>
+              <p className="font-mono text-[10px]" style={{ color: isFirst ? 'rgba(255,255,255,0.5)' : '#6b7a72' }}>Hcp {p.course_handicap}</p>
+            </div>
+            <div className="text-right">
+              <p className="font-mono text-[22px] font-black leading-none" style={{ color: isFirst ? '#fff' : '#0e1a16' }}>{total || '–'}</p>
+              {delta !== null && (
+                <p className="font-mono text-[11px] font-bold mt-0.5" style={{ color: delta <= 0 ? '#1f8a5b' : '#e8b75a' }}>
+                  {delta > 0 ? `+${delta}` : delta === 0 ? 'E' : delta}
+                </p>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+type RoundStatsProps = { players: Player[]; scores: Score[] }
+
+/** Per-player stats of a finished round (putts, fairways, GIR, penalties). */
+function RoundStats({ players, scores }: RoundStatsProps) {
+  const rows = players.map(p => {
+    const mine     = scores.filter(s => s.profile_id === p.id && s.strokes != null)
+    const putts    = mine.some(s => s.putts != null) ? mine.reduce((a, s) => a + (s.putts ?? 0), 0) : null
+    const fwTotal  = mine.filter(s => s.fairway !== null).length
+    const fw       = fwTotal > 0 ? Math.round(mine.filter(s => s.fairway === true).length / fwTotal * 100) : null
+    const gir      = mine.some(s => s.gir !== null) && mine.length > 0
+      ? Math.round(mine.filter(s => s.gir === true).length / mine.length * 100) : null
+    const penalties = mine.some(s => s.penalties != null) ? mine.reduce((a, s) => a + (s.penalties ?? 0), 0) : null
+    return { p, putts, fw, gir, penalties }
+  })
+  if (!rows.some(r => r.putts != null || r.fw != null || r.gir != null || r.penalties != null)) return null
+
+  return (
+    <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
+      <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-2">Stats de la ronda</p>
+      <table className="w-full text-center">
+        <thead>
+          <tr>
+            <td aria-label="Jugador"/>
+            <td className="font-mono text-[9px] text-[#6b7a72] uppercase pb-1.5">Putts</td>
+            <td className="font-mono text-[9px] text-[#6b7a72] uppercase pb-1.5">FW</td>
+            <td className="font-mono text-[9px] text-[#6b7a72] uppercase pb-1.5">GIR</td>
+            <td className="font-mono text-[9px] text-[#6b7a72] uppercase pb-1.5">Penaltis</td>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ p, putts, fw, gir, penalties }) => (
+            <tr key={p.id} className="border-t border-[#efebe1]">
+              <td className="py-2 text-left">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
+                  <span className="font-semibold text-[12px] text-[#0e1a16]">{p.name.split(' ')[0]}</span>
+                </div>
+              </td>
+              <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{putts ?? '–'}</td>
+              <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{fw != null ? `${fw}%` : '–'}</td>
+              <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{gir != null ? `${gir}%` : '–'}</td>
+              <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{penalties ?? '–'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -308,6 +447,7 @@ type ScorecardHeaderProps = {
   allProfiles: { _id: string; name: string; avatar_color: string }[] | undefined
   isPractice: boolean
   isActive: boolean
+  completed: boolean
   myScoresCount: number
   holesCount: number
   getTotal: (pid: string) => number
@@ -318,7 +458,7 @@ type ScorecardHeaderProps = {
 }
 
 function ScorecardHeader({
-  roundId, myId, courseName, modes, players, customBet, allProfiles, isPractice, isActive,
+  roundId, myId, courseName, modes, players, customBet, allProfiles, isPractice, isActive, completed,
   myScoresCount, holesCount, getTotal, viewMode, setViewMode, matchplayResult, availableModes,
 }: ScorecardHeaderProps) {
   return (
@@ -330,7 +470,9 @@ function ScorecardHeader({
             Inicio
           </Link>
         </div>
-        <span className="font-mono text-[10px] text-[#6b7a72]">{myScoresCount} / {holesCount} HOYOS</span>
+        {completed
+          ? <span className="font-mono text-[9px] font-bold text-[#1f8a5b] bg-[#d9eedd] px-2 py-1 rounded-full uppercase tracking-wide">Firmada</span>
+          : <span className="font-mono text-[10px] text-[#6b7a72]">{myScoresCount} / {holesCount} HOYOS</span>}
       </div>
 
       {/* Mini info bar */}
@@ -352,10 +494,27 @@ function ScorecardHeader({
               </div>
             )
           })}
-          <BetControl roundId={roundId} customBet={customBet} />
-          <EditPlayersControl roundId={roundId} myId={myId} players={players} allProfiles={allProfiles} isPractice={isPractice} isActive={isActive} />
+          {!completed && (
+            <>
+              <BetControl roundId={roundId} customBet={customBet} />
+              <EditPlayersControl roundId={roundId} myId={myId} players={players} allProfiles={allProfiles} isPractice={isPractice} isActive={isActive} />
+            </>
+          )}
         </div>
       </div>
+
+      {/* Mode tabs */}
+      {availableModes.length > 1 && (
+        <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] mb-2">
+          {availableModes.map(m => (
+            <button type="button" key={m.key} onClick={() => setViewMode(m.key)}
+              className="flex-1 py-1.5 rounded-full text-[11px] font-bold transition"
+              style={{ backgroundColor: viewMode === m.key ? '#0e1a16' : 'transparent', color: viewMode === m.key ? '#fff' : '#6b7a72' }}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Matchplay live result */}
       {(viewMode === 'matchplay_hcp' || viewMode === 'matchplay') && matchplayResult && (
@@ -374,19 +533,6 @@ function ScorecardHeader({
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: matchplayResult.b.avatar_color }}>{matchplayResult.b.name[0]}</div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Mode tabs */}
-      {availableModes.length > 1 && (
-        <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] mb-2">
-          {availableModes.map(m => (
-            <button type="button" key={m.key} onClick={() => setViewMode(m.key)}
-              className="flex-1 py-1.5 rounded-full text-[11px] font-bold transition"
-              style={{ backgroundColor: viewMode === m.key ? '#0e1a16' : 'transparent', color: viewMode === m.key ? '#fff' : '#6b7a72' }}>
-              {m.label}
-            </button>
-          ))}
         </div>
       )}
     </div>
@@ -418,22 +564,55 @@ function ScoreLegend({ viewMode }: ScoreLegendProps) {
 }
 
 type BottomCTAProps = {
-  roundId: string
   allDone: boolean
   nextHole: Hole | undefined
+  completed: boolean
+  signed: boolean
+  saving: boolean
+  customBet: string
+  players: Player[]
+  getTotal: (pid: string) => number
+  onSign: () => void
   onScoreNext: (holeNumber: number) => void
 }
 
-function BottomCTA({ roundId, allDone, nextHole, onScoreNext }: BottomCTAProps) {
+function BottomCTA({ allDone, nextHole, completed, signed, saving, customBet, players, getTotal, onSign, onScoreNext }: BottomCTAProps) {
+  if (completed && !signed) return null
   return (
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
-      {allDone ? (
-        <Link to={`/summary?round=${roundId}`}
-          className="flex items-center justify-between w-full px-5 py-4 rounded-full font-bold text-[14px]"
+      {completed ? (
+        <>
+          <div className="bg-[#d9eedd] rounded-[14px] px-4 py-3 mb-2 flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span className="text-[#1f8a5b] font-semibold text-[13px]">Ronda firmada y guardada</span>
+          </div>
+          {/* Apuesta — si existe en notes */}
+          {customBet && (
+            <div className="bg-[#f6e6c4] border-2 border-[#e8b75a] rounded-[14px] px-4 py-3 mb-2">
+              <p className="font-mono text-[9px] text-[#9b6e1a] uppercase tracking-wide mb-1">Apuesta de la ronda</p>
+              <p className="font-bold text-[15px] text-[#0e1a16]">{customBet}</p>
+              {/* Winner */}
+              {(() => {
+                const sorted = players.flatMap(p => {
+                  const total = getTotal(p.id)
+                  return total > 0 ? [{ ...p, total }] : []
+                }).toSorted((a, b) => a.total - b.total)
+                if (sorted.length >= 2 && sorted[0].total < sorted[1].total) {
+                  const loser = sorted[sorted.length - 1]
+                  return <p className="text-[13px] text-[#9b6e1a] mt-1 font-semibold">{loser.name}, te toca a ti. 😏</p>
+                }
+                return null
+              })()}
+            </div>
+          )}
+        </>
+      ) : allDone ? (
+        <button type="button" onClick={onSign} disabled={saving}
+          className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-60"
           style={{ backgroundColor: '#e8b75a', color: '#0e1a16' }}>
-          <span>Ronda completada</span>
-          <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">FIRMAR →</span>
-        </Link>
+          <span>Firmar y guardar ronda</span>
+          <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">{saving ? '…' : '✓ FIRMAR'}</span>
+        </button>
       ) : nextHole ? (
         <button type="button" onClick={() => onScoreNext(nextHole.hole_number)}
           className="flex items-center justify-between w-full px-5 py-4 rounded-full font-bold text-[14px] text-white"
@@ -451,7 +630,6 @@ function BottomCTA({ roundId, allDone, nextHole, onScoreNext }: BottomCTAProps) 
 
 function TarjetaPage() {
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
   const roundId      = searchParams.get('round') ?? ''
 
   const me   = useQuery(api.profiles.me)
@@ -460,6 +638,10 @@ function TarjetaPage() {
 
   const [viewMode, setViewMode]   = useState<ViewMode>('stroke')
   const [editHole, setEditHole]   = useState<number | null>(null)
+  const [saving, setSaving]       = useState(false)
+  const [signed, setSigned]       = useState(false)
+  const [celebrating, setCelebrating] = useState(false)
+  const finalizeMut = useMutation(api.rounds.finalize)
 
   const myId = me?._id ?? ''
 
@@ -469,11 +651,12 @@ function TarjetaPage() {
   const notesVal    = data?.round.notes ?? ''
   const isPractice  = !!data?.round.is_practice
   const isActive    = data?.round.status === 'active'
+  const completed   = data?.round.status === 'completed' || signed
   const base        = data?.course?.holes_count ?? 18
   const totalHoles  = holeMode === '9_twice' ? 18 : holeMode === 'front' || holeMode === 'back' ? 9 : base
   const allHoles: Hole[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
   const players: Player[] = (data?.players ?? []).map(p => ({ id: p.profileId ?? '', name: p.name ?? 'Inv', avatar_color: p.avatar_color ?? '#6b7a72', course_handicap: p.course_handicap ?? 0, is_guest: p.is_guest }))
-  const scores: Score[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null }))
+  const scores: Score[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null, putts: s.putts ?? null, gir: s.gir ?? null, fairway: s.fairway ?? null, penalties: s.penalties ?? null }))
   const modes = (data?.modes ?? []).length ? (data?.modes ?? []) : ['stroke']
 
   // Bet input value: derived from notes (the live-edited value lives inside BetControl)
@@ -519,7 +702,57 @@ function TarjetaPage() {
     ...(modes.includes('matchplay')     ? [{ key: 'matchplay'     as ViewMode, label: 'Matchplay' }] : []),
     ...(modes.includes('bbb')           ? [{ key: 'bbb'           as ViewMode, label: 'BBB' }] : []),
     ...(modes.includes('wolf')          ? [{ key: 'wolf'          as ViewMode, label: 'Wolf' }] : []),
+    ...(players.length >= 3             ? [{ key: 'clasificacion' as ViewMode, label: 'Clasificación' }] : []),
   ]
+
+  // Clasificación general (stroke play)
+  const realPar = holes.reduce((a, h) => a + h.par, 0)
+  const ranking = players.toSorted((a, b) => (getTotal(a.id) || 999) - (getTotal(b.id) || 999))
+
+  async function handleSign() {
+    setSaving(true)
+    await finalizeMut({ round_id: roundId as Id<'rounds'> })
+    setSaving(false)
+    setCelebrating(true)
+    setTimeout(() => {
+      setCelebrating(false)
+      setSigned(true)
+    }, 2000)
+  }
+
+  // Matchplay: net winner of a hole (null = tied, unscored, or <2 players).
+  function holeWinner(holeNumber: number): Player | null {
+    if (players.length < 2) return null
+    const [a, b] = players
+    const h = holes.find(x => x.hole_number === holeNumber)
+    if (!h) return null
+    const sa = getScore(a.id, holeNumber)
+    const sb = getScore(b.id, holeNumber)
+    if (!sa || !sb) return null
+    const rec = modes.includes('matchplay_hcp') ? strokesReceived(Math.abs(a.course_handicap - b.course_handicap), h.stroke_index) : 0
+    const netA = sa - (a.course_handicap > b.course_handicap ? rec : 0)
+    const netB = sb - (b.course_handicap > a.course_handicap ? rec : 0)
+    if (netA < netB) return a
+    if (netB < netA) return b
+    return null
+  }
+
+  // Matchplay: cumulative state after each scored hole (for the MATCH row).
+  const matchState = (() => {
+    const map = new Map<number, { n: number; leader: Player | null }>()
+    if (players.length < 2) return map
+    const [a, b] = players
+    let state = 0
+    for (const h of holes) {
+      const w = holeWinner(h.hole_number)
+      if (w?.id === a.id) state++
+      else if (w?.id === b.id) state--
+      if (getScore(a.id, h.hole_number) && getScore(b.id, h.hole_number)) {
+        map.set(h.hole_number, { n: Math.abs(state), leader: state === 0 ? null : state > 0 ? a : b })
+      }
+    }
+    return map
+  })()
 
   // Matchplay calculation
   const matchplayResult = (() => {
@@ -527,14 +760,9 @@ function TarjetaPage() {
     const [a, b] = players
     let state = 0
     holes.forEach(h => {
-      const sa = getScore(a.id, h.hole_number)
-      const sb = getScore(b.id, h.hole_number)
-      if (!sa || !sb) return
-      const recA = modes.includes('matchplay_hcp') ? strokesReceived(Math.abs(a.course_handicap - b.course_handicap), h.stroke_index) : 0
-      const netA = sa - (a.course_handicap > b.course_handicap ? recA : 0)
-      const netB = sb - (b.course_handicap > a.course_handicap ? recA : 0)
-      if (netA < netB) state++
-      else if (netB < netA) state--
+      const w = holeWinner(h.hole_number)
+      if (w?.id === a.id) state++
+      else if (w?.id === b.id) state--
     })
     const label = state === 0 ? 'AS' : state > 0 ? `${state} UP` : `${-state} UP`
     const leader = state === 0 ? null : state > 0 ? a : b
@@ -543,8 +771,21 @@ function TarjetaPage() {
 
   if (loading) return SPINNER
 
+  const myTotal = getTotal(myId) || (players[0] ? getTotal(players[0].id) : 0)
+  const myDelta = myTotal && realPar > 0 ? myTotal - realPar : 0
+  const celebrationDeltaStr = myDelta > 0 ? `+${myDelta}` : myDelta === 0 ? 'E' : `${myDelta}`
+
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-32">
+      {celebrating && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0e1a16]">
+          <style>{`@keyframes summary-pop { from { transform: scale(0.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }`}</style>
+          <div className="text-[80px]" style={{ animation: 'summary-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both' }}>&#9971;</div>
+          <p className="text-white text-[28px] font-black mt-4">Ronda firmada!</p>
+          <p className="text-white/60 text-[14px] mt-2">{myTotal} golpes · {celebrationDeltaStr}</p>
+        </div>
+      )}
+
       {/* Header */}
       <ScorecardHeader
         roundId={roundId}
@@ -556,6 +797,7 @@ function TarjetaPage() {
         allProfiles={allProfiles}
         isPractice={isPractice}
         isActive={isActive}
+        completed={completed}
         myScoresCount={myScores.length}
         holesCount={holes.length}
         getTotal={getTotal}
@@ -567,26 +809,40 @@ function TarjetaPage() {
 
       {/* Scorecard */}
       <div className="px-[14px] space-y-2">
-        {groups.map((group, gi) => (
-          <ScoreTable key={group[0]?.hole_number ?? gi} group={group} gi={gi} groupsCount={groups.length}
-            players={players} viewMode={viewMode} getScore={getScore} onEditHole={setEditHole} />
-        ))}
+        {viewMode === 'clasificacion' ? (
+          <Clasificacion ranking={ranking} getTotal={getTotal} realPar={realPar} />
+        ) : (
+          <>
+            {groups.map((group, gi) => (
+              <ScoreTable key={group[0]?.hole_number ?? gi} group={group} gi={gi} groupsCount={groups.length}
+                players={players} viewMode={viewMode} getScore={getScore} matchState={matchState}
+                onEditHole={completed ? undefined : setEditHole} />
+            ))}
 
-        {/* Legend */}
-        <ScoreLegend viewMode={viewMode} />
+            {/* Legend */}
+            <ScoreLegend viewMode={viewMode} />
+          </>
+        )}
+
+        {/* Stats of the finished round */}
+        {completed && <RoundStats players={players} scores={scores} />}
       </div>
 
       {/* CTA */}
-      <BottomCTA roundId={roundId} allDone={allDone} nextHole={nextHole} onScoreNext={setEditHole} />
+      <BottomCTA allDone={allDone} nextHole={nextHole} completed={completed} signed={signed}
+        saving={saving} customBet={customBet} players={players} getTotal={getTotal}
+        onSign={handleSign} onScoreNext={setEditHole} />
 
       {/* Hole scoring bottom sheet */}
-      <HoleSheet
-        roundId={roundId}
-        holeNumber={editHole}
-        onClose={() => setEditHole(null)}
-        onChangeHole={setEditHole}
-        onFinish={() => { setEditHole(null); navigate(`/summary?round=${roundId}`) }}
-      />
+      {!completed && (
+        <HoleSheet
+          roundId={roundId}
+          holeNumber={editHole}
+          onClose={() => setEditHole(null)}
+          onChangeHole={setEditHole}
+          onFinish={() => setEditHole(null)}
+        />
+      )}
     </div>
   )
 }
