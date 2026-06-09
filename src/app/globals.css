@@ -1,6 +1,17 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@config '../../tailwind.config.ts';
+
+/* Tailwind v4 defaults `border`/`divide` to currentColor; restore the v3
+   gray default so bare `border` utilities keep their previous look. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, #e5e7eb);
+  }
+}
 
 :root {
   --c-bg: #f4f1e9;
