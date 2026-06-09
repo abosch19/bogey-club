@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@config '../../tailwind.config.ts';
 
 /* Tailwind v4 defaults `border`/`divide` to currentColor; restore the v3
    gray default so bare `border` utilities keep their previous look. */
