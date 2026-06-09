@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -39,14 +39,7 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
   const [scoresInit, setScoresInit] = useState(false)
   const [saving, setSaving]     = useState(false)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [showTip, setShowTip]   = useState(holeNum === 1)
-
-  useEffect(() => {
-    if (holeNum === 1) {
-      const t = setTimeout(() => setShowTip(false), 4000)
-      return () => clearTimeout(t)
-    }
-  }, [])
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
 
   const roundModes = data?.modes ?? []
   const totalHoles = data?.course?.holes_count ?? 18
@@ -62,6 +55,7 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
     avatar_color: rp.avatar_color ?? '#6b7a72',
     course_handicap: rp.course_handicap ?? 0,
   }))
+  const activePlayer = players.find((p) => p.id === selectedPlayerId) ?? players[0]
 
   // Load existing scores for this hole once data is available
   if (data && !scoresInit) {
@@ -131,16 +125,6 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
           </div>
         </div>
       </div>
-
-      {/* First-hole tip */}
-      {showTip && (
-        <div className="mx-[14px] rounded-[14px] px-4 py-3 mb-2 flex items-center justify-between" style={{backgroundColor:'#d9eedd'}}>
-          <p className="text-[12px] text-[#1f8a5b] font-semibold flex-1">
-            Toca el número de golpes para cada jugador. Guarda para avanzar al siguiente hoyo.
-          </p>
-          <button onClick={() => setShowTip(false)} className="text-[#1f8a5b] ml-2 text-[18px] leading-none">×</button>
-        </div>
-      )}
 
       {/* SCRAMBLE MODE — una tarjeta por equipo, un resultado compartido */}
       {roundModes.includes('scramble') && (() => {
@@ -241,9 +225,33 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
         )
       })()}
 
-      {/* Players — compact 2-row per player (non-scramble) */}
-      {!roundModes.includes('scramble') && <div className="px-[14px] space-y-2">
-        {players.map(p => {
+      {/* Players — avatar selector + active player's card (non-scramble) */}
+      {!roundModes.includes('scramble') && <div className="px-[14px]">
+        {/* Avatar selector */}
+        <div className="flex gap-3 mb-2 overflow-x-auto px-0.5 py-2">
+          {players.map(p => {
+            const psc = get(p.id)
+            const isActive = activePlayer?.id === p.id
+            const pd = psc.strokes != null ? scoreColor(psc.strokes - par) : null
+            return (
+              <button key={p.id} onClick={() => setSelectedPlayerId(p.id)}
+                className="flex flex-col items-center gap-1 flex-shrink-0 transition active:scale-95" style={{ width: 56 }}>
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-[16px] font-bold"
+                    style={{ backgroundColor: p.avatar_color, outline: isActive ? '3px solid #0e1a16' : '3px solid transparent', outlineOffset: 2 }}>
+                    {p.short}
+                  </div>
+                  {psc.strokes != null && pd && (
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-black border-2 border-white"
+                      style={{ backgroundColor: pd.bg, color: pd.text }}>{psc.strokes}</div>
+                  )}
+                </div>
+                <span className="text-[11px] font-semibold truncate w-full text-center" style={{ color: isActive ? '#0e1a16' : '#6b7a72' }}>{p.name.split(' ')[0]}</span>
+              </button>
+            )
+          })}
+        </div>
+        {(activePlayer ? [activePlayer] : []).map(p => {
           const sc = get(p.id)
           const delta = sc.strokes != null ? sc.strokes - par : null
           const colors = delta != null ? scoreColor(delta) : null
