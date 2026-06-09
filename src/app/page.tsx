@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { useValue } from '@legendapp/state/react'
 import { api } from '@convex/_generated/api'
-import { formatHandicap, scoreChipClass } from '@/lib/golf'
+import { scoreChipClass } from '@/lib/golf'
 import { lastRound$, type LastRound } from '@/lib/store'
 
 type LeagueStanding = { profile_id: string; name: string; avatar_color: string; total_points: number }
@@ -139,7 +139,6 @@ export default function HomePage() {
   const { profile, activeRound, activeLeague, feed, completedRoundsCount } = data
 
   const firstName = profile.name.split(' ')[0]
-  const initials  = profile.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
@@ -154,16 +153,12 @@ export default function HomePage() {
           </svg>
           <span className="text-[26px] font-black tracking-tight text-[#0e1a16]">Bogey-Club</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[11px] text-[#6b7a72] tracking-wide uppercase">
-            {new Date().toLocaleDateString('es-ES', { weekday: 'short' })} · {formatHandicap(profile.handicap_index)}
-          </span>
-          <Link to="/profile">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold" style={{ backgroundColor: profile.avatar_color ?? '#1f8a5b' }}>
-              {initials}
-            </div>
-          </Link>
-        </div>
+        <Link to="/round/course"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-[13px] text-white transition active:scale-[0.97]"
+          style={{ backgroundColor: '#1f8a5b' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
+          Nueva
+        </Link>
       </div>
 
       <div>
