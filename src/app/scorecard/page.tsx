@@ -384,13 +384,14 @@ function TarjetaPage() {
         </Drawer.Portal>
       </Drawer.Root>
 
-      {/* Edit players modal */}
-      {showEditPlayers && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }}>
-          <div className="w-full max-w-[430px] bg-white rounded-t-[28px] p-5 pb-10 max-h-[80vh] overflow-y-auto">
+      {/* Edit players bottom sheet (Vaul) */}
+      <Drawer.Root open={showEditPlayers} onOpenChange={setShowEditPlayers}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-50" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }} />
+          <Drawer.Content aria-describedby={undefined} className="fixed bottom-0 inset-x-0 z-50 mx-auto max-w-[430px] bg-white rounded-t-[28px] p-5 pb-10 max-h-[85vh] overflow-y-auto outline-none">
             <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-4"/>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[18px] font-black text-[#0e1a16]">Jugadores</h2>
+              <Drawer.Title className="text-[18px] font-black text-[#0e1a16]">Jugadores</Drawer.Title>
               <button onClick={() => setShowEditPlayers(false)} className="text-[#6b7a72] text-[20px]">×</button>
             </div>
             {/* Current players */}
@@ -443,9 +444,9 @@ function TarjetaPage() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
 
       {/* CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">

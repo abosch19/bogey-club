@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from 'convex/react'
-import { useValue } from '@legendapp/state/react'
 import { api } from '@convex/_generated/api'
 import { scoreChipClass } from '@/lib/golf'
-import { lastRound$, type LastRound } from '@/lib/store'
 
 type LeagueStanding = { profile_id: string; name: string; avatar_color: string; total_points: number }
 
@@ -112,25 +110,11 @@ export default function HomePage() {
   const dailyQuote = GOLF_QUOTES[new Date().getDate() % GOLF_QUOTES.length]
   const data = useQuery(api.home.dashboard)
   const recentRounds = useQuery(api.home.recentRounds) ?? []
-  const lastRound = useValue(lastRound$)
-  const [quickStarting, setQuickStarting] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
     if (data === null) navigate('/onboarding', { replace: true })
   }, [data, navigate])
-
-  function quickStart(lr: LastRound) {
-    // Navigate to jugadores with course prefilled so user can review/modify
-    const params = new URLSearchParams({
-      course: lr.course_id,
-      practice: 'false',
-      hole_mode: lr.hole_mode ?? 'all',
-      ...(lr.player_ids?.length ? { prefill_players: lr.player_ids.join(',') } : {}),
-      ...(lr.league_id ? { league: lr.league_id } : {}),
-    })
-    navigate(`/round/players?${params}`)
-  }
 
   if (data === undefined || data === null) {
     return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
@@ -220,23 +204,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Ultima ronda quick-start */}
-          {lastRound && !activeRound && (
-            <button
-              onClick={() => quickStart(lastRound)}
-              disabled={quickStarting}
-              className="w-full text-left bg-white rounded-[22px] border border-[#e5e0d4] px-4 py-3 flex items-center justify-between transition active:scale-[0.98] disabled:opacity-60"
-            >
-              <div>
-                <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-[0.15em] mb-1">Ultima ronda</p>
-                <p className="text-[15px] font-bold text-[#0e1a16]">Repetir ronda</p>
-                <p className="text-[12px] text-[#6b7a72] mt-0.5">{lastRound.course_name} · {lastRound.modes.join(', ')}</p>
-              </div>
-              <span className="w-9 h-9 rounded-full flex items-center justify-center text-white flex-shrink-0" style={{ backgroundColor: '#1f8a5b' }}>
-                {quickStarting ? '...' : '→'}
-              </span>
-            </button>
-          )}
 
           {/* Active round card */}
           {activeRound && (

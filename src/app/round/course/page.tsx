@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
+import { Drawer } from 'vaul'
 
 type Course = {
   _id: Id<'courses'>
@@ -170,12 +171,14 @@ function SeleccionarCampoPage() {
       </div>
 
       {/* CTA fixed bottom */}
-      {/* Hole selection modal */}
-      {showHoleModal && selected && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }}>
-          <div className="w-full max-w-[430px] bg-white rounded-t-[28px] p-6 pb-10">
+      {/* Hole selection bottom sheet (Vaul) */}
+      <Drawer.Root open={showHoleModal} onOpenChange={(o) => { if (!o) { setShowHoleModal(false); setSelected(null) } }}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-50" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }} />
+          <Drawer.Content aria-describedby={undefined} className="fixed bottom-0 inset-x-0 z-50 mx-auto max-w-[430px] bg-white rounded-t-[28px] p-6 pb-10 outline-none">
             <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-5"/>
-            <h2 className="text-[20px] font-black text-[#0e1a16] mb-1">{selected.name}</h2>
+            {selected && (<>
+            <Drawer.Title className="text-[20px] font-black text-[#0e1a16] mb-1">{selected.name}</Drawer.Title>
             <p className="text-[13px] text-[#6b7a72] mb-5">
               {selected.holes_count === 9 ? '¿Cuántos hoyos vais a jugar?' : '¿Qué parte del campo jugáis?'}
             </p>
@@ -232,9 +235,10 @@ function SeleccionarCampoPage() {
                 Siguiente →
               </button>
             </div>
-          </div>
-        </div>
-      )}
+            </>)}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
 
       {selected && !showHoleModal && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
