@@ -111,7 +111,7 @@ function NuevoTorneoPage() {
         mode,
         players: groups.map(p => ({ id: p.id as Id<'profiles'>, group: p.group, handicap_index: p.handicap_index })),
       })
-      navigate(`/torneo/${data.tournament_id}`)
+      navigate(`/tournament/${data.tournament_id}`)
     } catch (e: any) {
       alert(e?.message ?? 'Error al crear el torneo')
       setSaving(false)

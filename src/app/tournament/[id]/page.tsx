@@ -278,7 +278,7 @@ export default function TorneoPage() {
                 <div className="space-y-2">
                   {/* Start round button if no round yet */}
                   {!gRound && myId && gPlayers.find(p => p.id === myId) && (
-                    <Link to={`/ronda/campo?tournament=${tournamentId}&group=${activeGroup}`}
+                    <Link to={`/round/course?tournament=${tournamentId}&group=${activeGroup}`}
                       className="flex items-center justify-between w-full px-4 py-3.5 rounded-full font-bold text-[14px] text-[#0e1a16] transition"
                       style={{ backgroundColor: GROUP_COLORS[activeGroup - 1] }}>
                       <span>Iniciar ronda del grupo</span>
@@ -287,7 +287,7 @@ export default function TorneoPage() {
                   )}
 
                   {gRound && myId && gPlayers.find(p => p.id === myId) && (
-                    <Link to={`/tarjeta?round=${gRound}`}
+                    <Link to={`/scorecard?round=${gRound}`}
                       className="flex items-center justify-between w-full px-4 py-3.5 rounded-full font-bold text-[14px] text-white transition"
                       style={{ backgroundColor: '#0e1a16' }}>
                       <span>Ver tarjeta del grupo</span>

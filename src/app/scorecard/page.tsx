@@ -169,7 +169,7 @@ function TarjetaPage() {
                         const d = s != null ? s - h.par : null
                         return (
                           <td key={h.hole_number} className="py-1.5 px-0.5">
-                            <button onClick={() => navigate(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block active:scale-95 transition">
+                            <button onClick={() => navigate(`/hole?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block active:scale-95 transition">
                               {s != null
                                 ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
                                 : <span className="text-[#c4bfb5] text-[13px]">·</span>}
@@ -200,7 +200,7 @@ function TarjetaPage() {
                         const pts = s ? stablefordPts(s, h.par, rcv) : null
                         return (
                           <td key={h.hole_number} className="py-1 px-0.5">
-                            <button onClick={() => navigate(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block text-center relative">
+                            <button onClick={() => navigate(`/hole?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block text-center relative">
                               {/* Asterisks for handicap strokes */}
                               {rcv > 0 && (
                                 <div className="flex justify-center gap-px mb-0.5">
@@ -446,14 +446,14 @@ function TarjetaPage() {
       {/* CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
         {allDone ? (
-          <Link to={`/resumen?round=${roundId}`}
+          <Link to={`/summary?round=${roundId}`}
             className="flex items-center justify-between w-full px-5 py-4 rounded-full font-bold text-[14px]"
             style={{ backgroundColor: '#e8b75a', color: '#0e1a16' }}>
             <span>Ronda completada</span>
             <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">FIRMAR →</span>
           </Link>
         ) : nextHole ? (
-          <Link to={`/hoyo?round=${roundId}&hole=${nextHole.hole_number}`}
+          <Link to={`/hole?round=${roundId}&hole=${nextHole.hole_number}`}
             className="flex items-center justify-between w-full px-5 py-4 rounded-full font-bold text-[14px] text-white"
             style={{ backgroundColor: '#0e1a16' }}>
             <div>

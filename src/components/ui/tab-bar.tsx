@@ -9,20 +9,20 @@ export function TabBar() {
   const checked = activeRound !== undefined
   const activeRoundId = activeRound ?? null
 
-  const active = pathname === '/' ? 'inicio' : pathname.startsWith('/tarjeta') ? 'tarjeta' : pathname.startsWith('/stats') ? 'stats' : pathname.startsWith('/liga') ? 'liga' : pathname.startsWith('/perfil') ? 'perfil' : ''
+  const active = pathname === '/' ? 'inicio' : pathname.startsWith('/scorecard') ? 'tarjeta' : pathname.startsWith('/stats') ? 'stats' : pathname.startsWith('/league') ? 'liga' : pathname.startsWith('/profile') ? 'perfil' : ''
 
   const tabs = [
     { key: 'inicio', href: '/', label: 'Inicio',
       icon: (a: boolean) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 11L12 3l9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-9z" stroke="currentColor" strokeWidth={a?2.2:1.7}/></svg> },
     ...(activeRoundId ? [{
-      key: 'tarjeta', href: `/tarjeta?round=${activeRoundId}`, label: 'Tarjeta',
+      key: 'tarjeta', href: `/scorecard?round=${activeRoundId}`, label: 'Tarjeta',
       icon: (a: boolean) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth={a?2.2:1.7}/><path d="M3 10h18M9 5v14" stroke="currentColor" strokeWidth={a?2.2:1.7}/></svg>
     }] : []),
     { key: 'stats', href: '/stats', label: 'Stats',
       icon: (a: boolean) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 19V9m6 10V5m6 14v-7" stroke="currentColor" strokeWidth={a?2.2:1.7} strokeLinecap="round"/></svg> },
-    { key: 'liga', href: '/liga', label: 'Liga',
+    { key: 'liga', href: '/league', label: 'Liga',
       icon: (a: boolean) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z" stroke="currentColor" strokeWidth={a?2.2:1.7} strokeLinecap="round"/><path d="M5 7H2v3a3 3 0 0 0 3 3M19 7h3v3a3 3 0 0 1-3 3" stroke="currentColor" strokeWidth={a?2.2:1.7} strokeLinecap="round"/></svg> },
-    { key: 'perfil', href: '/perfil', label: 'Perfil',
+    { key: 'perfil', href: '/profile', label: 'Perfil',
       icon: (a: boolean) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth={a?2.2:1.7}/><path d="M4 21c0-4 4-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth={a?2.2:1.7} strokeLinecap="round"/></svg> },
   ]
 

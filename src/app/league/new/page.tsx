@@ -18,7 +18,7 @@ export default function NuevaLigaPage() {
     setError('')
     try {
       await createLeague({ name: name.trim(), total_rounds: rounds, mode })
-      navigate('/liga')
+      navigate('/league')
     } catch (e: any) {
       setError(e?.message ?? 'Error')
       setLoading(false)

@@ -5,29 +5,29 @@ import { TabBar } from '@/components/ui/tab-bar'
 
 import HomePage from '@/app/page'
 import LoginPage from '@/app/login/page'
-import RegistroPage from '@/app/registro/page'
+import RegisterPage from '@/app/register/page'
 import OnboardingPage from '@/app/onboarding/page'
-import PerfilPage from '@/app/perfil/page'
+import ProfilePage from '@/app/profile/page'
 import StatsPage from '@/app/stats/page'
-import JugadoresPage from '@/app/jugadores/page'
-import HoyoPage from '@/app/hoyo/page'
-import ResumenPage from '@/app/resumen/page'
-import TarjetaPage from '@/app/tarjeta/page'
-import CampoPage from '@/app/campo/[id]/page'
+import PlayersPage from '@/app/players/page'
+import HolePage from '@/app/hole/page'
+import SummaryPage from '@/app/summary/page'
+import ScorecardPage from '@/app/scorecard/page'
+import CoursePage from '@/app/course/[id]/page'
 import AdminPage from '@/app/admin/page'
-import AdminCampoPage from '@/app/admin/campo/[id]/page'
-import LigaPage from '@/app/liga/page'
-import LigaNuevaPage from '@/app/liga/nueva/page'
-import TorneoPage from '@/app/torneo/[id]/page'
-import TorneoNuevoPage from '@/app/torneo/nuevo/page'
-import RondaCampoPage from '@/app/ronda/campo/page'
-import RondaJugadoresPage from '@/app/ronda/jugadores/page'
-import RondaModalidadPage from '@/app/ronda/modalidad/page'
-import RondaParejasPage from '@/app/ronda/parejas/page'
+import AdminCoursePage from '@/app/admin/course/[id]/page'
+import LeaguePage from '@/app/league/page'
+import LeagueNewPage from '@/app/league/new/page'
+import TournamentPage from '@/app/tournament/[id]/page'
+import TournamentNewPage from '@/app/tournament/new/page'
+import RoundCoursePage from '@/app/round/course/page'
+import RoundPlayersPage from '@/app/round/players/page'
+import RoundFormatPage from '@/app/round/format/page'
+import RoundPairsPage from '@/app/round/pairs/page'
 
-const PUBLIC_ROUTES = ['/login', '/registro', '/onboarding']
+const PUBLIC_ROUTES = ['/login', '/register', '/onboarding']
 /** Routes that show the persistent bottom tab bar. */
-const TAB_ROUTES = ['/', '/liga', '/stats', '/perfil']
+const TAB_ROUTES = ['/', '/league', '/stats', '/profile']
 
 function Spinner() {
   return (
@@ -67,25 +67,25 @@ export function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/registro" element={<RegistroPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/perfil" element={<PerfilPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/stats" element={<StatsPage />} />
-          <Route path="/jugadores" element={<JugadoresPage />} />
-          <Route path="/hoyo" element={<HoyoPage />} />
-          <Route path="/resumen" element={<ResumenPage />} />
-          <Route path="/tarjeta" element={<TarjetaPage />} />
-          <Route path="/campo/:id" element={<CampoPage />} />
+          <Route path="/players" element={<PlayersPage />} />
+          <Route path="/hole" element={<HolePage />} />
+          <Route path="/summary" element={<SummaryPage />} />
+          <Route path="/scorecard" element={<ScorecardPage />} />
+          <Route path="/course/:id" element={<CoursePage />} />
           <Route path="/admin" element={<AdminPage />} />
-          <Route path="/admin/campo/:id" element={<AdminCampoPage />} />
-          <Route path="/liga" element={<LigaPage />} />
-          <Route path="/liga/nueva" element={<LigaNuevaPage />} />
-          <Route path="/torneo/:id" element={<TorneoPage />} />
-          <Route path="/torneo/nuevo" element={<TorneoNuevoPage />} />
-          <Route path="/ronda/campo" element={<RondaCampoPage />} />
-          <Route path="/ronda/jugadores" element={<RondaJugadoresPage />} />
-          <Route path="/ronda/modalidad" element={<RondaModalidadPage />} />
-          <Route path="/ronda/parejas" element={<RondaParejasPage />} />
+          <Route path="/admin/course/:id" element={<AdminCoursePage />} />
+          <Route path="/league" element={<LeaguePage />} />
+          <Route path="/league/new" element={<LeagueNewPage />} />
+          <Route path="/tournament/:id" element={<TournamentPage />} />
+          <Route path="/tournament/new" element={<TournamentNewPage />} />
+          <Route path="/round/course" element={<RoundCoursePage />} />
+          <Route path="/round/players" element={<RoundPlayersPage />} />
+          <Route path="/round/format" element={<RoundFormatPage />} />
+          <Route path="/round/pairs" element={<RoundPairsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <PersistentTabBar />

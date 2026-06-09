@@ -70,7 +70,7 @@ function ParejasPage() {
       scramble_teams: players.map(p => `${p._id}:${p.team}`).join(','),
       ...(leagueId ? { league: leagueId } : {}),
     })
-    navigate(`/ronda/modalidad?${params}&mode=scramble`)
+    navigate(`/round/format?${params}&mode=scramble`)
   }
 
   if (loading) return SPINNER

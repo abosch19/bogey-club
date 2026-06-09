@@ -32,7 +32,7 @@ export default function LigaPage() {
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
         <div className="flex items-center justify-between">
           <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16]">Liga</h1>
-          <Link to="/liga/nueva"
+          <Link to="/league/new"
             className="flex items-center gap-1.5 px-3 py-2 rounded-full font-semibold text-[13px] text-white"
             style={{ backgroundColor: '#1f8a5b' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
@@ -53,7 +53,7 @@ export default function LigaPage() {
               </div>
               <p className="text-[18px] font-black text-[#0e1a16] mb-1">¿Qué es una liga?</p>
               <p className="text-[13px] text-[#6b7a72] mb-4">Una competición entre amigos a lo largo de varias jornadas. Cada ronda puntúa y al final hay un campeón.</p>
-              <Link to="/liga/nueva"
+              <Link to="/league/new"
                 className="flex items-center justify-center gap-2 w-full py-3.5 rounded-full font-bold text-[14px] text-white"
                 style={{ backgroundColor: '#1f8a5b' }}>
                 Crear primera liga →
@@ -128,7 +128,7 @@ export default function LigaPage() {
                         </button>
                       </div>
                       {/* Iniciar ronda de liga */}
-                      <Link to={`/ronda/campo?league=${league._id}`}
+                      <Link to={`/round/course?league=${league._id}`}
                         className="flex items-center justify-between w-full px-4 py-2.5 rounded-full font-bold text-[13px] text-white transition active:scale-[0.98]"
                         style={{ backgroundColor: '#2a6fdb' }}>
                         <span>Iniciar ronda de liga</span>

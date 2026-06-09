@@ -93,7 +93,7 @@ function SeleccionarJugadoresPage() {
         practice: String(isPractice),
         ...(guestData ? { guests: guestData } : {}),
       })
-      navigate(`/torneo/nuevo?${params}`)
+      navigate(`/tournament/new?${params}`)
       return
     }
 
@@ -107,7 +107,7 @@ function SeleccionarJugadoresPage() {
       ...(guestData ? { guests: guestData } : {}),
       ...(leagueId ? { league: leagueId } : {}),
     })
-    navigate(`/ronda/modalidad?${params}`)
+    navigate(`/round/format?${params}`)
   }
 
   const filtered = allPlayers.filter(p =>

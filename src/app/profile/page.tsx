@@ -192,7 +192,7 @@ export default function PerfilPage() {
         {/* ── ACCESOS ── */}
         <div className="space-y-2 mb-3">
           {/* Jugadores registrados */}
-          <Link to="/jugadores" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70">
+          <Link to="/players" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70">
             <div className="w-9 h-9 rounded-full bg-[#d9eedd] flex items-center justify-center">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#1f8a5b" strokeWidth="1.8" strokeLinecap="round"/><circle cx="9" cy="7" r="4" stroke="#1f8a5b" strokeWidth="1.8"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#1f8a5b" strokeWidth="1.8" strokeLinecap="round"/></svg>
             </div>
@@ -204,7 +204,7 @@ export default function PerfilPage() {
           </Link>
 
           {/* Editar campos */}
-          <Link to="/ronda/campo" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70">
+          <Link to="/round/course" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70">
             <div className="w-9 h-9 rounded-full bg-[#dde7fb] flex items-center justify-center">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 18 Q8 6 14 12 T20 8" stroke="#2a6fdb" strokeWidth="2" fill="none" strokeLinecap="round"/><circle cx="20" cy="8" r="1.8" fill="#2a6fdb"/></svg>
             </div>

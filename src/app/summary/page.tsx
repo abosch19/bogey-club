@@ -106,7 +106,7 @@ function ResumenPage() {
       )}
       <div className="safe-top px-[14px] pt-3 pb-3">
         <div className="flex items-center justify-between mb-3">
-          <Link to={`/tarjeta?round=${roundId}`} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <Link to={`/scorecard?round=${roundId}`} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Tarjeta
           </Link>

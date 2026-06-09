@@ -54,7 +54,7 @@ export default function HomePage() {
       ...(lr.player_ids?.length ? { prefill_players: lr.player_ids.join(',') } : {}),
       ...(lr.league_id ? { league: lr.league_id } : {}),
     })
-    window.location.href = `/ronda/jugadores?${params}`
+    window.location.href = `/round/players?${params}`
   }
 
   if (data === undefined || data === null) {
@@ -83,7 +83,7 @@ export default function HomePage() {
           <span className="font-mono text-[11px] text-[#6b7a72] tracking-wide uppercase">
             {new Date().toLocaleDateString('es-ES', { weekday: 'short' })} · {formatHandicap(profile.handicap_index)}
           </span>
-          <Link to="/perfil">
+          <Link to="/profile">
             <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold" style={{ backgroundColor: profile.avatar_color ?? '#1f8a5b' }}>
               {initials}
             </div>
@@ -121,10 +121,10 @@ export default function HomePage() {
               </div>
 
               <div className="flex gap-2">
-                <Link to="/ronda/campo" className="flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[15px] text-[#0e1a16] transition active:scale-[0.98]" style={{ backgroundColor: '#1f8a5b' }}>
+                <Link to="/round/course" className="flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[15px] text-[#0e1a16] transition active:scale-[0.98]" style={{ backgroundColor: '#1f8a5b' }}>
                   Competitivo
                 </Link>
-                <Link to="/ronda/campo?practice=true" className="flex items-center justify-center px-5 py-3.5 rounded-full font-semibold text-[14px] transition active:scale-[0.98]" style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)', color: '#fff' }}>
+                <Link to="/round/course?practice=true" className="flex items-center justify-center px-5 py-3.5 rounded-full font-semibold text-[14px] transition active:scale-[0.98]" style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)', color: '#fff' }}>
                   Práctica
                 </Link>
               </div>
@@ -147,7 +147,7 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-              <Link to="/ronda/campo" className="mt-3 flex items-center justify-center w-full py-3 rounded-full font-bold text-[14px] text-white" style={{ backgroundColor: '#1f8a5b' }}>
+              <Link to="/round/course" className="mt-3 flex items-center justify-center w-full py-3 rounded-full font-bold text-[14px] text-white" style={{ backgroundColor: '#1f8a5b' }}>
                 Primera ronda →
               </Link>
             </div>
@@ -207,7 +207,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <Link to={`/tarjeta?round=${activeRound.id}`}
+              <Link to={`/scorecard?round=${activeRound.id}`}
                 className="flex items-center justify-between w-full py-3 px-4 rounded-[14px] font-bold text-[14px] text-white transition active:scale-[0.98]"
                 style={{ backgroundColor: '#0e1a16' }}>
                 <span>Continuar · hoyo {activeRound.next_hole} par {activeRound.next_par}</span>
@@ -242,17 +242,17 @@ export default function HomePage() {
                     </div>
                   ))}
                   <div className="flex-1"/>
-                  <Link to={`/ronda/campo?league=${activeLeague.id}`}
+                  <Link to={`/round/course?league=${activeLeague.id}`}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-full font-bold text-[11px] transition active:scale-[0.98]"
                     style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}>
                     Jugar →
                   </Link>
-                  <Link to="/liga" className="font-mono text-[9px] text-white/60 ml-1">Ver liga →</Link>
+                  <Link to="/league" className="font-mono text-[9px] text-white/60 ml-1">Ver liga →</Link>
                 </div>
               </div>
             </div>
           ) : (
-            <Link to="/liga/nueva" className="block rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
+            <Link to="/league/new" className="block rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
               <div className="absolute right-[-30px] top-[-30px] w-[120px] h-[120px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.7 }}/>
               <div className="relative flex items-center justify-between">
                 <div>
@@ -274,7 +274,7 @@ export default function HomePage() {
               </div>
               <div className="space-y-0">
                 {feed.map((item, i) => (
-                  <Link key={item.id} to={`/resumen?round=${item.round_id}&readonly=true`}
+                  <Link key={item.id} to={`/summary?round=${item.round_id}&readonly=true`}
                     className={`flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0" style={{ backgroundColor: item.avatar_color }}>
                       {item.name[0].toUpperCase()}

@@ -58,7 +58,7 @@ function SeleccionarModalidadPage() {
           hole_mode: holeMode,
           ...(leagueId ? { league: leagueId } : {}),
         })
-        navigate(`/ronda/parejas?${params}`)
+        navigate(`/round/pairs?${params}`)
         setLoading(false)
         return
       }
@@ -89,7 +89,7 @@ function SeleccionarModalidadPage() {
           ...(scrambleTeams ? { scramble_teams: scrambleTeams } : {}),
         }))
       } catch {}
-      navigate(`/tarjeta?round=${data.round_id}`)
+      navigate(`/scorecard?round=${data.round_id}`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al crear la ronda'
       alert(msg)
