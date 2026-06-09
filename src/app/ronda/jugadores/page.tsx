@@ -1,7 +1,5 @@
-'use client'
-
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { getInitials, avatarColor } from '@/lib/golf'
@@ -9,8 +7,8 @@ import { getInitials, avatarColor } from '@/lib/golf'
 type Player = { _id: string; name: string; handicap_index: number; avatar_color: string; isGuest?: boolean }
 
 function SeleccionarJugadoresPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const courseId = searchParams.get('course') ?? ''
   const isPractice    = searchParams.get('practice') === 'true'
   const leagueId      = searchParams.get('league') ?? ''
@@ -95,7 +93,7 @@ function SeleccionarJugadoresPage() {
         practice: String(isPractice),
         ...(guestData ? { guests: guestData } : {}),
       })
-      router.push(`/torneo/nuevo?${params}`)
+      navigate(`/torneo/nuevo?${params}`)
       return
     }
 
@@ -109,7 +107,7 @@ function SeleccionarJugadoresPage() {
       ...(guestData ? { guests: guestData } : {}),
       ...(leagueId ? { league: leagueId } : {}),
     })
-    router.push(`/ronda/modalidad?${params}`)
+    navigate(`/ronda/modalidad?${params}`)
   }
 
   const filtered = allPlayers.filter(p =>
@@ -120,7 +118,7 @@ function SeleccionarJugadoresPage() {
     <div className="min-h-screen bg-[#f4f1e9] flex flex-col">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-5">
-          <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Atrás
           </button>

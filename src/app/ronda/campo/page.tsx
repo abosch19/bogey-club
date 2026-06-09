@@ -1,7 +1,5 @@
-'use client'
-
 import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -18,8 +16,8 @@ type Course = {
 }
 
 function SeleccionarCampoPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const isPractice = searchParams.get('practice') === 'true'
   const leagueId   = searchParams.get('league') ?? ''
 
@@ -53,7 +51,7 @@ function SeleccionarCampoPage() {
       hole_mode: holeMode,
       ...(leagueId ? { league: leagueId } : {}),
     })
-    router.push(`/ronda/jugadores?${params}`)
+    navigate(`/ronda/jugadores?${params}`)
   }
 
   return (
@@ -61,7 +59,7 @@ function SeleccionarCampoPage() {
       {/* Header */}
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-5">
-          <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Atrás
           </button>
@@ -131,7 +129,7 @@ function SeleccionarCampoPage() {
                     <p className="font-bold text-[15px] leading-tight" style={{ color: isSel ? '#fff' : '#0e1a16' }}>
                       {course.name}
                     </p>
-                    <button onClick={e => { e.stopPropagation(); router.push(`/campo/${course._id}`) }}
+                    <button onClick={e => { e.stopPropagation(); navigate(`/campo/${course._id}`) }}
                       className="font-mono text-[9px] px-2 py-0.5 rounded-full font-bold transition"
                       style={{ backgroundColor: isSel ? 'rgba(255,255,255,0.15)' : '#f4f1e9', color: isSel ? '#fff' : '#6b7a72' }}>
                       Editar

@@ -1,7 +1,5 @@
-'use client'
-
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -46,7 +44,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#f4f1e9] pb-8">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center gap-3 mb-4">
-          <Link href="/perfil" className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <Link to="/perfil" className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Perfil
           </Link>
@@ -134,7 +132,7 @@ export default function AdminPage() {
         {tab === 'campos' && (
           <div className="space-y-2">
             {courses.map(c => (
-              <Link key={c._id} href={`/admin/campo/${c._id}`}
+              <Link key={c._id} to={`/admin/campo/${c._id}`}
                 className="bg-white rounded-[16px] p-4 border border-[#e5e0d4] flex items-center gap-3 block active:opacity-80">
                 <div className="flex-1">
                   <p className="font-bold text-[14px] text-[#0e1a16]">{c.name}</p>

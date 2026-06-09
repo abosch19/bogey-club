@@ -1,8 +1,6 @@
-'use client'
-
 import { useEffect, useState, useMemo } from 'react'
-import { useParams } from 'next/navigation'
-import Link from 'next/link'
+import { useParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -158,7 +156,7 @@ export default function TorneoPage() {
       <div className="safe-top px-[14px] pt-3 pb-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
-          <Link href="/" className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <Link to="/" className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Inicio
           </Link>
@@ -280,7 +278,7 @@ export default function TorneoPage() {
                 <div className="space-y-2">
                   {/* Start round button if no round yet */}
                   {!gRound && myId && gPlayers.find(p => p.id === myId) && (
-                    <Link href={`/ronda/campo?tournament=${tournamentId}&group=${activeGroup}`}
+                    <Link to={`/ronda/campo?tournament=${tournamentId}&group=${activeGroup}`}
                       className="flex items-center justify-between w-full px-4 py-3.5 rounded-full font-bold text-[14px] text-[#0e1a16] transition"
                       style={{ backgroundColor: GROUP_COLORS[activeGroup - 1] }}>
                       <span>Iniciar ronda del grupo</span>
@@ -289,7 +287,7 @@ export default function TorneoPage() {
                   )}
 
                   {gRound && myId && gPlayers.find(p => p.id === myId) && (
-                    <Link href={`/tarjeta?round=${gRound}`}
+                    <Link to={`/tarjeta?round=${gRound}`}
                       className="flex items-center justify-between w-full px-4 py-3.5 rounded-full font-bold text-[14px] text-white transition"
                       style={{ backgroundColor: '#0e1a16' }}>
                       <span>Ver tarjeta del grupo</span>

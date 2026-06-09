@@ -1,7 +1,5 @@
-'use client'
-
 import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -28,8 +26,8 @@ function scoreColor(delta: number): { bg: string; text: string } {
 }
 
 function HoyoPage() {
-  const router      = useRouter()
-  const searchParams = useSearchParams()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const roundId  = searchParams.get('round') ?? ''
   const holeNum  = parseInt(searchParams.get('hole') ?? '1')
 
@@ -105,8 +103,8 @@ function HoyoPage() {
       setSaving(false); alert('Error guardando'); return
     }
     const isLast = holeNum >= totalHoles
-    if (isLast) router.push(`/resumen?round=${roundId}`)
-    else router.push(`/hoyo?round=${roundId}&hole=${holeNum + 1}`)
+    if (isLast) navigate(`/resumen?round=${roundId}`)
+    else navigate(`/hoyo?round=${roundId}&hole=${holeNum + 1}`)
   }
 
   if (!hole) return SPINNER
@@ -118,17 +116,17 @@ function HoyoPage() {
       {/* Header */}
       <div className="safe-top px-[14px] pt-3 pb-2">
         <div className="flex items-center justify-between">
-          <button onClick={() => router.push(`/tarjeta?round=${roundId}`)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button onClick={() => navigate(`/tarjeta?round=${roundId}`)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Tarjeta
           </button>
           <div className="flex items-center gap-3">
             {holeNum > 1 && (
-              <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${holeNum - 1}`)} className="font-mono text-[11px] text-[#6b7a72]">← H{holeNum - 1}</button>
+              <button onClick={() => navigate(`/hoyo?round=${roundId}&hole=${holeNum - 1}`)} className="font-mono text-[11px] text-[#6b7a72]">← H{holeNum - 1}</button>
             )}
             <span className="font-mono text-[10px] text-[#6b7a72] uppercase">HOYO {String(holeNum).padStart(2,'0')} / {totalHoles}</span>
             {holeNum < totalHoles && (
-              <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${holeNum + 1}`)} className="font-mono text-[11px] text-[#6b7a72]">H{holeNum + 1} →</button>
+              <button onClick={() => navigate(`/hoyo?round=${roundId}&hole=${holeNum + 1}`)} className="font-mono text-[11px] text-[#6b7a72]">H{holeNum + 1} →</button>
             )}
           </div>
         </div>
@@ -414,7 +412,7 @@ function HoyoPage() {
       {/* CTAs */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-3 bg-gradient-to-t from-[#f4f1e9] to-transparent space-y-2">
         {/* Ver tarjeta — botón grande y accesible */}
-        <button onClick={() => router.push(`/tarjeta?round=${roundId}`)}
+        <button onClick={() => navigate(`/tarjeta?round=${roundId}`)}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-full font-semibold text-[14px] border-2 border-[#e5e0d4] bg-white text-[#0e1a16] transition active:scale-[0.98]">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#0e1a16" strokeWidth="1.8"/><path d="M3 10h18M9 5v14" stroke="#0e1a16" strokeWidth="1.8"/></svg>
           Ver tarjeta completa

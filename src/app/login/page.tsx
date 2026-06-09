@@ -1,7 +1,5 @@
-'use client'
-
 import { useState } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { useAuthActions } from '@convex-dev/auth/react'
 
 function LogoPin() {
@@ -91,7 +89,7 @@ export default function LoginPage() {
 
         <p className="text-center text-[13px] text-[#6b7a72] mt-5">
           ¿Primera vez?{' '}
-          <Link href="/registro" className="text-[#1f8a5b] font-semibold hover:underline">
+          <Link to="/registro" className="text-[#1f8a5b] font-semibold hover:underline">
             Crear cuenta
           </Link>
         </p>

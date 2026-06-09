@@ -1,7 +1,5 @@
-'use client'
-
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { formatHandicap } from '@/lib/golf'
@@ -16,8 +14,8 @@ const TEAM_COLORS: Record<number, { bg: string; text: string; light: string }> =
 }
 
 function ParejasPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const courseId   = searchParams.get('course') ?? ''
   const isPractice = searchParams.get('practice') === 'true'
   const playerIds  = searchParams.get('players')?.split(',').filter(Boolean) ?? []
@@ -72,7 +70,7 @@ function ParejasPage() {
       scramble_teams: players.map(p => `${p._id}:${p.team}`).join(','),
       ...(leagueId ? { league: leagueId } : {}),
     })
-    router.push(`/ronda/modalidad?${params}&mode=scramble`)
+    navigate(`/ronda/modalidad?${params}&mode=scramble`)
   }
 
   if (loading) return SPINNER
@@ -85,7 +83,7 @@ function ParejasPage() {
     <div className="min-h-screen bg-[#f4f1e9] flex flex-col">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-5">
-          <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Atrás
           </button>

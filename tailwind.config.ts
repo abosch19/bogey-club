@@ -20,8 +20,8 @@ const config: Config = {
         amber: 'var(--c-amber)',
       },
       fontFamily: {
-        sans: ['var(--font-geist)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'system-ui', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       borderRadius: {
         hero: '22px',

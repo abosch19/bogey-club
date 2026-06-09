@@ -1,7 +1,5 @@
-'use client'
-
 import { useState } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { formatHandicap } from '@/lib/golf'
@@ -26,7 +24,7 @@ export default function JugadoresPage() {
     <div className="min-h-screen bg-[#f4f1e9] pb-8">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center gap-3 mb-4">
-          <Link href="/perfil" className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <Link to="/perfil" className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Perfil
           </Link>

@@ -1,12 +1,10 @@
-'use client'
-
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useState, Suspense } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { scoreChipClass, stablefordPts, strokesReceived } from '@/lib/golf'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 
 type Player = { id: string; name: string; avatar_color: string; course_handicap: number; is_guest: boolean }
 type Hole   = { hole_number: number; par: number; stroke_index: number }
@@ -17,8 +15,8 @@ const SPINNER = <div className="min-h-screen bg-[#f4f1e9] flex items-center just
 type ViewMode = 'stroke' | 'stableford' | 'matchplay_hcp' | 'matchplay' | 'bbb' | 'wolf'
 
 function TarjetaPage() {
-  const searchParams = useSearchParams()
-  const router       = useRouter()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const roundId      = searchParams.get('round') ?? ''
 
   const me   = useQuery(api.profiles.me)
@@ -171,7 +169,7 @@ function TarjetaPage() {
                         const d = s != null ? s - h.par : null
                         return (
                           <td key={h.hole_number} className="py-1.5 px-0.5">
-                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block active:scale-95 transition">
+                            <button onClick={() => navigate(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block active:scale-95 transition">
                               {s != null
                                 ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
                                 : <span className="text-[#c4bfb5] text-[13px]">·</span>}
@@ -202,7 +200,7 @@ function TarjetaPage() {
                         const pts = s ? stablefordPts(s, h.par, rcv) : null
                         return (
                           <td key={h.hole_number} className="py-1 px-0.5">
-                            <button onClick={() => router.push(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block text-center relative">
+                            <button onClick={() => navigate(`/hoyo?round=${roundId}&hole=${h.hole_number}`)} className="mx-auto block text-center relative">
                               {/* Asterisks for handicap strokes */}
                               {rcv > 0 && (
                                 <div className="flex justify-center gap-px mb-0.5">
@@ -247,11 +245,11 @@ function TarjetaPage() {
       <div className="safe-top px-[14px] pt-3 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <button onClick={() => router.back()} className="flex items-center gap-1 text-[#6b7a72] font-semibold text-[13px]">
+            <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-[#6b7a72] font-semibold text-[13px]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Atrás
             </button>
-            <Link href="/" className="font-mono text-[10px] text-[#6b7a72] bg-[#f4f1e9] px-2.5 py-1 rounded-full">Inicio</Link>
+            <Link to="/" className="font-mono text-[10px] text-[#6b7a72] bg-[#f4f1e9] px-2.5 py-1 rounded-full">Inicio</Link>
           </div>
           <span className="font-mono text-[10px] text-[#6b7a72]">{myScores.length} / {holes.length} HOYOS</span>
         </div>
@@ -429,7 +427,7 @@ function TarjetaPage() {
                 <button onClick={async () => {
                   if (!confirm('¿Borrar esta ronda de práctica? Se eliminarán todos los golpes.')) return
                   await removeRoundMut({ round_id: roundId as Id<'rounds'> })
-                  router.push('/')
+                  navigate('/')
                 }}
                   className="w-full py-3 rounded-full border-2 border-[#c6432d] text-[#c6432d] font-bold text-[14px] transition active:opacity-80">
                   Borrar ronda de práctica
@@ -448,14 +446,14 @@ function TarjetaPage() {
       {/* CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
         {allDone ? (
-          <Link href={`/resumen?round=${roundId}`}
+          <Link to={`/resumen?round=${roundId}`}
             className="flex items-center justify-between w-full px-5 py-4 rounded-full font-bold text-[14px]"
             style={{ backgroundColor: '#e8b75a', color: '#0e1a16' }}>
             <span>Ronda completada</span>
             <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">FIRMAR →</span>
           </Link>
         ) : nextHole ? (
-          <Link href={`/hoyo?round=${roundId}&hole=${nextHole.hole_number}`}
+          <Link to={`/hoyo?round=${roundId}&hole=${nextHole.hole_number}`}
             className="flex items-center justify-between w-full px-5 py-4 rounded-full font-bold text-[14px] text-white"
             style={{ backgroundColor: '#0e1a16' }}>
             <div>

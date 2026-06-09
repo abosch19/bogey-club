@@ -1,7 +1,5 @@
-'use client'
-
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -39,8 +37,8 @@ function autoGroup(players: Player[], groupSize: number): Player[] {
 }
 
 function NuevoTorneoPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [step, setStep]       = useState<'config'|'grupos'>('config')
   const [name, setName]       = useState('')
   const [courseId, setCourseId] = useState<Id<'courses'> | ''>('')
@@ -64,7 +62,7 @@ function NuevoTorneoPage() {
   // Auth gate + initial selection from URL params
   useEffect(() => {
     if (me === undefined || coursesData === undefined || profilesData === undefined) return
-    if (me === null) { router.push('/login'); return }
+    if (me === null) { navigate('/login'); return }
 
     const allP: Player[] = (profilesData ?? []).map(p => ({ id: p._id, name: p.name, handicap_index: p.handicap_index, avatar_color: p.avatar_color, group: 1 }))
 
@@ -113,7 +111,7 @@ function NuevoTorneoPage() {
         mode,
         players: groups.map(p => ({ id: p.id as Id<'profiles'>, group: p.group, handicap_index: p.handicap_index })),
       })
-      router.push(`/torneo/${data.tournament_id}`)
+      navigate(`/torneo/${data.tournament_id}`)
     } catch (e: any) {
       alert(e?.message ?? 'Error al crear el torneo')
       setSaving(false)
@@ -126,7 +124,7 @@ function NuevoTorneoPage() {
     <div className="min-h-screen bg-[#f4f1e9]">
       <div className="safe-top px-[14px] pt-3 pb-8">
         <div className="flex items-center gap-3 mb-5">
-          <button onClick={() => step === 'grupos' ? setStep('config') : router.back()} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button onClick={() => step === 'grupos' ? setStep('config') : navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             {step === 'grupos' ? 'Configuración' : 'Atrás'}
           </button>

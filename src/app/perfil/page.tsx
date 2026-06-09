@@ -1,7 +1,5 @@
-'use client'
-
 import { useState } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { useAuthActions } from '@convex-dev/auth/react'
 import { api } from '@convex/_generated/api'
@@ -195,7 +193,7 @@ export default function PerfilPage() {
         {/* ── ACCESOS ── */}
         <div className="space-y-2 mb-3">
           {/* Jugadores registrados */}
-          <Link href="/jugadores" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70">
+          <Link to="/jugadores" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70">
             <div className="w-9 h-9 rounded-full bg-[#d9eedd] flex items-center justify-center">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#1f8a5b" strokeWidth="1.8" strokeLinecap="round"/><circle cx="9" cy="7" r="4" stroke="#1f8a5b" strokeWidth="1.8"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#1f8a5b" strokeWidth="1.8" strokeLinecap="round"/></svg>
             </div>
@@ -207,7 +205,7 @@ export default function PerfilPage() {
           </Link>
 
           {/* Editar campos */}
-          <Link href="/ronda/campo" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70">
+          <Link to="/ronda/campo" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70">
             <div className="w-9 h-9 rounded-full bg-[#dde7fb] flex items-center justify-center">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 18 Q8 6 14 12 T20 8" stroke="#2a6fdb" strokeWidth="2" fill="none" strokeLinecap="round"/><circle cx="20" cy="8" r="1.8" fill="#2a6fdb"/></svg>
             </div>
@@ -220,7 +218,7 @@ export default function PerfilPage() {
 
           {/* Admin — solo para admin */}
           {email === 's.vallve93@gmail.com' && (
-            <Link href="/admin" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#fadcd6] active:opacity-70">
+            <Link to="/admin" className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#fadcd6] active:opacity-70">
               <div className="w-9 h-9 rounded-full bg-[#fadcd6] flex items-center justify-center">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#c6432d" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </div>

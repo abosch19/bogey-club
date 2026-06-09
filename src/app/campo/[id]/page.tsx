@@ -1,7 +1,5 @@
-'use client'
-
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -10,7 +8,7 @@ type Hole = { _id: Id<'holes'>; hole_number: number; par: number; stroke_index: 
 
 export default function EditCampoPage() {
   const { id } = useParams()
-  const router  = useRouter()
+  const navigate = useNavigate()
   const [holes, setHoles]     = useState<Hole[]>([])
   const [courseName, setCourseName] = useState('')
   const [saving, setSaving]   = useState(false)
@@ -61,7 +59,7 @@ export default function EditCampoPage() {
     <div className="min-h-screen bg-[#f4f1e9] pb-8">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-4">
-          <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Atrás
           </button>

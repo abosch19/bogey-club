@@ -1,7 +1,5 @@
-'use client'
-
 import { useState } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { formatDate, formatHandicap } from '@/lib/golf'
@@ -231,7 +229,7 @@ export default function StatsPage() {
   const emptyState = (text: string) => (
     <div className="bg-white rounded-[16px] p-6 border border-[#e5e0d4] text-center">
       <p className="text-[#6b7a72] text-[14px]">{text}</p>
-      <Link href="/ronda/campo" className="mt-3 inline-block text-[#1f8a5b] font-semibold text-[13px]">Empezar ronda →</Link>
+      <Link to="/ronda/campo" className="mt-3 inline-block text-[#1f8a5b] font-semibold text-[13px]">Empezar ronda →</Link>
     </div>
   )
 
@@ -325,7 +323,7 @@ export default function StatsPage() {
                     {rounds.slice(0, 6).map(r => {
                       const delta = r.total - r.real_par
                       return (
-                        <Link key={r.id} href={`/resumen?round=${r.id}`}
+                        <Link key={r.id} to={`/resumen?round=${r.id}`}
                           className="bg-white rounded-[16px] p-3.5 border flex items-center gap-3 block"
                           style={{ borderColor: r.total === bestScore ? '#e8b75a' : '#e5e0d4' }}>
                           <div className="flex-1 min-w-0">

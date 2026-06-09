@@ -2,32 +2,34 @@
   "name": "boggey-club",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "vite",
     "dev:convex": "convex dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@auth/core": "^0.37.0",
     "@convex-dev/auth": "^0.0.93",
     "clsx": "^2.1.1",
     "convex": "^1.40.0",
-    "geist": "^1.3.0",
     "lucide-react": "^0.400.0",
-    "next": "14.2.5",
     "react": "^18",
     "react-dom": "^18",
+    "react-router-dom": "^6.26.0",
     "tailwind-merge": "^2.3.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.0.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^5.4.0"
   }
 }

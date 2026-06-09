@@ -1,12 +1,10 @@
-'use client'
-
 import { useState, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { scoreChipClass, formatDate, stablefordPts, strokesReceived } from '@/lib/golf'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 
 const SPINNER = <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
@@ -17,8 +15,8 @@ type ScoreRow = { profile_id: string; hole_number: number; strokes: number | nul
 type Tab = 'stroke' | 'stableford' | 'clasificacion'
 
 function ResumenPage() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const roundId  = searchParams.get('round') ?? ''
   const readonly = searchParams.get('readonly') === 'true'
 
@@ -108,7 +106,7 @@ function ResumenPage() {
       )}
       <div className="safe-top px-[14px] pt-3 pb-3">
         <div className="flex items-center justify-between mb-3">
-          <Link href={`/tarjeta?round=${roundId}`} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <Link to={`/tarjeta?round=${roundId}`} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Tarjeta
           </Link>
@@ -310,7 +308,7 @@ function ResumenPage() {
       {/* Sign CTA */}
       {readonly && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
-          <Link href="/"
+          <Link to="/"
             className="flex items-center justify-center w-full py-3.5 rounded-full font-bold text-[14px] text-white transition active:scale-[0.98]"
             style={{ backgroundColor: '#0e1a16' }}>
             ← Volver al inicio
@@ -356,12 +354,12 @@ function ResumenPage() {
             </>
           )}
           <div className="flex gap-2">
-            <Link href="/"
+            <Link to="/"
               className="flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[14px] text-white transition active:scale-[0.98]"
               style={{ backgroundColor: '#0e1a16' }}>
               Inicio
             </Link>
-            <Link href="/stats"
+            <Link to="/stats"
               className="flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[14px] transition active:scale-[0.98]"
               style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}>
               Ver stats

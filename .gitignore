@@ -3,15 +3,16 @@
 /.pnp
 .pnp.js
 
-# next.js
-/.next/
-/out/
-next-env.d.ts
+# vite build output
+/dist
 *.tsbuildinfo
+
+# stale next.js output
+/.next/
 
 # production build
 /build
-/dist
+/out
 
 # convex
 /.convex

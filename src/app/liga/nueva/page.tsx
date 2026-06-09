@@ -1,12 +1,10 @@
-'use client'
-
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 
 export default function NuevaLigaPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const createLeague = useMutation(api.leagues.create)
   const [name, setName]     = useState('')
   const [rounds, setRounds] = useState(8)
@@ -20,7 +18,7 @@ export default function NuevaLigaPage() {
     setError('')
     try {
       await createLeague({ name: name.trim(), total_rounds: rounds, mode })
-      router.push('/liga')
+      navigate('/liga')
     } catch (e: any) {
       setError(e?.message ?? 'Error')
       setLoading(false)
@@ -40,7 +38,7 @@ export default function NuevaLigaPage() {
     <div className="min-h-screen bg-[#f4f1e9]">
       <div className="safe-top px-[14px] pt-3 pb-8">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Atrás
           </button>

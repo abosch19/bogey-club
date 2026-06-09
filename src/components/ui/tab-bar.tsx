@@ -1,12 +1,10 @@
-'use client'
-
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { Link } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 
 export function TabBar() {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const activeRound = useQuery(api.rounds.activeIdForUser)
   const checked = activeRound !== undefined
   const activeRoundId = activeRound ?? null
@@ -38,7 +36,7 @@ export function TabBar() {
         {tabs.map(({ key, href, label, icon }) => {
           const isActive = key === active
           return (
-            <Link key={key} href={href}
+            <Link key={key} to={href}
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 transition-colors ${isActive ? 'text-[#1f8a5b]' : 'text-[#6b7a72]'}`}>
               {icon(isActive)}
               <span className="text-[10px] font-semibold">{label}</span>
