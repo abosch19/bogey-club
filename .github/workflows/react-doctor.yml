@@ -1,0 +1,24 @@
+name: React Doctor
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  react-doctor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Pinned so rule changes in new releases don't break main unexpectedly.
+      # Uses doctor.config.json (ignores convex/**, dead-code off).
+      - name: Run React Doctor
+        run: bunx react-doctor@0.5.0 . --yes --no-telemetry
