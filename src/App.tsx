@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useConvexAuth, useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
@@ -53,6 +53,16 @@ function AuthGuard({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+/** Reset scroll to the top on every route change so tabs don't share scrollY. */
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    document.scrollingElement?.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
 /** Renders the bottom bar only on tab routes; stays mounted so it never flickers. */
 function PersistentTabBar() {
   const { pathname } = useLocation()
@@ -80,6 +90,7 @@ function KeepWarm() {
 export function App() {
   return (
     <div className="mx-auto max-w-[430px] min-h-screen relative">
+      <ScrollToTop />
       <KeepWarm />
       <AuthGuard>
         <Routes>
