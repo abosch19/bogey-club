@@ -1,8 +1,10 @@
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useEffect, useState, Suspense } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, Suspense } from 'react'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '@convex/_generated/api'
+import { Id } from '@convex/_generated/dataModel'
 import { scoreChipClass, stablefordPts, strokesReceived } from '@/lib/golf'
 import Link from 'next/link'
 
@@ -19,59 +21,43 @@ function TarjetaPage() {
   const router       = useRouter()
   const roundId      = searchParams.get('round') ?? ''
 
-  const [players, setPlayers]     = useState<Player[]>([])
-  const [allHoles, setAllHoles]   = useState<Hole[]>([])
-  const [scores, setScores]       = useState<Score[]>([])
-  const [courseName, setCourse]   = useState('')
-  const [totalHoles, setTotal]    = useState(18)
-  const [holeMode, setHoleMode]   = useState('all')
-  const [modes, setModes]         = useState<string[]>(['stroke'])
+  const me   = useQuery(api.profiles.me)
+  const data = useQuery(api.rounds.get, roundId ? { roundId: roundId as Id<'rounds'> } : 'skip')
+  const allProfiles = useQuery(api.players.all)
+
   const [viewMode, setViewMode]   = useState<ViewMode>('stroke')
-  const [myId, setMyId]           = useState('')
-  const [loading, setLoading]     = useState(true)
   const [showEditPlayers, setShowEditPlayers] = useState(false)
-  const [allProfiles, setAllProfiles] = useState<{id:string;name:string;avatar_color:string;handicap_index:number}[]>([])
-  const [courseId, setCourseId]   = useState('')
   const [bet, setBet]             = useState('')
+  const [betInit, setBetInit]     = useState(false)
   const [showBetModal, setShowBetModal] = useState(false)
   const [savingBet, setSavingBet] = useState(false)
-  const [isPractice, setIsPractice] = useState(false)
-  const [roundCreatedBy, setRoundCreatedBy] = useState('')
-  const supabase = createClient()
 
-  async function reload() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) setMyId(user.id)
+  const addPlayerMut    = useMutation(api.roundPlayers.add)
+  const removePlayerMut = useMutation(api.roundPlayers.remove)
+  const setBetMut       = useMutation(api.rounds.setBet)
+  const removeRoundMut  = useMutation(api.rounds.remove)
 
-    const { data: round } = await supabase.from('rounds').select('course_id, notes, is_practice, created_by, courses(name, holes_count), status').eq('id', roundId).single()
-    if (!round) return
-    const course = Array.isArray(round.courses) ? round.courses[0] : round.courses as any
-    const hm = (round as any).notes ?? 'all'
-    setHoleMode(hm)
-    const notesVal = (round as any).notes ?? ''
+  const myId = me?._id ?? ''
+
+  // Derived data from the single rounds.get query
+  const courseName  = data?.course?.name ?? ''
+  const holeMode    = data?.round.notes ?? 'all'
+  const notesVal    = data?.round.notes ?? ''
+  const isPractice  = !!data?.round.is_practice
+  const base        = data?.course?.holes_count ?? 18
+  const totalHoles  = holeMode === '9_twice' ? 18 : holeMode === 'front' || holeMode === 'back' ? 9 : base
+  const allHoles: Hole[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
+  const players: Player[] = (data?.players ?? []).map(p => ({ id: p.profileId ?? '', name: p.name ?? 'Inv', avatar_color: p.avatar_color ?? '#6b7a72', course_handicap: p.course_handicap ?? 0, is_guest: p.is_guest }))
+  const scores: Score[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null }))
+  const modes = (data?.modes ?? []).length ? (data?.modes ?? []) : ['stroke']
+
+  // Initialize bet input from notes once data loads
+  if (data && !betInit) {
     if (!['all','front','back','9_once','9_twice'].includes(notesVal)) setBet(notesVal)
-    setIsPractice(!!(round as any).is_practice)
-    setRoundCreatedBy((round as any).created_by ?? '')
-    setCourseId((round as any).course_id)
-    setCourse(course?.name ?? '')
-    const base = course?.holes_count ?? 18
-    setTotal(hm === '9_twice' ? 18 : hm === 'front' || hm === 'back' ? 9 : base)
-
-    const [hRes, rpsRes, sRes, mRes] = await Promise.all([
-      supabase.from('holes').select('hole_number, par, stroke_index').eq('course_id', (round as any).course_id).order('hole_number'),
-      supabase.from('round_players').select('profile_id, is_guest, course_handicap, profiles(name, avatar_color)').eq('round_id', roundId),
-      supabase.from('scores').select('profile_id, hole_number, strokes').eq('round_id', roundId),
-      supabase.from('round_modes').select('mode').eq('round_id', roundId),
-    ])
-    setAllHoles(hRes.data ?? [])
-    setPlayers((rpsRes.data ?? []).map((rp: any) => ({ id: rp.profile_id, name: rp.profiles?.name ?? 'Inv', avatar_color: rp.profiles?.avatar_color ?? '#6b7a72', course_handicap: rp.course_handicap ?? 0, is_guest: rp.is_guest })))
-    setScores(sRes.data ?? [])
-    const ml = (mRes.data ?? []).map((x: any) => x.mode as string)
-    setModes(ml.length ? ml : ['stroke'])
-    setLoading(false)
+    setBetInit(true)
   }
 
-  useEffect(() => { if (roundId) reload() }, [roundId])
+  const loading = data === undefined || me === undefined
 
   // Filtered holes based on holeMode
   const holes: Hole[] = (() => {
@@ -138,17 +124,12 @@ function TarjetaPage() {
 
   // Add/remove player
   async function addPlayer(profileId: string) {
-    const { data: prof } = await supabase.from('profiles').select('handicap_index').eq('id', profileId).single()
-    const { data: course } = await supabase.from('courses').select('slope, course_rating, par').eq('id', courseId).single()
-    const hcp = Math.round((prof?.handicap_index ?? 18) * ((course?.slope ?? 113) / 113) + ((course?.course_rating ?? 72) - (course?.par ?? 72)))
-    await fetch('/api/ronda/jugador/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId, profile_id: profileId, course_handicap: hcp }) })
-    await reload()
+    await addPlayerMut({ roundId: roundId as Id<'rounds'>, profileId: profileId as Id<'profiles'> })
   }
 
   async function removePlayer(profileId: string) {
     if (!confirm('¿Eliminar este jugador de la ronda?')) return
-    await fetch('/api/ronda/jugador/borrar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId, profile_id: profileId }) })
-    await reload()
+    await removePlayerMut({ roundId: roundId as Id<'rounds'>, profileId: profileId as Id<'profiles'> })
   }
 
   if (loading) return SPINNER
@@ -305,7 +286,7 @@ function TarjetaPage() {
               </span>
             </button>
             {/* Edit players button */}
-            <button onClick={() => { setShowEditPlayers(true); supabase.from('profiles').select('id,name,avatar_color,handicap_index').order('name').then(r => setAllProfiles(r.data ?? [])) }}
+            <button onClick={() => setShowEditPlayers(true)}
               className="w-8 h-8 rounded-full bg-[#f4f1e9] border border-[#e5e0d4] flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round"/><circle cx="9" cy="7" r="4" stroke="#6b7a72" strokeWidth="1.8"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round"/></svg>
             </button>
@@ -391,7 +372,7 @@ function TarjetaPage() {
               </button>
               <button disabled={savingBet} onClick={async () => {
                 setSavingBet(true)
-                await fetch('/api/ronda/apuesta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId, bet }) })
+                await setBetMut({ round_id: roundId as Id<'rounds'>, bet: bet || null })
                 setSavingBet(false)
                 setShowBetModal(false)
               }}
@@ -432,8 +413,8 @@ function TarjetaPage() {
             {/* Add players */}
             <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-2">Añadir jugador</p>
             <div className="space-y-2">
-              {allProfiles.filter(p => !players.find(rp => rp.id === p.id)).map(p => (
-                <button key={p.id} onClick={() => addPlayer(p.id)}
+              {(allProfiles ?? []).filter(p => !players.find(rp => rp.id === p._id)).map(p => (
+                <button key={p._id} onClick={() => addPlayer(p._id)}
                   className="w-full flex items-center gap-3 bg-white rounded-[12px] px-3 py-2.5 border border-[#e5e0d4] text-left active:opacity-70">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
                   <span className="flex-1 font-semibold text-[13px] text-[#0e1a16]">{p.name}</span>
@@ -447,7 +428,7 @@ function TarjetaPage() {
               {isPractice ? (
                 <button onClick={async () => {
                   if (!confirm('¿Borrar esta ronda de práctica? Se eliminarán todos los golpes.')) return
-                  await fetch('/api/ronda/borrar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId }) })
+                  await removeRoundMut({ round_id: roundId as Id<'rounds'> })
                   router.push('/')
                 }}
                   className="w-full py-3 rounded-full border-2 border-[#c6432d] text-[#c6432d] font-bold text-[14px] transition active:opacity-80">

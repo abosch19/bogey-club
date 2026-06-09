@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { useAuthActions } from '@convex-dev/auth/react'
 
 function LogoPin() {
   return (
@@ -26,7 +26,7 @@ export default function RegistroPage() {
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
-  const supabase = createClient()
+  const { signIn } = useAuthActions()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -34,14 +34,13 @@ export default function RegistroPage() {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } },
-    })
-
-    if (error) { setError(error.message); setLoading(false); return }
-    window.location.href = '/onboarding'
+    try {
+      await signIn('password', { email, password, name, flow: 'signUp' })
+      window.location.href = '/onboarding'
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo crear la cuenta.')
+      setLoading(false)
+    }
   }
 
   return (

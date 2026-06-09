@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery, useMutation } from 'convex/react'
+import { useAuthActions } from '@convex-dev/auth/react'
+import { api } from '@convex/_generated/api'
 import { formatHandicap, formatDate, countingRounds } from '@/lib/golf'
 import { TabBar } from '@/components/ui/tab-bar'
 
@@ -22,64 +24,20 @@ function Sparkline({ diffs }: { diffs: { diff: number }[] }) {
 }
 
 export default function PerfilPage() {
-  const [profile, setProfile]   = useState<any>(null)
-  const [email, setEmail]       = useState('')
-  const [diffs, setDiffs]       = useState<{ diff: number; played_at: string; counting: boolean }[]>([])
-  const [loading, setLoading]   = useState(true)
+  const profile = useQuery(api.profiles.me)
+  const rawDiffs = useQuery(api.profiles.myDifferentials)
+  const recalc = useMutation(api.whs.recalc)
+  const setHandicap = useMutation(api.profiles.setHandicap)
+  const { signOut } = useAuthActions()
   const [recalculating, setRecalculating] = useState(false)
-  const supabase = createClient()
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
-      setEmail(user.email ?? '')
-
-      // Try sessionStorage cache for profile (30s TTL)
-      let prof: any = null
-      try {
-        const cachedProfile = sessionStorage.getItem('profile')
-        const cacheTime = sessionStorage.getItem('profileTime')
-        if (cachedProfile && cacheTime && Date.now() - parseInt(cacheTime) < 30000) {
-          prof = JSON.parse(cachedProfile)
-          setProfile(prof)
-        }
-      } catch {}
-
-      if (!prof) {
-        const { data: fetchedProf } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-        if (!fetchedProf) { window.location.href = '/onboarding'; return }
-        prof = fetchedProf
-        setProfile(prof)
-        try {
-          sessionStorage.setItem('profile', JSON.stringify(prof))
-          sessionStorage.setItem('profileTime', Date.now().toString())
-        } catch {}
-      }
-
-      const { data: d } = await supabase.from('whs_differentials').select('differential, played_at, is_counting').eq('profile_id', user.id).order('played_at', { ascending: false }).limit(20)
-      setDiffs((d ?? []).map(x => ({ diff: x.differential, played_at: x.played_at, counting: x.is_counting })))
-      setLoading(false)
-    }
-    load()
-  }, [])
+  const email = profile?.email ?? ''
+  const diffs = (rawDiffs ?? []).map(x => ({ diff: x.differential, played_at: x.played_at, counting: x.is_counting }))
 
   async function recalculate() {
     setRecalculating(true)
     try {
-      const res = await fetch('/api/profile/recalcular-whs', { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      // Reload diffs and profile
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const [profRes, diffsRes] = await Promise.all([
-          supabase.from('profiles').select('*').eq('id', user.id).single(),
-          supabase.from('whs_differentials').select('differential, played_at, is_counting').eq('profile_id', user.id).order('played_at', { ascending: false }).limit(20),
-        ])
-        if (profRes.data) setProfile(profRes.data)
-        setDiffs((diffsRes.data ?? []).map((x: any) => ({ diff: x.differential, played_at: x.played_at, counting: x.is_counting })))
-      }
+      const data = await recalc({})
       alert(`Hándicap recalculado correctamente (${data.rounds_processed ?? 0} rondas procesadas)`)
     } catch (err: unknown) {
       alert('Error al recalcular: ' + (err instanceof Error ? err.message : 'Error desconocido'))
@@ -89,11 +47,11 @@ export default function PerfilPage() {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut()
+    await signOut()
     window.location.href = '/login'
   }
 
-  if (loading || !profile) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
+  if (profile === undefined || profile === null) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
   const initials = profile.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
   const nCount   = countingRounds(diffs.length)
@@ -227,8 +185,7 @@ export default function PerfilPage() {
             if (val === null) return
             const num = parseFloat(val)
             if (isNaN(num) || num < 0 || num > 54) { alert('Valor inválido. Debe ser entre 0 y 54.'); return }
-            fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ handicap_index: num }) })
-              .then(() => setProfile((p: any) => ({ ...p, handicap_index: num })))
+            setHandicap({ handicap_index: num })
           }}
             className="py-3 rounded-[14px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80">
             Reiniciar hándicap

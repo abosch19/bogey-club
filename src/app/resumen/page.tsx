@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '@convex/_generated/api'
+import { Id } from '@convex/_generated/dataModel'
 import { scoreChipClass, formatDate, stablefordPts, strokesReceived } from '@/lib/golf'
 import Link from 'next/link'
 
@@ -20,39 +22,20 @@ function ResumenPage() {
   const roundId  = searchParams.get('round') ?? ''
   const readonly = searchParams.get('readonly') === 'true'
 
-  const [round, setRound]     = useState<any>(null)
-  const [course, setCourse]   = useState<any>(null)
-  const [players, setPlayers] = useState<Player[]>([])
-  const [holes, setHoles]     = useState<HoleRow[]>([])
-  const [scores, setScores]   = useState<ScoreRow[]>([])
-  const [modes, setModes]     = useState<string[]>(['stroke'])
+  const data = useQuery(api.rounds.get, roundId ? { roundId: roundId as Id<'rounds'> } : 'skip')
+  const finalizeMut = useMutation(api.rounds.finalize)
+
   const [activeTab, setActiveTab] = useState<Tab>('stroke')
   const [saving, setSaving]   = useState(false)
   const [signed, setSigned]   = useState(false)
   const [celebrating, setCelebrating] = useState(false)
-  const supabase = createClient()
 
-  useEffect(() => {
-    if (!roundId) return
-    async function load() {
-      const { data: r } = await supabase.from('rounds').select('id, date, is_practice, status, course_id, notes, courses(name, par, holes_count)').eq('id', roundId).single()
-      if (!r) return
-      const c = Array.isArray(r.courses) ? r.courses[0] : r.courses as any
-      setRound(r); setCourse(c)
-
-      const { data: rps }   = await supabase.from('round_players').select('profile_id, course_handicap, profiles(name, avatar_color)').eq('round_id', roundId)
-      const { data: h }     = await supabase.from('holes').select('hole_number, par, stroke_index').eq('course_id', r.course_id).order('hole_number')
-      const { data: s }     = await supabase.from('scores').select('profile_id, hole_number, strokes, putts, gir, fairway').eq('round_id', roundId)
-      const { data: m }     = await supabase.from('round_modes').select('mode').eq('round_id', roundId)
-
-      setPlayers((rps ?? []).map((rp: any) => ({ id: rp.profile_id, name: rp.profiles?.name ?? 'Inv', avatar_color: rp.profiles?.avatar_color ?? '#6b7a72', course_handicap: rp.course_handicap ?? 0 })))
-      setHoles(h ?? [])
-      setScores(s ?? [])
-      const modeList = (m ?? []).map((x: any) => x.mode as string)
-      setModes(modeList.length ? modeList : ['stroke'])
-    }
-    load()
-  }, [roundId])
+  const round   = data?.round ?? null
+  const course  = data?.course ?? null
+  const players: Player[] = (data?.players ?? []).map(rp => ({ id: rp.profileId ?? '', name: rp.name ?? 'Inv', avatar_color: rp.avatar_color ?? '#6b7a72', course_handicap: rp.course_handicap ?? 0 }))
+  const holes: HoleRow[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
+  const scores: ScoreRow[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null, putts: s.putts ?? null, gir: s.gir ?? null, fairway: s.fairway ?? null }))
+  const modes = (data?.modes ?? []).length ? (data?.modes ?? []) : ['stroke']
 
   function getScore(pid: string, holeNum: number) {
     return scores.find(s => s.profile_id === pid && s.hole_number === holeNum)
@@ -78,7 +61,7 @@ function ResumenPage() {
 
   async function handleSign() {
     setSaving(true)
-    await fetch('/api/ronda/finalizar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round_id: roundId }) })
+    await finalizeMut({ round_id: roundId as Id<'rounds'> })
     setSaving(false)
     setCelebrating(true)
     setTimeout(() => {

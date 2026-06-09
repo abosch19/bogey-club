@@ -2,48 +2,63 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '@convex/_generated/api'
+import { Id } from '@convex/_generated/dataModel'
 
-const ADMIN_EMAIL = 's.vallve93@gmail.com'
-
-type Hole = { id: string; hole_number: number; par: number; stroke_index: number; distance_m: number | null }
+type Hole = { _id: Id<'holes'>; hole_number: number; par: number; stroke_index: number; distance_m: number | null }
 
 export default function EditCampoPage() {
   const { id } = useParams()
   const router  = useRouter()
-  const [course, setCourse]   = useState<any>(null)
   const [holes, setHoles]     = useState<Hole[]>([])
   const [saving, setSaving]   = useState(false)
   const [msg, setMsg]         = useState('')
-  const supabase = createClient()
+
+  const me     = useQuery(api.profiles.me)
+  const course = useQuery(api.courses.get, { courseId: id as Id<'courses'> })
+  const editCourseHoles = useMutation(api.admin.editCourseHoles)
+
+  // Admin gate
+  useEffect(() => {
+    if (me === undefined) return
+    if (!me || !me.is_admin) { window.location.href = '/'; return }
+  }, [me])
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || user.email !== ADMIN_EMAIL) { window.location.href = '/'; return }
-      const { data: c } = await supabase.from('courses').select('*').eq('id', id).single()
-      const { data: h } = await supabase.from('holes').select('*').eq('course_id', id).order('hole_number')
-      setCourse(c)
-      setHoles(h ?? [])
+    if (course === undefined) return
+    if (course) {
+      setHoles(
+        course.holes.map((h: any) => ({
+          _id: h._id,
+          hole_number: h.hole_number,
+          par: h.par,
+          stroke_index: h.stroke_index,
+          distance_m: h.distance_m ?? null,
+        })),
+      )
     }
-    load()
-  }, [id])
+  }, [course])
 
-  function updateHole(holeId: string, field: keyof Hole, value: string) {
-    setHoles(prev => prev.map(h => h.id === holeId ? { ...h, [field]: parseInt(value) || 0 } : h))
+  function updateHole(holeId: Id<'holes'>, field: keyof Hole, value: string) {
+    setHoles(prev => prev.map(h => h._id === holeId ? { ...h, [field]: parseInt(value) || 0 } : h))
   }
 
   async function handleSave() {
     setSaving(true)
-    const res = await fetch('/api/admin/campo/editar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ course_id: id, holes }),
-    })
-    setSaving(false)
-    if (res.ok) { setMsg('Guardado correctamente.'); setTimeout(() => setMsg(''), 3000) }
-    else setMsg('Error al guardar.')
+    try {
+      await editCourseHoles({
+        holes: holes.map(h => ({ holeId: h._id, par: h.par, stroke_index: h.stroke_index, distance_m: h.distance_m })),
+      })
+      setSaving(false)
+      setMsg('Guardado correctamente.'); setTimeout(() => setMsg(''), 3000)
+    } catch {
+      setSaving(false)
+      setMsg('Error al guardar.')
+    }
   }
+
+  if (course === undefined || me === undefined || !me?.is_admin) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
   if (!course) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
@@ -74,14 +89,14 @@ export default function EditCampoPage() {
             ))}
           </div>
           {holes.map((h, i) => (
-            <div key={h.id} className={`grid grid-cols-4 gap-0 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
+            <div key={h._id} className={`grid grid-cols-4 gap-0 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
               <div className="flex items-center justify-center py-2.5 px-2 font-mono text-[13px] font-bold text-[#0e1a16]">{h.hole_number}</div>
               {(['par', 'stroke_index', 'distance_m'] as const).map(field => (
                 <div key={field} className="py-1.5 px-2">
                   <input
                     type="number"
                     value={field === 'distance_m' ? (h.distance_m ?? '') : h[field]}
-                    onChange={e => updateHole(h.id, field, e.target.value)}
+                    onChange={e => updateHole(h._id, field, e.target.value)}
                     className="w-full text-center font-mono text-[13px] text-[#0e1a16] bg-[#f4f1e9] rounded-[8px] py-1.5 outline-none focus:bg-[#d9eedd] transition"
                   />
                 </div>

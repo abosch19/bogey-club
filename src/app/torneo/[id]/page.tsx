@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState, useMemo } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery } from 'convex/react'
+import { api } from '@convex/_generated/api'
+import { Id } from '@convex/_generated/dataModel'
 import { stablefordPts, strokesReceived } from '@/lib/golf'
 
 type TPlayer = { id: string; name: string; avatar_color: string; group: number; handicap: number; round_id: string | null; course_handicap: number }
@@ -23,91 +25,117 @@ function calcScore(mode: string, scores: Score[], holes: Hole[], player: TPlayer
   return scores.reduce((a, s) => a + s.strokes, 0)
 }
 
+/**
+ * Loads scores for a single round (group) reactively and reports them up.
+ * Convex `rounds.get` returns the scores rows; we forward strokes-only scores keyed by profile.
+ */
+function GroupScoresLoader({ roundId, onScores }: { roundId: Id<'rounds'>; onScores: (roundId: string, scores: Score[]) => void }) {
+  const data = useQuery(api.rounds.get, { roundId })
+  useEffect(() => {
+    if (!data) return
+    const scores: Score[] = (data.scores ?? [])
+      .filter((s: any) => s.strokes != null && s.profileId != null)
+      .map((s: any) => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes }))
+    onScores(roundId, scores)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, roundId])
+  return null
+}
+
 export default function TorneoPage() {
   const { id } = useParams()
-  const router  = useRouter()
-  const [tournament, setTournament] = useState<any>(null)
-  const [players, setPlayers]       = useState<TPlayer[]>([])
-  const [scores, setScores]         = useState<Record<string, Score[]>>({})
-  const [holes, setHoles]           = useState<Hole[]>([])
+  const tournamentId = id as Id<'tournaments'>
+
+  const me   = useQuery(api.profiles.me)
+  const data = useQuery(api.tournaments.get, { tournamentId })
+
   const [activeGroup, setActiveGroup] = useState<number | null>(null)
   const [tab, setTab]               = useState<'leaderboard'|'grupos'>('leaderboard')
-  const [loading, setLoading]       = useState(true)
-  const [myId, setMyId]             = useState('')
-  const supabase = createClient()
+  const [scoresByRound, setScoresByRound] = useState<Record<string, Score[]>>({})
 
-  const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/login'); return }
-    setMyId(user.id)
+  const myId = me?._id ?? ''
 
-    const { data: t } = await supabase.from('tournaments').select('*, courses(name, par)').eq('id', id).single()
-    if (!t) return
-    setTournament(t)
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (me === null) { window.location.href = '/login' }
+  }, [me])
 
-    const { data: tp } = await supabase.from('tournament_players').select('profile_id, group_number, profiles(name, avatar_color, handicap_index)').eq('tournament_id', id)
-    const { data: tg } = await supabase.from('tournament_groups').select('group_number, round_id').eq('tournament_id', id)
-    const { data: hs } = await supabase.from('holes').select('hole_number, par, stroke_index').eq('course_id', t.course_id).order('hole_number')
-    setHoles(hs ?? [])
-
-    const ps: TPlayer[] = (tp ?? []).map((p: any) => {
-      const group = tg?.find(g => g.group_number === p.group_number)
+  // Build players from the reactive tournament data
+  const players: TPlayer[] = useMemo(() => {
+    if (!data) return []
+    const { players: tps, groups } = data
+    return tps.map((tp: any) => {
+      const group = groups.find((g: any) => g.group_number === tp.group_number)
+      const gp = group?.players.find((p: any) => p.profileId === tp.profileId)
       return {
-        id: p.profile_id, group: p.group_number,
-        name: p.profiles?.name ?? 'J', avatar_color: p.profiles?.avatar_color ?? '#6b7a72',
-        handicap: p.profiles?.handicap_index ?? 0,
-        round_id: group?.round_id ?? null,
-        course_handicap: Math.round((p.profiles?.handicap_index ?? 0)),
+        id: tp.profileId,
+        group: tp.group_number,
+        name: gp?.name ?? 'J',
+        avatar_color: gp?.avatar_color ?? '#6b7a72',
+        handicap: gp?.handicap_index ?? 0,
+        round_id: group?.roundId ?? null,
+        course_handicap: gp?.course_handicap ?? Math.round(gp?.handicap_index ?? 0),
       }
     })
-    setPlayers(ps)
+  }, [data])
 
-    // Fetch scores for all rounds
-    const roundIds = (tg ?? []).map(g => g.round_id).filter(Boolean)
-    if (roundIds.length) {
-      const { data: sc } = await supabase.from('scores').select('round_id, profile_id, hole_number, strokes').in('round_id', roundIds)
-      const byPlayer: Record<string, Score[]> = {}
-      for (const s of sc ?? []) {
+  // Scores aggregated by player across all round loaders
+  const scores: Record<string, Score[]> = useMemo(() => {
+    const byPlayer: Record<string, Score[]> = {}
+    for (const roundScores of Object.values(scoresByRound)) {
+      for (const s of roundScores) {
         if (!byPlayer[s.profile_id]) byPlayer[s.profile_id] = []
-        byPlayer[s.profile_id].push({ profile_id: s.profile_id, hole_number: s.hole_number, strokes: s.strokes })
+        byPlayer[s.profile_id].push(s)
       }
-      setScores(byPlayer)
     }
+    return byPlayer
+  }, [scoresByRound])
 
-    // Set my group as active
-    const myGroup = ps.find(p => p.id === user.id)?.group ?? 1
-    setActiveGroup(myGroup)
-    setLoading(false)
-  }, [id])
+  // Holes come from any loaded round (all groups share the same course)
+  const [roundHoles, setRoundHoles] = useState<Hole[]>([])
 
+  // Set my group as active once data loads
+  useEffect(() => {
+    if (!data || !myId) return
+    setActiveGroup(prev => prev ?? (players.find(p => p.id === myId)?.group ?? 1))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, myId, players.length])
+
+  function handleGroupScores(roundId: string, s: Score[]) {
+    setScoresByRound(prev => {
+      const prevS = prev[roundId]
+      if (prevS && prevS.length === s.length && JSON.stringify(prevS) === JSON.stringify(s)) return prev
+      return { ...prev, [roundId]: s }
+    })
+  }
+
+  // "hace Xs" live indicator — refreshes timestamp when data changes
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [secondsAgo, setSecondsAgo] = useState(0)
-
-  useEffect(() => { load().then(() => setLastUpdate(new Date())) }, [load])
-
-  // Auto-refresh every 15s
-  useEffect(() => {
-    const interval = setInterval(() => { load().then(() => setLastUpdate(new Date())) }, 15000)
-    return () => clearInterval(interval)
-  }, [load])
-
-  // Update "hace Xs" counter
+  useEffect(() => { if (data) setLastUpdate(new Date()) }, [data])
   useEffect(() => {
     const t = setInterval(() => setSecondsAgo(Math.floor((Date.now() - lastUpdate.getTime()) / 1000)), 1000)
     return () => clearInterval(t)
   }, [lastUpdate])
 
-  if (loading || !tournament) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
+  const loading = me === undefined || data === undefined
 
+  if (loading || !data) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
+
+  const tournament = data.tournament
   const mode   = tournament.mode
-  const course = Array.isArray(tournament.courses) ? tournament.courses[0] : tournament.courses as any
+  const course = data.course as any
+  const effectiveHoles = roundHoles
   const nGroups = Math.max(...players.map(p => p.group), 1)
   const isHigherBetter = mode === 'stableford'
+
+  // Round ids to load scores for
+  const roundIds = Array.from(new Set(data.groups.map((g: any) => g.roundId).filter(Boolean))) as Id<'rounds'>[]
 
   // Compute rankings
   const rankings = players.map(p => {
     const pScores = scores[p.id] ?? []
-    const score = pScores.length > 0 ? calcScore(mode, pScores, holes, p) : null
+    const score = pScores.length > 0 ? calcScore(mode, pScores, effectiveHoles, p) : null
     const holesPlayed = pScores.length
     return { ...p, score, holesPlayed }
   }).sort((a, b) => {
@@ -121,6 +149,12 @@ export default function TorneoPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-8">
+      {/* Reactive per-round score loaders + hole loader */}
+      {roundIds.map(rid => (
+        <GroupScoresLoader key={rid} roundId={rid} onScores={handleGroupScores} />
+      ))}
+      {roundIds.length > 0 && <HolesLoader roundId={roundIds[0]} onHoles={setRoundHoles} />}
+
       <div className="safe-top px-[14px] pt-3 pb-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
@@ -128,7 +162,7 @@ export default function TorneoPage() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Inicio
           </Link>
-          <button onClick={load} className="font-mono text-[10px] text-[#1f8a5b] uppercase tracking-wide">
+          <button onClick={() => setLastUpdate(new Date())} className="font-mono text-[10px] text-[#1f8a5b] uppercase tracking-wide">
             ↻ Actualizar
           </button>
         </div>
@@ -246,7 +280,7 @@ export default function TorneoPage() {
                 <div className="space-y-2">
                   {/* Start round button if no round yet */}
                   {!gRound && myId && gPlayers.find(p => p.id === myId) && (
-                    <Link href={`/ronda/campo?tournament=${id}&group=${activeGroup}`}
+                    <Link href={`/ronda/campo?tournament=${tournamentId}&group=${activeGroup}`}
                       className="flex items-center justify-between w-full px-4 py-3.5 rounded-full font-bold text-[14px] text-[#0e1a16] transition"
                       style={{ backgroundColor: GROUP_COLORS[activeGroup - 1] }}>
                       <span>Iniciar ronda del grupo</span>
@@ -266,7 +300,7 @@ export default function TorneoPage() {
                   {/* Per-player hole progress */}
                   {gPlayers.map(p => {
                     const pScores = scores[p.id] ?? []
-                    const score   = pScores.length > 0 ? calcScore(mode, pScores, holes, p) : null
+                    const score   = pScores.length > 0 ? calcScore(mode, pScores, effectiveHoles, p) : null
                     return (
                       <div key={p.id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
                         <div className="flex items-center gap-3 mb-3">
@@ -280,9 +314,9 @@ export default function TorneoPage() {
                           )}
                         </div>
                         {/* Hole progress bars */}
-                        {holes.length > 0 && (
+                        {effectiveHoles.length > 0 && (
                           <div className="flex gap-[2px]">
-                            {holes.map(h => {
+                            {effectiveHoles.map(h => {
                               const s = pScores.find(sc => sc.hole_number === h.hole_number)
                               const d = s ? s.strokes - h.par : null
                               const bg = d === null ? '#ece8db' : d <= -1 ? '#2a6fdb' : d === 0 ? '#1f8a5b' : d === 1 ? '#e8b75a' : '#c6432d'
@@ -301,4 +335,16 @@ export default function TorneoPage() {
       </div>
     </div>
   )
+}
+
+/** Loads holes (course layout) for the tournament via one round and lifts them up. */
+function HolesLoader({ roundId, onHoles }: { roundId: Id<'rounds'>; onHoles: (holes: Hole[]) => void }) {
+  const data = useQuery(api.rounds.get, { roundId })
+  useEffect(() => {
+    if (!data) return
+    const hs: Hole[] = (data.holes ?? []).map((h: any) => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
+    onHoles(hs)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data])
+  return null
 }

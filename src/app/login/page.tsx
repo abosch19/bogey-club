@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { useAuthActions } from '@convex-dev/auth/react'
 
 function LogoPin() {
   return (
@@ -25,15 +25,19 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
-  const supabase = createClient()
+  const { signIn } = useAuthActions()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError('Email o contraseña incorrectos.'); setLoading(false); return }
-    window.location.href = '/'
+    try {
+      await signIn('password', { email, password, flow: 'signIn' })
+      window.location.href = '/'
+    } catch {
+      setError('Email o contraseña incorrectos.')
+      setLoading(false)
+    }
   }
 
   return (

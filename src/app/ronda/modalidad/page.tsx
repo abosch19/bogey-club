@@ -2,6 +2,9 @@
 
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useMutation } from 'convex/react'
+import { api } from '@convex/_generated/api'
+import { Id } from '@convex/_generated/dataModel'
 import { GAME_MODES, type GameMode } from '@/lib/types'
 
 function SeleccionarModalidadPage() {
@@ -22,6 +25,7 @@ function SeleccionarModalidadPage() {
   const [loading, setLoading] = useState(false)
   const [bet, setBet] = useState('')
   const [expandedMode, setExpandedMode] = useState<string | null>(null)
+  const createRound = useMutation(api.rounds.create)
 
   function isCompatible(mode: GameMode): boolean {
     if (mode === 'matchplay' || mode === 'matchplay_hcp') return totalPlayers === 2
@@ -63,23 +67,16 @@ function SeleccionarModalidadPage() {
 
       // Scramble replaces stroke — no individual player scores
       const modes = isScrambleSelected ? extras : ['stroke', ...extras]
-      const res = await fetch('/api/ronda/crear', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          course_id: courseId,
-          is_practice: isPractice,
-          player_ids: playerIds,
-          guests,
-          modes,
-          hole_mode: holeMode,
-          ...(leagueId ? { league_id: leagueId } : {}),
-          ...(scrambleTeams ? { scramble_teams: scrambleTeams } : {}),
-          ...(bet ? { notes: bet } : {}),
-        }),
+      const data = await createRound({
+        course_id: courseId as Id<'courses'>,
+        is_practice: isPractice,
+        player_ids: playerIds as Id<'profiles'>[],
+        guests,
+        modes,
+        hole_mode: holeMode,
+        ...(leagueId ? { league_id: leagueId as Id<'leagues'> } : {}),
+        ...(scrambleTeams ? { scramble_teams: scrambleTeams } : {}),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
       // Save last round config for quick-start
       try {
         const courseName = searchParams.get('course_name') ?? courseId

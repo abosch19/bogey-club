@@ -2,60 +2,45 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '@convex/_generated/api'
+import { Id } from '@convex/_generated/dataModel'
 import { formatHandicap } from '@/lib/golf'
-
-const ADMIN_EMAIL = 's.vallve93@gmail.com'
-
-type User = { id: string; name: string; handicap_index: number; avatar_color: string; email?: string }
-type League = { id: string; name: string; mode: string; total_rounds: number; created_by: string; active: boolean; creator_name: string }
 
 export default function AdminPage() {
   const [tab, setTab]         = useState<'usuarios'|'ligas'|'campos'>('usuarios')
-  const [users, setUsers]     = useState<User[]>([])
-  const [leagues, setLeagues] = useState<League[]>([])
-  const [courses, setCourses] = useState<any[]>([])
-  const [myEmail, setMyEmail] = useState('')
-  const [loading, setLoading] = useState(true)
   const [msg, setMsg]         = useState('')
-  const supabase = createClient()
 
+  const me       = useQuery(api.profiles.me)
+  const overview = useQuery(api.admin.overview)
+  const removeLeague  = useMutation(api.leagues.remove)
+  const setHandicap   = useMutation(api.profiles.setHandicap)
+
+  // Auth + admin gate
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
-      setMyEmail(user.email ?? '')
-      if (user.email !== ADMIN_EMAIL) { window.location.href = '/'; return }
+    if (me === undefined) return
+    if (me === null) { window.location.href = '/login'; return }
+    if (!me.is_admin) { window.location.href = '/'; return }
+  }, [me])
 
-      const { data: profiles } = await supabase.from('profiles').select('*').order('created_at')
-      setUsers(profiles ?? [])
-
-      const { data: ls } = await supabase.from('leagues').select('*, profiles(name)').order('created_at', { ascending: false })
-      setLeagues((ls ?? []).map((l: any) => ({ ...l, creator_name: l.profiles?.name ?? '–' })))
-
-      const { data: cs } = await supabase.from('courses').select('id, name, holes_count, par, slope, course_rating, record_score').order('name')
-      setCourses(cs ?? [])
-
-      setLoading(false)
-    }
-    load()
-  }, [])
-
-  async function deleteLeague(id: string) {
+  async function deleteLeague(id: Id<'leagues'>) {
     if (!confirm('¿Borrar esta liga?')) return
-    await fetch('/api/liga/borrar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ league_id: id }) })
-    setLeagues(prev => prev.filter(l => l.id !== id))
+    await removeLeague({ league_id: id })
     setMsg('Liga borrada.')
   }
 
-  async function updateHandicap(userId: string, value: string) {
+  async function updateHandicap(profileId: Id<'profiles'>, value: string) {
     const hcp = parseFloat(value)
     if (isNaN(hcp)) return
-    await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ handicap_index: hcp, user_id: userId }) })
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, handicap_index: hcp } : u))
+    await setHandicap({ handicap_index: hcp, profileId })
   }
 
-  if (loading) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
+  if (me === undefined || overview === undefined || !me?.is_admin) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
+
+  const users   = overview?.users ?? []
+  const leagues = overview?.leagues ?? []
+  const courses = overview?.courses ?? []
+  const myEmail = me?.email ?? ''
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-8">
@@ -94,7 +79,7 @@ export default function AdminPage() {
         {tab === 'usuarios' && (
           <div className="space-y-2">
             {users.map(u => (
-              <div key={u.id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
+              <div key={u._id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-bold" style={{ backgroundColor: u.avatar_color }}>
                     {u.name[0].toUpperCase()}
@@ -109,7 +94,7 @@ export default function AdminPage() {
                   <input
                     type="number" step="0.1" min="0" max="54"
                     defaultValue={u.handicap_index.toFixed(1)}
-                    onBlur={e => updateHandicap(u.id, e.target.value)}
+                    onBlur={e => updateHandicap(u._id, e.target.value)}
                     className="flex-1 border border-[#e5e0d4] rounded-[8px] px-3 py-1.5 text-[13px] font-mono text-[#0e1a16] outline-none focus:border-[#1f8a5b]"
                   />
                 </div>
@@ -123,7 +108,7 @@ export default function AdminPage() {
           <div className="space-y-2">
             {leagues.length === 0 && <p className="text-center text-[#6b7a72] text-[14px] py-6">No hay ligas.</p>}
             {leagues.map(l => (
-              <div key={l.id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
+              <div key={l._id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <p className="font-bold text-[14px] text-[#0e1a16]">{l.name}</p>
@@ -134,7 +119,7 @@ export default function AdminPage() {
                       {l.active ? 'Activa' : 'Inactiva'}
                     </span>
                   </div>
-                  <button onClick={() => deleteLeague(l.id)}
+                  <button onClick={() => deleteLeague(l._id)}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#c6432d] border border-[#c6432d] hover:bg-[#fadcd6] transition">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#c6432d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     Borrar
@@ -149,7 +134,7 @@ export default function AdminPage() {
         {tab === 'campos' && (
           <div className="space-y-2">
             {courses.map(c => (
-              <Link key={c.id} href={`/admin/campo/${c.id}`}
+              <Link key={c._id} href={`/admin/campo/${c._id}`}
                 className="bg-white rounded-[16px] p-4 border border-[#e5e0d4] flex items-center gap-3 block active:opacity-80">
                 <div className="flex-1">
                   <p className="font-bold text-[14px] text-[#0e1a16]">{c.name}</p>

@@ -1,75 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery } from 'convex/react'
+import { api } from '@convex/_generated/api'
 import { formatHandicap } from '@/lib/golf'
 
-type Player = {
-  id: string
-  name: string
-  handicap_index: number
-  avatar_color: string
-  rounds: number
-  best_score: number | null
-}
-
 export default function JugadoresPage() {
-  const [players, setPlayers] = useState<Player[]>([])
-  const [myId, setMyId]       = useState('')
+  const players = useQuery(api.players.directory)
+  const me = useQuery(api.profiles.me)
   const [search, setSearch]   = useState('')
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
-      setMyId(user.id)
-
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, name, handicap_index, avatar_color')
-        .order('handicap_index', { ascending: true })
-
-      if (!profiles?.length) { setLoading(false); return }
-
-      // Get round counts and best scores
-      const { data: rps } = await supabase
-        .from('round_players')
-        .select('profile_id, round_id')
-        .in('profile_id', profiles.map(p => p.id))
-
-      const { data: completedRounds } = await supabase
-        .from('rounds')
-        .select('id, status')
-        .eq('status', 'completed')
-
-      const completedIds = new Set((completedRounds ?? []).map(r => r.id))
-
-      // Count rounds per player
-      const roundCounts: Record<string, number> = {}
-      for (const rp of rps ?? []) {
-        if (completedIds.has(rp.round_id)) {
-          roundCounts[rp.profile_id] = (roundCounts[rp.profile_id] ?? 0) + 1
-        }
-      }
-
-      setPlayers(profiles.map(p => ({
-        ...p,
-        rounds: roundCounts[p.id] ?? 0,
-        best_score: null,
-      })))
-      setLoading(false)
-    }
-    load()
-  }, [])
-
-  const filtered = players.filter(p =>
+  const myId = me?._id ?? ''
+  const filtered = (players ?? []).filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  if (loading) return (
+  if (players === undefined) return (
     <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
       <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/>
     </div>
@@ -107,7 +54,7 @@ export default function JugadoresPage() {
                   <p className="font-bold text-[14px] text-[#0e1a16]">{p.name}</p>
                   {p.id === myId && <span className="font-mono text-[8px] text-[#1f8a5b] bg-[#d9eedd] px-1.5 py-0.5 rounded-full uppercase">Tú</span>}
                 </div>
-                <p className="text-[11px] text-[#6b7a72] mt-0.5">{p.rounds} ronda{p.rounds !== 1 ? 's' : ''}</p>
+                <p className="text-[11px] text-[#6b7a72] mt-0.5">{p.rounds_played} ronda{p.rounds_played !== 1 ? 's' : ''}</p>
               </div>
               <div className="text-right">
                 <p className="font-mono text-[11px] text-[#6b7a72] uppercase">HCP</p>

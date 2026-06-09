@@ -1,57 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery } from 'convex/react'
+import { api } from '@convex/_generated/api'
 
 export function TabBar() {
   const pathname = usePathname()
-  const [activeRoundId, setActiveRoundId] = useState<string | null>(null)
-  const [checked, setChecked] = useState(false)
-  const supabase = createClient()
-
-  useEffect(() => {
-    async function check() {
-      // Cache for 60 seconds to avoid repeated DB calls
-      try {
-        const cached = sessionStorage.getItem('activeRound')
-        const cacheTime = sessionStorage.getItem('activeRoundTime')
-        if (cached && cacheTime && Date.now() - parseInt(cacheTime) < 60000) {
-          setActiveRoundId(cached === 'null' ? null : cached)
-          setChecked(true)
-          return
-        }
-      } catch {}
-
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setChecked(true); return }
-
-      const { data: rps } = await supabase
-        .from('round_players')
-        .select('round_id')
-        .eq('profile_id', user.id)
-        .limit(20)
-
-      let foundId: string | null = null
-      if (rps?.length) {
-        const { data: rounds } = await supabase
-          .from('rounds')
-          .select('id')
-          .in('id', rps.map(r => r.round_id))
-          .eq('status', 'active')
-          .limit(1)
-        if (rounds?.length) foundId = rounds[0].id
-      }
-      if (foundId) setActiveRoundId(foundId)
-      try {
-        sessionStorage.setItem('activeRound', foundId ?? 'null')
-        sessionStorage.setItem('activeRoundTime', Date.now().toString())
-      } catch {}
-      setChecked(true)
-    }
-    check()
-  }, [pathname])
+  const activeRound = useQuery(api.rounds.activeIdForUser)
+  const checked = activeRound !== undefined
+  const activeRoundId = activeRound ?? null
 
   const active = pathname === '/' ? 'inicio' : pathname.startsWith('/tarjeta') ? 'tarjeta' : pathname.startsWith('/stats') ? 'stats' : pathname.startsWith('/liga') ? 'liga' : pathname.startsWith('/perfil') ? 'perfil' : ''
 

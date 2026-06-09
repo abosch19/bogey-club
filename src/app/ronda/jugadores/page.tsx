@@ -2,10 +2,11 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery } from 'convex/react'
+import { api } from '@convex/_generated/api'
 import { getInitials, avatarColor } from '@/lib/golf'
 
-type Player = { id: string; name: string; handicap_index: number; avatar_color: string; isGuest?: boolean }
+type Player = { _id: string; name: string; handicap_index: number; avatar_color: string; isGuest?: boolean }
 
 function SeleccionarJugadoresPage() {
   const router = useRouter()
@@ -16,49 +17,49 @@ function SeleccionarJugadoresPage() {
   const holeMode      = searchParams.get('hole_mode') ?? 'all'
   const prefillPlayers = searchParams.get('prefill_players')?.split(',').filter(Boolean) ?? []
 
-  const [allPlayers, setAllPlayers] = useState<Player[]>([])
+  const me = useQuery(api.profiles.me)
+  const profiles = useQuery(api.players.all)
+  const loading = me === undefined || profiles === undefined
+
+  const allPlayers: Player[] = (profiles ?? []).filter(p => p._id !== me?._id).map(p => ({
+    _id: p._id,
+    name: p.name,
+    handicap_index: p.handicap_index,
+    avatar_color: p.avatar_color,
+  }))
+
   const [selected, setSelected] = useState<Player[]>([])
-  const [me, setMe] = useState<Player | null>(null)
+  const [selectionInit, setSelectionInit] = useState(false)
   const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState(true)
 
   // Guest form
   const [showGuestForm, setShowGuestForm] = useState(false)
   const [guestName, setGuestName] = useState('')
   const [guestHcp, setGuestHcp] = useState('18')
-  const supabase = createClient()
 
+  const meParsed: Player | null = me
+    ? { _id: me._id, name: me.name, handicap_index: me.handicap_index, avatar_color: me.avatar_color }
+    : null
+
+  // Initialize selection once me + profiles are loaded
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-
-      const { data: profiles } = await supabase.from('profiles').select('*').order('name')
-      if (!profiles) return
-
-      const myProfile = profiles.find(p => p.id === user.id)
-      if (myProfile) {
-        const me: Player = { ...myProfile }
-        setMe(me)
-        // Prefill from last round if provided
-        if (prefillPlayers.length > 0) {
-          const prefilled = (profiles ?? []).filter(p => prefillPlayers.includes(p.id)).map(p => ({ ...p }))
-          setSelected(prefilled.length > 0 ? prefilled : [me])
-        } else {
-          setSelected([me])
-        }
-      }
-
-      setAllPlayers(profiles.filter(p => p.id !== user.id))
-      setLoading(false)
+    if (selectionInit || !me || !profiles) return
+    const mePlayer: Player = { _id: me._id, name: me.name, handicap_index: me.handicap_index, avatar_color: me.avatar_color }
+    if (prefillPlayers.length > 0) {
+      const prefilled = profiles
+        .filter(p => prefillPlayers.includes(p._id))
+        .map(p => ({ _id: p._id, name: p.name, handicap_index: p.handicap_index, avatar_color: p.avatar_color }))
+      setSelected(prefilled.length > 0 ? prefilled : [mePlayer])
+    } else {
+      setSelected([mePlayer])
     }
-    load()
-  }, [])
+    setSelectionInit(true)
+  }, [me, profiles, selectionInit, prefillPlayers])
 
   function togglePlayer(p: Player) {
     const totalWithMe = selected.length // me is always included
-    if (selected.find(s => s.id === p.id)) {
-      setSelected(selected.filter(s => s.id !== p.id))
+    if (selected.find(s => s._id === p._id)) {
+      setSelected(selected.filter(s => s._id !== p._id))
     } else {
       if (totalWithMe >= 4) return // max 4 players
       setSelected([...selected, p])
@@ -69,7 +70,7 @@ function SeleccionarJugadoresPage() {
     if (!guestName.trim()) return
     const hcp = parseFloat(guestHcp) || 18
     const guest: Player = {
-      id: `guest_${Date.now()}`,
+      _id: `guest_${Date.now()}`,
       name: guestName.trim(),
       handicap_index: hcp,
       avatar_color: avatarColor(selected.length),
@@ -83,7 +84,7 @@ function SeleccionarJugadoresPage() {
 
   function handleNext() {
     if (selected.length === 0) return
-    const playerIds = selected.filter(p => !p.isGuest).map(p => p.id).join(',')
+    const playerIds = selected.filter(p => !p.isGuest).map(p => p._id).join(',')
     const guestData = selected.filter(p => p.isGuest).map(p => `${p.name}:${p.handicap_index}`).join('|')
 
     // 5+ players → torneo automático
@@ -135,13 +136,13 @@ function SeleccionarJugadoresPage() {
         {selected.length > 0 && (
           <div className="flex items-center gap-2 mb-4 flex-wrap">
             {selected.map((p, i) => (
-              <div key={p.id} className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 border border-[#e5e0d4]">
+              <div key={p._id} className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 border border-[#e5e0d4]">
                 <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
                   style={{ backgroundColor: p.avatar_color ?? avatarColor(i) }}>
                   {getInitials(p.name)}
                 </div>
                 <span className="text-[12px] font-semibold text-[#0e1a16]">{p.name.split(' ')[0]}</span>
-                {p.id !== me?.id && (
+                {p._id !== meParsed?._id && (
                   <button onClick={() => togglePlayer(p)} className="text-[#6b7a72] hover:text-[#c6432d] ml-0.5">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                   </button>
@@ -188,10 +189,10 @@ function SeleccionarJugadoresPage() {
         {loading ? (
           <div className="flex justify-center pt-6"><div className="w-6 h-6 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
         ) : filtered.map((p, i) => {
-          const isSel = !!selected.find(s => s.id === p.id)
+          const isSel = !!selected.find(s => s._id === p._id)
           const isDisabled = false // sin límite
           return (
-            <button key={p.id} onClick={() => !isDisabled && togglePlayer(p)}
+            <button key={p._id} onClick={() => !isDisabled && togglePlayer(p)}
               className={`w-full flex items-center gap-3 rounded-[16px] p-4 border transition-all ${isDisabled ? 'opacity-40' : 'active:scale-[0.99]'}`}
               style={{ backgroundColor: isSel ? '#0e1a16' : '#ffffff', borderColor: isSel ? '#0e1a16' : '#e5e0d4' }}>
               <div className="w-11 h-11 rounded-full flex items-center justify-center text-white text-[15px] font-bold flex-shrink-0"

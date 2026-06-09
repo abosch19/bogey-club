@@ -1,60 +1,32 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '@convex/_generated/api'
+import type { Id } from '@convex/_generated/dataModel'
 import { TabBar } from '@/components/ui/tab-bar'
 
 export default function LigaPage() {
-  const [leagues, setLeagues] = useState<any[]>([])
-  const [standings, setStandings] = useState<Record<string, any[]>>({})
-  const [loading, setLoading] = useState(true)
+  const data = useQuery(api.leagues.listForUser)
+  const me = useQuery(api.profiles.me)
+  const removeLeague = useMutation(api.leagues.remove)
   const [deleting, setDeleting] = useState<string | null>(null)
-  const [myId, setMyId] = useState('')
-  const supabase = createClient()
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
-      setMyId(user.id)
+  const myId = me?._id ?? ''
+  const leagues = data ?? []
 
-      const { data: lps } = await supabase.from('league_players').select('league_id').eq('profile_id', user.id)
-      if (!lps?.length) { setLoading(false); return }
-
-      const ids = lps.map(l => l.league_id)
-      const { data: ls } = await supabase.from('leagues').select('*').in('id', ids).eq('active', true)
-      setLeagues(ls ?? [])
-
-      // Fetch standings for all leagues in parallel
-      const stMap: Record<string, any[]> = {}
-      await Promise.all((ls ?? []).map(async (l) => {
-        const { data: st } = await supabase
-          .from('league_standings')
-          .select('profile_id, total_points, rounds_played, wins, profiles(name, avatar_color)')
-          .eq('league_id', l.id)
-          .order('total_points', { ascending: false })
-        stMap[l.id] = (st ?? []).map((s: any) => ({ ...s, name: s.profiles?.name ?? 'Jugador', avatar_color: s.profiles?.avatar_color ?? '#6b7a72' }))
-      }))
-      setStandings(stMap)
-      setLoading(false)
-    }
-    load()
-  }, [])
-
-  async function handleDelete(leagueId: string) {
+  async function handleDelete(leagueId: Id<'leagues'>) {
     if (!confirm('¿Seguro que quieres borrar esta liga? Esta acción no se puede deshacer.')) return
     setDeleting(leagueId)
-    await fetch('/api/liga/borrar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ league_id: leagueId }),
-    })
-    setLeagues(prev => prev.filter(l => l.id !== leagueId))
-    setDeleting(null)
+    try {
+      await removeLeague({ league_id: leagueId })
+    } finally {
+      setDeleting(null)
+    }
   }
 
-  if (loading) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
+  if (data === undefined) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
@@ -133,10 +105,9 @@ export default function LigaPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {leagues.map(league => {
-              const st = standings[league.id] ?? []
+            {leagues.map(({ league, standings: st }) => {
               return (
-                <div key={league.id} className="bg-white rounded-[22px] border border-[#e5e0d4] overflow-hidden">
+                <div key={league._id} className="bg-white rounded-[22px] border border-[#e5e0d4] overflow-hidden">
                   {/* League header */}
                   <div className="p-4 relative overflow-hidden" style={{ backgroundColor: '#1a2a4a' }}>
                     <div className="absolute right-[-20px] top-[-20px] w-[100px] h-[100px] rounded-full" style={{ backgroundColor: '#2a6fdb', opacity: 0.6 }}/>
@@ -149,18 +120,18 @@ export default function LigaPage() {
                           <p className="text-white text-[20px] font-black tracking-tight mt-1">{league.name}</p>
                         </div>
                         <button
-                          onClick={() => handleDelete(league.id)}
-                          disabled={deleting === league.id}
+                          onClick={() => handleDelete(league._id)}
+                          disabled={deleting === league._id}
                           className="mt-1 flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#c6432d]/80 hover:bg-[#c6432d] transition disabled:opacity-50 text-white text-[11px] font-semibold"
                           title="Borrar liga">
-                          {deleting === league.id
+                          {deleting === league._id
                             ? <div className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin"/>
                             : <><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> Borrar</>
                           }
                         </button>
                       </div>
                       {/* Iniciar ronda de liga */}
-                      <Link href={`/ronda/campo?league=${league.id}`}
+                      <Link href={`/ronda/campo?league=${league._id}`}
                         className="flex items-center justify-between w-full px-4 py-2.5 rounded-full font-bold text-[13px] text-white transition active:scale-[0.98]"
                         style={{ backgroundColor: '#2a6fdb' }}>
                         <span>Iniciar ronda de liga</span>

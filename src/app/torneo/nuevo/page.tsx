@@ -2,11 +2,13 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '@convex/_generated/api'
+import { Id } from '@convex/_generated/dataModel'
 import { formatHandicap } from '@/lib/golf'
 
-type Course  = { id: string; name: string; par: number; holes_count: number }
-type Player  = { id: string; name: string; handicap_index: number; avatar_color: string; group: number }
+type Course  = { id: Id<'courses'>; name: string; par: number; holes_count: number }
+type Player  = { id: Id<'profiles'>; name: string; handicap_index: number; avatar_color: string; group: number }
 
 const MODES = [
   { id: 'stableford', name: 'Stableford', desc: 'Puntos por hoyo. Gana quien más acumule.' },
@@ -41,47 +43,46 @@ function NuevoTorneoPage() {
   const searchParams = useSearchParams()
   const [step, setStep]       = useState<'config'|'grupos'>('config')
   const [name, setName]       = useState('')
-  const [courses, setCourses] = useState<Course[]>([])
-  const [courseId, setCourseId] = useState('')
+  const [courseId, setCourseId] = useState<Id<'courses'> | ''>('')
   const [mode, setMode]       = useState('stableford')
-  const [allProfiles, setAllProfiles] = useState<Player[]>([])
   const [selected, setSelected] = useState<Player[]>([])
   const [groups, setGroups]   = useState<Player[]>([])
   const [groupSize, setGroupSize] = useState(3)
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving]   = useState(false)
   const [search, setSearch]   = useState('')
-  const supabase = createClient()
 
+  const me            = useQuery(api.profiles.me)
+  const coursesData   = useQuery(api.courses.list)
+  const profilesData  = useQuery(api.players.all)
+  const createTournament = useMutation(api.tournaments.create)
+
+  const courses: Course[] = (coursesData ?? []).map(c => ({ id: c._id, name: c.name, par: c.par, holes_count: c.holes_count }))
+  const allProfiles: Player[] = (profilesData ?? []).map(p => ({ id: p._id, name: p.name, handicap_index: p.handicap_index, avatar_color: p.avatar_color, group: 1 }))
+
+  const loading = me === undefined || coursesData === undefined || profilesData === undefined
+
+  // Auth gate + initial selection from URL params
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      const [coursesRes, profilesRes] = await Promise.all([
-        supabase.from('courses').select('id,name,par,holes_count').eq('active', true).order('name'),
-        supabase.from('profiles').select('id,name,handicap_index,avatar_color').order('handicap_index'),
-      ])
-      setCourses(coursesRes.data ?? [])
-      const allP = (profilesRes.data ?? []).map(p => ({ ...p, group: 1 }))
-      setAllProfiles(allP)
+    if (me === undefined || coursesData === undefined || profilesData === undefined) return
+    if (me === null) { router.push('/login'); return }
 
-      // Pre-select players from URL params
-      const preselectedIds = searchParams.get('players')?.split(',').filter(Boolean) ?? []
-      const preCoursId = searchParams.get('course')
-      if (preCoursId) setCourseId(preCoursId)
-      else if (coursesRes.data?.length) setCourseId(coursesRes.data[0].id)
+    const allP: Player[] = (profilesData ?? []).map(p => ({ id: p._id, name: p.name, handicap_index: p.handicap_index, avatar_color: p.avatar_color, group: 1 }))
 
-      if (preselectedIds.length > 0) {
-        const presels = allP.filter(p => preselectedIds.includes(p.id))
-        setSelected(presels.length > 0 ? presels : allP.filter(p => p.id === user.id))
-      } else {
-        const me = allP.find(p => p.id === user.id)
-        if (me) setSelected([me])
-      }
-      setLoading(false)
+    // Pre-select players from URL params
+    const preselectedIds = searchParams.get('players')?.split(',').filter(Boolean) ?? []
+    const preCoursId = searchParams.get('course')
+    if (preCoursId) setCourseId(preCoursId as Id<'courses'>)
+    else if (coursesData?.length) setCourseId(coursesData[0]._id)
+
+    if (preselectedIds.length > 0) {
+      const presels = allP.filter(p => preselectedIds.includes(p.id))
+      setSelected(presels.length > 0 ? presels : allP.filter(p => p.id === me._id))
+    } else {
+      const meP = allP.find(p => p.id === me._id)
+      if (meP) setSelected([meP])
     }
-    load()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me, coursesData, profilesData])
 
   function togglePlayer(p: Player) {
     if (selected.find(s => s.id === p.id)) setSelected(selected.filter(s => s.id !== p.id))
@@ -95,7 +96,7 @@ function NuevoTorneoPage() {
     setStep('grupos')
   }
 
-  function moveToGroup(playerId: string, newGroup: number) {
+  function moveToGroup(playerId: Id<'profiles'>, newGroup: number) {
     setGroups(prev => prev.map(p => p.id === playerId ? { ...p, group: newGroup } : p))
   }
 
@@ -103,15 +104,20 @@ function NuevoTorneoPage() {
   const groupColors = ['#2a6fdb','#1f8a5b','#c6432d','#d4a24a','#7a3fc4','#0f9c7a']
 
   async function handleCreate() {
+    if (!courseId) return
     setSaving(true)
-    const res = await fetch('/api/torneo/crear', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, course_id: courseId, mode, players: groups }),
-    })
-    const data = await res.json()
-    if (!res.ok) { alert(data.error); setSaving(false); return }
-    router.push(`/torneo/${data.tournament_id}`)
+    try {
+      const data = await createTournament({
+        name,
+        course_id: courseId as Id<'courses'>,
+        mode,
+        players: groups.map(p => ({ id: p.id as Id<'profiles'>, group: p.group, handicap_index: p.handicap_index })),
+      })
+      router.push(`/torneo/${data.tournament_id}`)
+    } catch (e: any) {
+      alert(e?.message ?? 'Error al crear el torneo')
+      setSaving(false)
+    }
   }
 
   if (loading) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
@@ -160,7 +166,7 @@ function NuevoTorneoPage() {
               {/* Course */}
               <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
                 <label className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2">Campo</label>
-                <select value={courseId} onChange={e => setCourseId(e.target.value)}
+                <select value={courseId} onChange={e => setCourseId(e.target.value as Id<'courses'>)}
                   className="w-full text-[14px] font-semibold text-[#0e1a16] bg-transparent outline-none">
                   {courses.map(c => <option key={c.id} value={c.id}>{c.name} — Par {c.par}</option>)}
                 </select>

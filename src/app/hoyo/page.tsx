@@ -2,7 +2,9 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '@convex/_generated/api'
+import { Id } from '@convex/_generated/dataModel'
 import { strokesReceived, stablefordPts } from '@/lib/golf'
 
 type Hole   = { hole_number: number; par: number; stroke_index: number; distance_m: number | null }
@@ -31,16 +33,19 @@ function HoyoPage() {
   const roundId  = searchParams.get('round') ?? ''
   const holeNum  = parseInt(searchParams.get('hole') ?? '1')
 
-  const [hole, setHole]         = useState<Hole | null>(null)
-  const [players, setPlayers]   = useState<Player[]>([])
+  const data = useQuery(api.rounds.get, roundId ? { roundId: roundId as Id<'rounds'> } : 'skip')
+  const holeHistory = useQuery(api.scores.myHoleHistory, { hole_number: holeNum })
+  const saveHoleMut = useMutation(api.scores.saveHole)
+
+  const holeAvg = holeHistory && holeHistory.length > 0
+    ? (holeHistory.reduce((a, s) => a + s, 0) / holeHistory.length).toFixed(1)
+    : null
+
   const [scores, setScores]     = useState<Record<string, PlayerScore>>({})
+  const [scoresInit, setScoresInit] = useState(false)
   const [saving, setSaving]     = useState(false)
-  const [totalHoles, setTotal]  = useState(18)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [roundModes, setRoundModes] = useState<string[]>([])
-  const [holeAvg, setHoleAvg]   = useState<string | null>(null)
   const [showTip, setShowTip]   = useState(holeNum === 1)
-  const supabase = createClient()
 
   useEffect(() => {
     if (holeNum === 1) {
@@ -49,57 +54,30 @@ function HoyoPage() {
     }
   }, [])
 
-  useEffect(() => {
-    if (!roundId) return
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+  const roundModes = data?.modes ?? []
+  const totalHoles = data?.course?.holes_count ?? 18
+  const holeRow = (data?.holes ?? []).find(h => h.hole_number === holeNum) ?? null
+  const hole: Hole | null = holeRow
+    ? { hole_number: holeRow.hole_number, par: holeRow.par, stroke_index: holeRow.stroke_index, distance_m: holeRow.distance_m ?? null }
+    : null
 
-      const [roundRes, playersRes, modesRes] = await Promise.all([
-        supabase.from('rounds').select('course_id, courses(holes_count)').eq('id', roundId).single(),
-        supabase.from('round_players').select('profile_id, is_guest, course_handicap, profiles(name, avatar_color)').eq('round_id', roundId),
-        supabase.from('round_modes').select('mode').eq('round_id', roundId),
-      ])
-      setRoundModes((modesRes.data ?? []).map((m: any) => m.mode))
+  const players: Player[] = (data?.players ?? []).map(rp => ({
+    id: rp.profileId ?? `guest_${rp._id}`,
+    name: rp.name ?? 'Invitado',
+    short: (rp.name ?? 'I')[0].toUpperCase(),
+    avatar_color: rp.avatar_color ?? '#6b7a72',
+    course_handicap: rp.course_handicap ?? 0,
+  }))
 
-      const course = Array.isArray(roundRes.data?.courses) ? roundRes.data!.courses[0] : roundRes.data?.courses as any
-      setTotal(course?.holes_count ?? 18)
-
-      const [holeRes, historicalRes] = await Promise.all([
-        supabase.from('holes').select('hole_number, par, stroke_index, distance_m').eq('course_id', roundRes.data?.course_id).eq('hole_number', holeNum).single(),
-        user ? supabase.from('scores').select('strokes, hole_number').eq('profile_id', user.id).eq('hole_number', holeNum).limit(10) : Promise.resolve({ data: null }),
-      ])
-      setHole(holeRes.data)
-
-      if (historicalRes.data && historicalRes.data.length > 0) {
-        const validScores = historicalRes.data.filter((s: any) => s.strokes != null)
-        if (validScores.length > 0) {
-          const avg = (validScores.reduce((a: number, s: any) => a + s.strokes, 0) / validScores.length).toFixed(1)
-          setHoleAvg(avg)
-        }
-      }
-
-      const ps: Player[] = (playersRes.data ?? []).map((rp: any) => ({
-        id: rp.profile_id ?? `guest_${rp.id}`,
-        name: (rp.profiles as any)?.name ?? 'Invitado',
-        short: ((rp.profiles as any)?.name ?? 'I')[0].toUpperCase(),
-        avatar_color: (rp.profiles as any)?.avatar_color ?? '#6b7a72',
-        course_handicap: rp.course_handicap ?? 0,
-      }))
-      setPlayers(ps)
-
-      // Load existing scores
-      const ids = ps.filter(p => !p.id.startsWith('guest_')).map(p => p.id)
-      if (ids.length > 0 && holeRes.data) {
-        const { data: existing } = await supabase.from('scores').select('*').eq('round_id', roundId).eq('hole_number', holeNum).in('profile_id', ids)
-        const init: Record<string, PlayerScore> = {}
-        for (const s of existing ?? []) {
-          init[s.profile_id] = { strokes: s.strokes ?? null, putts: s.putts ?? 2, fairway: s.fairway ?? null, gir: s.gir ?? false, in_bunker: s.in_bunker ?? false, penalties: s.penalties ?? 0 }
-        }
-        setScores(init)
-      }
+  // Load existing scores for this hole once data is available
+  if (data && !scoresInit) {
+    const init: Record<string, PlayerScore> = {}
+    for (const s of (data.scores ?? []).filter(s => s.hole_number === holeNum)) {
+      init[s.profileId] = { strokes: s.strokes ?? null, putts: s.putts ?? 2, fairway: s.fairway ?? null, gir: s.gir ?? false, in_bunker: s.in_bunker ?? false, penalties: s.penalties ?? 0 }
     }
-    load()
-  }, [roundId, holeNum])
+    setScores(init)
+    setScoresInit(true)
+  }
 
   function get(pid: string): PlayerScore {
     return scores[pid] ?? { strokes: null, putts: 2, fairway: null, gir: false, in_bunker: false, penalties: 0 }
@@ -118,12 +96,14 @@ function HoyoPage() {
 
   async function handleSave() {
     setSaving(true)
-    const res = await fetch('/api/hoyo/guardar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ round_id: roundId, hole_number: holeNum, scores }),
-    })
-    if (!res.ok) { setSaving(false); alert('Error guardando'); return }
+    try {
+      const scoresArray = Object.entries(scores)
+        .filter(([pid]) => !pid.startsWith('guest_'))
+        .map(([profileId, sc]) => ({ profileId: profileId as Id<'profiles'>, ...sc }))
+      await saveHoleMut({ roundId: roundId as Id<'rounds'>, hole_number: holeNum, scores: scoresArray })
+    } catch {
+      setSaving(false); alert('Error guardando'); return
+    }
     const isLast = holeNum >= totalHoles
     if (isLast) router.push(`/resumen?round=${roundId}`)
     else router.push(`/hoyo?round=${roundId}&hole=${holeNum + 1}`)

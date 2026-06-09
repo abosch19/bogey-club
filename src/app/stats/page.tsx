@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery } from 'convex/react'
+import { api } from '@convex/_generated/api'
 import { formatDate, formatHandicap } from '@/lib/golf'
 import { TabBar } from '@/components/ui/tab-bar'
 
@@ -24,111 +25,80 @@ type RoundStat = {
   scores: { hole_number: number; strokes: number; par: number }[]
 }
 type OtherPlayer = { id: string; name: string; avatar_color: string }
+type StatScore = {
+  round_id: string; profile_id: string; hole_number: number
+  strokes: number | null; putts: number | null; gir: boolean | null
+  fairway: boolean | null; penalties: number | null; in_bunker: boolean | null
+}
 
 export default function StatsPage() {
-  const [rounds, setRounds]       = useState<RoundStat[]>([])
-  const [hcpIndex, setHcp]        = useState<number | null>(null)
-  const [hcpHistory, setHcpHist]  = useState<number[]>([])
-  const [allPlayers, setAllPlayers] = useState<OtherPlayer[]>([])
-  const [courseStats, setCourseStats] = useState<{ name: string; best: number; avg: number; par: number; rounds: number; record: number | null; last3: number[] }[]>([])
-  const [myId, setMyId]           = useState('')
-  const [loading, setLoading]     = useState(true)
+  const data = useQuery(api.stats.forUser)
+  const me = useQuery(api.profiles.me)
   const [section, setSection]     = useState<'general'|'hoyos'|'social'|'campos'>('general')
   const [hoyosPeriod, setHoyosPeriod] = useState<'all'|'10'|'5'|'3'>('all')
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
-  const [courseHoleData, setCourseHoleData] = useState<{ hole_number: number; par: number; my_last: number | null; my_best: number | null }[]>([])
   const [comparePlayerId, setComparePlayerId] = useState<string | null>(null)
   const [socialPeriod, setSocialPeriod]       = useState<'all'|'10'|'5'|'3'>('all')
   const [camposTab, setCamposTab]             = useState<'golf'|'pp'>('golf')
-  const supabase = createClient()
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
-      setMyId(user.id)
+  if (data === undefined || me === undefined) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
-      // Parallel: profile, differentials, all profiles
-      const [profRes, diffsRes, allProfilesRes] = await Promise.all([
-        supabase.from('profiles').select('handicap_index').eq('id', user.id).single(),
-        supabase.from('whs_differentials').select('differential, played_at').eq('profile_id', user.id).order('played_at', { ascending: true }).limit(20),
-        supabase.from('profiles').select('id, name, avatar_color').neq('id', user.id),
-      ])
-      setHcp(profRes.data?.handicap_index ?? null)
-      setHcpHist((diffsRes.data ?? []).map(d => parseFloat(d.differential.toFixed(1))))
-      setAllPlayers(allProfilesRes.data ?? [])
+  const myId = me?._id ?? ''
 
-      // My round IDs
-      const { data: rps } = await supabase.from('round_players').select('round_id').eq('profile_id', user.id)
-      if (!rps?.length) { setLoading(false); return }
-      const roundIds = rps.map(r => r.round_id)
+  // Build derived data from the single stats query
+  const hcpIndex: number | null = data?.myHandicap ?? null
+  const hcpHistory: number[] = (data?.whsHistory ?? []).map(d => parseFloat(d.differential.toFixed(1)))
+  const allPlayers: OtherPlayer[] = data?.otherPlayers ?? []
 
-      // Parallel: rounds + all scores + all round_players + courses
-      const [roundsRes, scoresRes, allRPsRes] = await Promise.all([
-        supabase.from('rounds').select('id, date, course_id, status, courses(name, par)').in('id', roundIds).eq('status', 'completed').order('date', { ascending: false }).limit(30),
-        supabase.from('scores').select('round_id, profile_id, hole_number, strokes, putts, gir, fairway, penalties, in_bunker').in('round_id', roundIds),
-        supabase.from('round_players').select('round_id, profile_id').in('round_id', roundIds).neq('profile_id', user.id),
-      ])
+  const statScores = (data?.scores ?? []) as unknown as StatScore[]
 
-      if (!roundsRes.data?.length) { setLoading(false); return }
-
-      const courseIds = Array.from(new Set(roundsRes.data.map((r: any) => r.course_id)))
-      const [holesRes, coursesRes] = await Promise.all([
-        supabase.from('holes').select('course_id, hole_number, par, stroke_index').in('course_id', courseIds),
-        supabase.from('courses').select('id, par, record_score').in('id', courseIds),
-      ])
-
-      // Build round stats
-      const statsArr: RoundStat[] = roundsRes.data.map((r: any) => {
-        const course = Array.isArray(r.courses) ? r.courses[0] : r.courses
-        const myS  = (scoresRes.data ?? []).filter(s => s.round_id === r.id && s.profile_id === user.id)
-        const allS = (scoresRes.data ?? []).filter(s => s.round_id === r.id)
-        const courseHoles = (holesRes.data ?? []).filter(h => h.course_id === r.course_id)
-        const realPar = courseHoles.reduce((a, h) => a + h.par, 0) || course?.par || 72
-        const coPlayers = (allRPsRes.data ?? []).filter(rp => rp.round_id === r.id).map((rp: any) => rp.profile_id)
-        const myTotal  = myS.reduce((a, s) => a + (s.strokes ?? 0), 0)
-        const allTotals = Array.from(new Set(allS.map(s => s.profile_id))).map(pid => ({ pid, total: allS.filter(s => s.profile_id === pid).reduce((a, s) => a + (s.strokes ?? 0), 0) })).filter(p => p.total > 0)
-        const won = allTotals.length > 0 && myTotal === Math.min(...allTotals.map(p => p.total)) && myTotal > 0
-        const holeScores = myS.filter(s => s.strokes != null).map(s => {
-          const h = courseHoles.find(h => h.hole_number === s.hole_number)
-          return { hole_number: s.hole_number, strokes: s.strokes!, par: h?.par ?? 4 }
-        })
-        return {
-          id: r.id, date: r.date, course_id: r.course_id, course_name: course?.name ?? 'Campo',
-          total: myTotal, real_par: realPar,
-          putts: myS.reduce((a, s) => a + (s.putts ?? 0), 0),
-          gir: myS.filter(s => s.gir).length, gir_total: myS.length,
-          fairways: myS.filter(s => s.fairway === true).length, fairways_total: myS.filter(s => s.fairway !== null).length,
-          penalties: myS.reduce((a, s) => a + (s.penalties ?? 0), 0),
-          bunkers: myS.filter(s => s.in_bunker).length,
-          players: coPlayers, won, scores: holeScores,
-        }
-      }).filter(r => r.total > 0)
-      setRounds(statsArr)
-
-      // Course stats
-      const cMap: Record<string, { name: string; scores: number[]; par: number; record: number | null }> = {}
-      for (const r of statsArr) {
-        if (!cMap[r.course_id]) {
-          const cd = (coursesRes.data ?? []).find((c: any) => c.id === r.course_id)
-          cMap[r.course_id] = { name: r.course_name, scores: [], par: r.real_par, record: cd?.record_score ?? null }
-        }
-        if (r.total > 0) cMap[r.course_id].scores.push(r.total)
+  const rounds: RoundStat[] = (() => {
+    if (!data) return []
+    return data.rounds.map((r) => {
+      const course = r.course
+      const myS  = statScores.filter(s => s.round_id === r.id && s.profile_id === myId)
+      const allS = statScores.filter(s => s.round_id === r.id)
+      const courseHoles = data.holes.filter(h => h.course_id === r.course_id)
+      const realPar = courseHoles.reduce((a, h) => a + h.par, 0) || course?.par || 72
+      const coPlayers = data.roundPlayers.filter(rp => rp.round_id === r.id).map(rp => rp.profile_id)
+      const myTotal  = myS.reduce((a, s) => a + (s.strokes ?? 0), 0)
+      const allTotals = Array.from(new Set(allS.map(s => s.profile_id))).map(pid => ({ pid, total: allS.filter(s => s.profile_id === pid).reduce((a, s) => a + (s.strokes ?? 0), 0) })).filter(p => p.total > 0)
+      const won = allTotals.length > 0 && myTotal === Math.min(...allTotals.map(p => p.total)) && myTotal > 0
+      const holeScores = myS.filter(s => s.strokes != null).map(s => {
+        const h = courseHoles.find(h => h.hole_number === s.hole_number)
+        return { hole_number: s.hole_number, strokes: s.strokes!, par: h?.par ?? 4 }
+      })
+      return {
+        id: r.id, date: r.date, course_id: r.course_id, course_name: course?.name ?? 'Campo',
+        total: myTotal, real_par: realPar,
+        putts: myS.reduce((a, s) => a + (s.putts ?? 0), 0),
+        gir: myS.filter(s => s.gir).length, gir_total: myS.length,
+        fairways: myS.filter(s => s.fairway === true).length, fairways_total: myS.filter(s => s.fairway !== null).length,
+        penalties: myS.reduce((a, s) => a + (s.penalties ?? 0), 0),
+        bunkers: myS.filter(s => s.in_bunker).length,
+        players: coPlayers, won, scores: holeScores,
       }
-      setCourseStats(Object.values(cMap).map(c => ({
-        name: c.name, par: c.par, record: c.record,
-        best: c.scores.length ? Math.min(...c.scores) : 0,
-        avg:  c.scores.length ? Math.round(c.scores.reduce((a, b) => a + b, 0) / c.scores.length) : 0,
-        rounds: c.scores.length,
-        last3: c.scores.slice(0, 3),
-      })).sort((a, b) => b.rounds - a.rounds))
+    }).filter(r => r.total > 0)
+  })()
 
-      setLoading(false)
+  // Course stats
+  const courseStats: { name: string; best: number; avg: number; par: number; rounds: number; record: number | null; last3: number[] }[] = (() => {
+    const cMap: Record<string, { name: string; scores: number[]; par: number; record: number | null }> = {}
+    for (const r of rounds) {
+      if (!cMap[r.course_id]) {
+        const cd = (data?.courses ?? []).find(c => c.id === r.course_id)
+        cMap[r.course_id] = { name: r.course_name, scores: [], par: r.real_par, record: cd?.record_score ?? null }
+      }
+      if (r.total > 0) cMap[r.course_id].scores.push(r.total)
     }
-    load()
-  }, [])
-
-  if (loading) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
+    return Object.values(cMap).map(c => ({
+      name: c.name, par: c.par, record: c.record,
+      best: c.scores.length ? Math.min(...c.scores) : 0,
+      avg:  c.scores.length ? Math.round(c.scores.reduce((a, b) => a + b, 0) / c.scores.length) : 0,
+      rounds: c.scores.length,
+      last3: c.scores.slice(0, 3),
+    })).sort((a, b) => b.rounds - a.rounds)
+  })()
 
   const n = rounds.length
   const avgScore  = n ? Math.round(rounds.reduce((a, r) => a + r.total, 0) / n) : null

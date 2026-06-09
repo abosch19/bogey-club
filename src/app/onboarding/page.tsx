@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-// Note: no supabase client needed here — profile saved via /api/profile
+import { useMutation } from 'convex/react'
+import { api } from '@convex/_generated/api'
 
 function hcpLabel(v: number) {
   if (v <= 5)  return { level: 'Jugador avanzado', sub: 'Índice WHS bajo' }
@@ -15,6 +16,7 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError]   = useState('')
   const num = parseFloat(hcp) || 0
+  const setHandicap = useMutation(api.profiles.setHandicap)
 
   function adjust(delta: number) {
     const next = Math.min(54, Math.max(0, Math.round((num + delta) * 10) / 10))
@@ -30,14 +32,13 @@ export default function OnboardingPage() {
     setLoading(true)
     setError('')
 
-    const res = await fetch('/api/profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ handicap_index: value }),
-    })
-    const json = await res.json()
-    if (!res.ok) { setError(json.error || 'Error al guardar.'); setLoading(false); return }
-    window.location.href = '/'
+    try {
+      await setHandicap({ handicap_index: value })
+      window.location.href = '/'
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar.')
+      setLoading(false)
+    }
   }
 
   const { level, sub } = hcpLabel(num)

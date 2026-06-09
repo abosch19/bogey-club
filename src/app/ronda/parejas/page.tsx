@@ -2,10 +2,11 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery } from 'convex/react'
+import { api } from '@convex/_generated/api'
 import { formatHandicap } from '@/lib/golf'
 
-type Player = { id: string; name: string; handicap_index: number; avatar_color: string; team: 1 | 2 }
+type Player = { _id: string; name: string; handicap_index: number; avatar_color: string; team: 1 | 2 }
 
 const SPINNER = <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
@@ -23,36 +24,38 @@ function ParejasPage() {
   const holeMode   = searchParams.get('hole_mode') ?? 'all'
   const leagueId   = searchParams.get('league') ?? ''
 
+  const allProfiles = useQuery(api.players.all)
+  const loading = allProfiles === undefined
+
   const [players, setPlayers] = useState<Player[]>([])
-  const [loading, setLoading] = useState(true)
+  const [assigned, setAssigned] = useState(false)
   const [saving, setSaving]   = useState(false)
-  const supabase = createClient()
 
   useEffect(() => {
-    async function load() {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, name, handicap_index, avatar_color')
-        .in('id', playerIds)
-        .order('handicap_index')
+    if (assigned || !allProfiles) return
 
-      if (!profiles?.length) { setLoading(false); return }
+    const profiles = allProfiles
+      .filter(p => playerIds.includes(p._id))
+      .sort((a, b) => a.handicap_index - b.handicap_index)
 
-      // Default assignment: sorted by handicap, snake → best+worst in same team
-      // e.g. 4 players sorted [1,2,3,4] → team1: [1,4], team2: [2,3]
-      const assigned: Player[] = profiles.map((p, i) => ({
-        ...p,
-        // Snake: index 0,3 → team 1; index 1,2 → team 2 (for 4 players)
-        team: (i % 2 === 0 ? 1 : 2) as 1 | 2,
-      }))
-      setPlayers(assigned)
-      setLoading(false)
-    }
-    load()
-  }, [])
+    if (!profiles.length) { setAssigned(true); return }
+
+    // Default assignment: sorted by handicap, snake → best+worst in same team
+    // e.g. 4 players sorted [1,2,3,4] → team1: [1,4], team2: [2,3]
+    const players: Player[] = profiles.map((p, i) => ({
+      _id: p._id,
+      name: p.name,
+      handicap_index: p.handicap_index,
+      avatar_color: p.avatar_color,
+      // Snake: index 0,3 → team 1; index 1,2 → team 2 (for 4 players)
+      team: (i % 2 === 0 ? 1 : 2) as 1 | 2,
+    }))
+    setPlayers(players)
+    setAssigned(true)
+  }, [allProfiles, assigned, playerIds])
 
   function moveToTeam(playerId: string, team: 1 | 2) {
-    setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, team } : p))
+    setPlayers(prev => prev.map(p => p._id === playerId ? { ...p, team } : p))
   }
 
   function swapTeams() {
@@ -66,7 +69,7 @@ function ParejasPage() {
       practice: String(isPractice),
       players: playerIds.join(','),
       hole_mode: holeMode,
-      scramble_teams: players.map(p => `${p.id}:${p.team}`).join(','),
+      scramble_teams: players.map(p => `${p._id}:${p.team}`).join(','),
       ...(leagueId ? { league: leagueId } : {}),
     })
     router.push(`/ronda/modalidad?${params}&mode=scramble`)
@@ -113,7 +116,7 @@ function ParejasPage() {
                 </div>
                 <div className="space-y-2">
                   {members.map(p => (
-                    <div key={p.id} className="flex items-center gap-2 bg-white rounded-[10px] px-2.5 py-2">
+                    <div key={p._id} className="flex items-center gap-2 bg-white rounded-[10px] px-2.5 py-2">
                       <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold" style={{ backgroundColor: p.avatar_color }}>
                         {p.name[0]}
                       </div>
@@ -146,7 +149,7 @@ function ParejasPage() {
             </button>
           </div>
           {players.map((p, i) => (
-            <div key={p.id} className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
+            <div key={p._id} className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold" style={{ backgroundColor: p.avatar_color }}>
                 {p.name[0]}
               </div>
@@ -157,7 +160,7 @@ function ParejasPage() {
               {/* Team toggle */}
               <div className="flex gap-1.5">
                 {([1, 2] as const).map(t => (
-                  <button key={t} onClick={() => moveToTeam(p.id, t)}
+                  <button key={t} onClick={() => moveToTeam(p._id, t)}
                     className="w-9 h-9 rounded-full font-black text-[13px] transition active:scale-90"
                     style={{
                       backgroundColor: p.team === t ? TEAM_COLORS[t].bg : '#f4f1e9',

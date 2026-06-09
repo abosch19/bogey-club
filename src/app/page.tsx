@@ -2,20 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { useQuery } from 'convex/react'
+import { api } from '@convex/_generated/api'
 import { formatHandicap } from '@/lib/golf'
 import { TabBar } from '@/components/ui/tab-bar'
 
-type Profile = { id: string; name: string; handicap_index: number; avatar_color: string }
-type HoleScore = { hole_number: number; strokes: number; par: number }
-type ActiveRound = {
-  id: string; course_name: string; total_holes: number
-  score_delta: number; holes_played: number; hole_scores: HoleScore[]
-  next_hole: number; next_par: number
-}
 type LeagueStanding = { profile_id: string; name: string; avatar_color: string; total_points: number }
-type ActiveLeague = { id: string; name: string; round_played: number; total_rounds: number; my_position: number; my_points: number; top3: LeagueStanding[] }
-type FeedItem = { id: string; round_id: string; name: string; avatar_color: string; action: string; detail: string; time: string; badge?: string | null }
 type LastRound = { course_id: string; course_name: string; player_ids: string[]; guests: string[]; modes: string[]; hole_mode: string; league_id?: string }
 
 const GOLF_QUOTES = [
@@ -40,16 +32,10 @@ function holeBarColor(delta: number | null): string {
 }
 
 export default function HomePage() {
-  const [profile, setProfile]         = useState<Profile | null>(null)
   const dailyQuote = GOLF_QUOTES[new Date().getDate() % GOLF_QUOTES.length]
-  const [activeRound, setActiveRound] = useState<ActiveRound | null>(null)
-  const [activeLeague, setActiveLeague] = useState<ActiveLeague | null>(null)
-  const [feed, setFeed]               = useState<FeedItem[]>([])
-  const [loading, setLoading]         = useState(true)
+  const data = useQuery(api.home.dashboard)
   const [lastRound, setLastRound]     = useState<LastRound | null>(null)
   const [quickStarting, setQuickStarting] = useState(false)
-  const [completedRoundsCount, setCompletedRoundsCount] = useState(0)
-  const supabase = createClient()
 
   useEffect(() => {
     try {
@@ -59,178 +45,8 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
-
-      // Run independent queries in parallel
-      const [profRes, rpsRes, lpsRes, recentRoundsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('round_players').select('round_id').eq('profile_id', user.id).limit(20),
-        supabase.from('league_players').select('league_id, leagues(id, name, active, total_rounds)').eq('profile_id', user.id).limit(5),
-        supabase.from('rounds').select('id, date, courses(name), round_players(profile_id, profiles(name, avatar_color))').eq('status', 'completed').order('created_at', { ascending: false }).limit(6),
-      ])
-
-      const prof = profRes.data
-      if (!prof) { window.location.href = '/onboarding'; return }
-      setProfile(prof)
-
-      const rps = rpsRes.data
-      const lps = lpsRes.data
-      const recentRounds = recentRoundsRes.data
-
-      // Active round — depends on rps
-      if (rps?.length) {
-        const roundIds = rps.map((r: any) => r.round_id)
-        const { data: rounds } = await supabase
-          .from('rounds').select('id, course_id, courses(name, holes_count)')
-          .in('id', roundIds).eq('status', 'active').limit(1)
-
-        if (rounds?.length) {
-          const r = rounds[0]
-          const course = Array.isArray(r.courses) ? r.courses[0] : r.courses as any
-          const totalHoles = course?.holes_count ?? 18
-
-          const [holesRes, scoresRes] = await Promise.all([
-            supabase.from('holes').select('hole_number, par').eq('course_id', r.course_id).order('hole_number'),
-            supabase.from('scores').select('hole_number, strokes').eq('round_id', r.id).eq('profile_id', user.id),
-          ])
-
-          const holes = holesRes.data
-          const scores = scoresRes.data
-
-          const holeScores: HoleScore[] = (scores ?? [])
-            .filter((s: any) => s.strokes != null)
-            .map((s: any) => {
-              const hole = (holes ?? []).find((h: any) => h.hole_number === s.hole_number)
-              return { hole_number: s.hole_number, strokes: s.strokes, par: hole?.par ?? 4 }
-            })
-
-          const totalStrokes = holeScores.reduce((a, s) => a + s.strokes, 0)
-          const totalPar     = holeScores.reduce((a, s) => a + s.par, 0)
-          const playedHoles  = holeScores.map(s => s.hole_number)
-          const nextHole     = Array.from({ length: totalHoles }, (_, i) => i + 1).find(h => !playedHoles.includes(h)) ?? 1
-          const nextPar      = (holes ?? []).find((h: any) => h.hole_number === nextHole)?.par ?? 4
-
-          setActiveRound({
-            id: r.id, course_name: course?.name ?? 'Campo',
-            total_holes: totalHoles,
-            score_delta: totalStrokes - totalPar,
-            holes_played: holeScores.length,
-            hole_scores: holeScores,
-            next_hole: nextHole, next_par: nextPar,
-          })
-        }
-      }
-
-      // Active league — depends on lps
-      const activeLp = (lps ?? []).find((x: any) => {
-        const l = Array.isArray(x.leagues) ? x.leagues[0] : x.leagues
-        return l?.active
-      })
-      if (activeLp) {
-        const lg = Array.isArray(activeLp.leagues) ? (activeLp.leagues as any[])[0] : activeLp.leagues as any
-        if (lg) {
-          const [standingsRes, lrsRes] = await Promise.all([
-            supabase.from('league_standings').select('profile_id, total_points, profiles(name, avatar_color)').eq('league_id', lg.id).order('total_points', { ascending: false }).limit(5),
-            supabase.from('league_rounds').select('id').eq('league_id', lg.id),
-          ])
-
-          const standings = standingsRes.data
-          const lrs = lrsRes.data
-          const st = (standings ?? []).map((s: any) => ({ profile_id: s.profile_id, name: s.profiles?.name ?? 'J', avatar_color: s.profiles?.avatar_color ?? '#6b7a72', total_points: s.total_points }))
-          const myPos = st.findIndex(s => s.profile_id === user.id) + 1
-
-          setActiveLeague({
-            id: lg.id, name: lg.name,
-            round_played: lrs?.length ?? 0,
-            total_rounds: lg.total_rounds,
-            my_position: myPos || 1,
-            my_points: st.find(s => s.profile_id === user.id)?.total_points ?? 0,
-            top3: st.slice(0, 3),
-          })
-        }
-      }
-
-      // Feed — recent completed rounds, fetch scores for birdie/eagle detection
-      const roundIds = (recentRounds ?? []).map((r: any) => r.id)
-
-      // Fetch scores for all recent rounds in one query + completed rounds count for user
-      const [allRecentScoresRes, holesDataRes, userCompletedRes] = await Promise.all([
-        roundIds.length > 0
-          ? supabase.from('scores').select('round_id, profile_id, hole_number, strokes').in('round_id', roundIds)
-          : Promise.resolve({ data: [] }),
-        supabase.from('holes').select('hole_number, par, course_id'),
-        rps?.length
-          ? supabase.from('rounds').select('id').in('id', (rps ?? []).map((r: any) => r.round_id)).eq('status', 'completed')
-          : Promise.resolve({ data: [] }),
-      ])
-
-      const allRecentScores = (allRecentScoresRes as any).data ?? []
-      const allHoles = (holesDataRes as any).data ?? []
-      const userCompleted = (userCompletedRes as any).data ?? []
-      setCompletedRoundsCount(userCompleted.length)
-
-      const feedItems: FeedItem[] = []
-      for (const r of recentRounds ?? []) {
-        const course = Array.isArray((r as any).courses) ? (r as any).courses[0] : (r as any).courses as any
-        const rps2 = (r as any).round_players ?? []
-        for (const rp of rps2.slice(0, 1)) {
-          const name = rp.profiles?.name ?? 'Jugador'
-          const pid = rp.profile_id
-          const days = Math.floor((Date.now() - new Date(r.date).getTime()) / 86400000)
-          const timeStr = days === 0 ? 'hoy' : days === 1 ? 'ayer' : `hace ${days} días`
-
-          // Get this player's scores for this round from the pre-fetched data
-          const playerScores = allRecentScores.filter((s: any) => s.round_id === r.id && s.profile_id === pid)
-          const total = playerScores.reduce((a: number, s: any) => a + (s.strokes ?? 0), 0)
-
-          // Detect birdie/eagle using fetched hole pars
-          let birdieHole: number | null = null
-          let eagleHole: number | null = null
-          for (const s of playerScores) {
-            const holeInfo = allHoles.find((h: any) => h.hole_number === s.hole_number)
-            if (!holeInfo) continue
-            const delta = s.strokes - holeInfo.par
-            if (delta <= -2 && eagleHole === null) eagleHole = s.hole_number
-            else if (delta === -1 && birdieHole === null) birdieHole = s.hole_number
-          }
-
-          let action = 'completó una ronda'
-          let badge: string | null = null
-
-          if (eagleHole !== null) {
-            action = `hizo eagle en el hoyo ${eagleHole}`
-            badge = '🦅'
-          } else if (birdieHole !== null) {
-            action = `hizo birdie en el hoyo ${birdieHole}`
-            badge = '🐦'
-          } else if (total > 0) {
-            // Check PB using allRecentScores already fetched — only do extra query if needed
-            try {
-              const { data: allScores } = await supabase.from('scores').select('strokes, round_id').eq('profile_id', pid).not('strokes', 'is', null).limit(200)
-              const roundTotals: Record<string, number> = {}
-              for (const s of allScores ?? []) {
-                if (!roundTotals[s.round_id]) roundTotals[s.round_id] = 0
-                roundTotals[s.round_id] += s.strokes ?? 0
-              }
-              const pastBests = Object.entries(roundTotals).filter(([rid]) => rid !== r.id).map(([, v]) => v).filter(v => v > 0)
-              if (pastBests.length > 0 && total <= Math.min(...pastBests)) {
-                action = 'batió su récord personal!'
-                badge = 'PB'
-              }
-            } catch {}
-          }
-
-          feedItems.push({ id: r.id + pid, round_id: r.id, name, avatar_color: rp.profiles?.avatar_color ?? '#6b7a72', action, detail: `${course?.name ?? 'Campo'} · ${timeStr}`, time: timeStr, badge })
-        }
-      }
-      setFeed(feedItems.slice(0, 4))
-
-      setLoading(false)
-    }
-    load()
-  }, [])
+    if (data === null) window.location.href = '/onboarding'
+  }, [data])
 
   function quickStart(lr: LastRound) {
     // Navigate to jugadores with course prefilled so user can review/modify
@@ -244,9 +60,11 @@ export default function HomePage() {
     window.location.href = `/ronda/jugadores?${params}`
   }
 
-  if (loading || !profile) {
+  if (data === undefined || data === null) {
     return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
   }
+
+  const { profile, activeRound, activeLeague, feed, completedRoundsCount } = data
 
   const firstName = profile.name.split(' ')[0]
   const initials  = profile.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -420,7 +238,7 @@ export default function HomePage() {
                 </div>
                 {/* Top 3 + actions */}
                 <div className="flex items-center gap-2">
-                  {activeLeague.top3.map((p) => (
+                  {activeLeague.top3.map((p: LeagueStanding) => (
                     <div key={p.profile_id} className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}>
                       <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: p.avatar_color }}>{p.name[0]}</div>
                       <span className="font-mono text-[10px] font-bold text-white">{p.total_points}</span>

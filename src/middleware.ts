@@ -1,30 +1,21 @@
-import { NextResponse, type NextRequest } from 'next/server'
+import {
+  convexAuthNextjsMiddleware,
+  createRouteMatcher,
+  nextjsMiddlewareRedirect,
+} from '@convex-dev/auth/nextjs/server'
 
-const PUBLIC_PATHS = ['/login', '/registro', '/onboarding', '/api']
+const isPublicRoute = createRouteMatcher(['/login', '/registro', '/onboarding'])
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
+  const isAuthenticated = await convexAuth.isAuthenticated()
 
-  // Allow public routes
-  if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
-    return NextResponse.next()
+  if (!isPublicRoute(request) && !isAuthenticated) {
+    return nextjsMiddlewareRedirect(request, '/login')
   }
-
-  // Check for Supabase session cookie
-  const projectRef = 'qkscbeiaxflcidojlwvk'
-  const hasSession =
-    request.cookies.has(`sb-${projectRef}-auth-token`) ||
-    request.cookies.has(`sb-${projectRef}-auth-token.0`) ||
-    request.cookies.has('sb-access-token')
-
-  if (!hasSession) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  if (isPublicRoute(request) && isAuthenticated && request.nextUrl.pathname !== '/onboarding') {
+    return nextjsMiddlewareRedirect(request, '/')
   }
-
-  return NextResponse.next()
-}
+})
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],

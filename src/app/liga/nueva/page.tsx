@@ -2,9 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useMutation } from 'convex/react'
+import { api } from '@convex/_generated/api'
 
 export default function NuevaLigaPage() {
   const router = useRouter()
+  const createLeague = useMutation(api.leagues.create)
   const [name, setName]     = useState('')
   const [rounds, setRounds] = useState(8)
   const [mode, setMode]     = useState('stroke')
@@ -15,14 +18,13 @@ export default function NuevaLigaPage() {
     if (!name.trim()) { setError('Ponle un nombre a la liga.'); return }
     setLoading(true)
     setError('')
-    const res = await fetch('/api/liga/crear', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), total_rounds: rounds, mode }),
-    })
-    const json = await res.json()
-    if (!res.ok) { setError(json.error ?? 'Error'); setLoading(false); return }
-    router.push('/liga')
+    try {
+      await createLeague({ name: name.trim(), total_rounds: rounds, mode })
+      router.push('/liga')
+    } catch (e: any) {
+      setError(e?.message ?? 'Error')
+      setLoading(false)
+    }
   }
 
   const MODES = [
