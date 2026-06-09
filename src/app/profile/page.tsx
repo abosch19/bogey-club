@@ -82,7 +82,7 @@ export default function PerfilPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <svg width="22" height="22" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="30" fill="#9bc9a3"/><path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round"/><path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16"/></svg>
-                <span className="text-white text-[14px] font-bold">Bogey-Club</span>
+                <span className="text-white text-[14px] font-bold">Bogey Club</span>
               </div>
               <span className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Socio</span>
             </div>

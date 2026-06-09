@@ -10,13 +10,13 @@ const GOLF_QUOTES = [
   { text: "El golf es el único deporte donde puedes hacer trampa y luego confesar en el hoyo 18.", author: "Anónimo del vestuario" },
   { text: "No hay ningún hoyo que no se pueda hacer peor con un segundo golpe.", author: "Ley de Murphy golfista" },
   { text: "Golf: el arte de meter una bola en un agujero usando los instrumentos más inapropiados.", author: "Winston Churchill" },
-  { text: "El golf saca lo mejor de uno... y también lo peor.", author: "Bogey-Club" },
+  { text: "El golf saca lo mejor de uno... y también lo peor.", author: "Bogey Club" },
   { text: "Si cuentas todos tus golpes en golf, nunca podrás tener amigos.", author: "Sabiduría popular" },
   { text: "El golf es un buen paseo arruinado.", author: "Mark Twain" },
   { text: "Juego con mi conciencia. Siempre que cometo un error, mi conciencia me dice que anote 5.", author: "Bob Hope" },
-  { text: "En golf, la humillación llega por parejas. Y a veces por águilas.", author: "Bogey-Club" },
+  { text: "En golf, la humillación llega por parejas. Y a veces por águilas.", author: "Bogey Club" },
   { text: "El árbol que te cortó el camino llevaba ahí 200 años. Tú llevas 20 minutos.", author: "Sabiduría del campo" },
-  { text: "Mi handicap no refleja mi nivel. Refleja mis esperanzas.", author: "Bogey-Club" },
+  { text: "Mi handicap no refleja mi nivel. Refleja mis esperanzas.", author: "Bogey Club" },
 ]
 
 function holeBarColor(delta: number | null): string {
@@ -135,7 +135,7 @@ export default function HomePage() {
             <path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round"/>
             <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16"/>
           </svg>
-          <span className="text-[26px] font-black tracking-tight text-[#0e1a16]">Bogey-Club</span>
+          <span className="text-[26px] font-black tracking-tight text-[#0e1a16]">Bogey Club</span>
         </div>
         <Link to="/round/course"
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-[13px] text-white transition active:scale-[0.97]"

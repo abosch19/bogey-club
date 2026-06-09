@@ -12,7 +12,7 @@ function LogoPin() {
         <circle cx="24" cy="50" r="2.6" fill="#0e1a16"/>
       </svg>
       <div className="text-[22px] font-black tracking-tight text-[#0e1a16]">
-        Bogey<span className="text-[#1f8a5b]">-Club</span>
+        Bogey <span className="text-[#1f8a5b]">Club</span>
       </div>
     </div>
   )

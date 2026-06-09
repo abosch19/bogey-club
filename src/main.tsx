@@ -14,3 +14,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ConvexClientProvider>
   </React.StrictMode>,
 )
+
+// Register the PWA service worker (production only — avoids dev/HMR conflicts).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
