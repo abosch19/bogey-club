@@ -63,7 +63,8 @@ export default function PerfilPage() {
 
   if (profile === undefined || profile === null) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
-  const initials = profile.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+  const fullName = [profile.name, profile.last_name].filter(Boolean).join(' ')
+  const initials = fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
   const nCount   = countingRounds(diffs.length)
 
   return (
@@ -89,7 +90,7 @@ export default function PerfilPage() {
             <div className="flex items-center gap-4 mb-4">
               <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-[20px] font-bold" style={{ backgroundColor: profile.avatar_color ?? '#1f8a5b' }}>{initials}</div>
               <div>
-                <p className="text-white text-[20px] font-bold leading-tight">{profile.name}</p>
+                <p className="text-white text-[20px] font-bold leading-tight">{fullName}</p>
                 <p className="text-white/50 text-[12px] mt-0.5">{email}</p>
               </div>
             </div>

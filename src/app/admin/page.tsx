@@ -84,7 +84,7 @@ export default function AdminPage() {
                     {u.name[0].toUpperCase()}
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-[14px] text-[#0e1a16]">{u.name}</p>
+                    <p className="font-bold text-[14px] text-[#0e1a16]">{[u.name, u.last_name].filter(Boolean).join(' ')}</p>
                     <p className="text-[11px] text-[#6b7a72]">HCP {formatHandicap(u.handicap_index)}</p>
                   </div>
                 </div>

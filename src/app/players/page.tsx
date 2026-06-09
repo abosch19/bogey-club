@@ -10,8 +10,10 @@ export default function JugadoresPage() {
   const [search, setSearch]   = useState('')
 
   const myId = me?._id ?? ''
+  const fullName = (p: { name: string; last_name?: string }) =>
+    [p.name, p.last_name].filter(Boolean).join(' ')
   const filtered = (players ?? []).filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase())
+    fullName(p).toLowerCase().includes(search.toLowerCase())
   )
 
   if (players === undefined) return (
@@ -49,7 +51,7 @@ export default function JugadoresPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="font-bold text-[14px] text-[#0e1a16]">{p.name}</p>
+                  <p className="font-bold text-[14px] text-[#0e1a16]">{fullName(p)}</p>
                   {p.id === myId && <span className="font-mono text-[8px] text-[#1f8a5b] bg-[#d9eedd] px-1.5 py-0.5 rounded-full uppercase">Tú</span>}
                 </div>
                 <p className="text-[11px] text-[#6b7a72] mt-0.5">{p.rounds_played} ronda{p.rounds_played !== 1 ? 's' : ''}</p>

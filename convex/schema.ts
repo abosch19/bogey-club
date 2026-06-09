@@ -15,6 +15,7 @@ export default defineSchema({
     userId: v.optional(v.id('users')),
     email: v.optional(v.string()),
     name: v.string(),
+    last_name: v.optional(v.string()),
     handicap_index: v.number(),
     handicap_index_pp: v.optional(v.number()),
     avatar_color: v.string(),

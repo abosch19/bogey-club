@@ -19,13 +19,13 @@ function LogoPin() {
 }
 
 export default function RegistroPage() {
-  const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const [form, setForm] = useState({ name: '', last_name: '', email: '', password: '' })
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
   const { signIn } = useAuthActions()
   const navigate = useNavigate()
 
-  const { name, email, password } = form
+  const { name, last_name, email, password } = form
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -34,7 +34,7 @@ export default function RegistroPage() {
     setError('')
 
     try {
-      await signIn('password', { email, password, name, flow: 'signUp' })
+      await signIn('password', { email, password, name, last_name, flow: 'signUp' })
       navigate('/onboarding', { replace: true })
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
@@ -68,6 +68,18 @@ export default function RegistroPage() {
                 id="register-name"
                 type="text" value={name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 required placeholder="Tu nombre o apodo"
+                className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="register-last-name" className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
+                Apellidos
+              </label>
+              <input
+                id="register-last-name"
+                type="text" value={last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))}
+                placeholder="Tus apellidos (opcional)"
                 className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
             </div>

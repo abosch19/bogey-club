@@ -32,6 +32,7 @@ export const directory = query({
         return {
           id: p._id,
           name: p.name,
+          last_name: p.last_name,
           handicap_index: p.handicap_index,
           avatar_color: p.avatar_color,
           rounds_played,
