@@ -20,7 +20,7 @@ export const forUser = query({
     )
       .sort((a, b) => (a.played_at < b.played_at ? -1 : 1))
       .slice(0, 20)
-      .map((d) => ({ differential: d.differential, played_at: d.played_at }))
+      .map((d) => ({ differential: d.differential, played_at: d.played_at, is_pp: d.is_pp ?? false }))
 
     const otherPlayers = (await ctx.db.query('profiles').collect())
       .filter((p) => p._id !== me._id)

@@ -36,15 +36,19 @@ export default function StatsPage() {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
   const [comparePlayerId, setComparePlayerId] = useState<string | null>(null)
   const [socialPeriod, setSocialPeriod]       = useState<'all'|'10'|'5'|'3'>('all')
-  const [camposTab, setCamposTab]             = useState<'golf'|'pp'>('golf')
+  const [courseType, setCourseType]           = useState<'golf'|'pp'>('golf')
 
   if (data === undefined || me === undefined) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
   const myId = me?._id ?? ''
 
   // Build derived data from the single stats query
-  const hcpIndex: number | null = data?.myHandicap ?? null
-  const hcpHistory: number[] = (data?.whsHistory ?? []).map(d => parseFloat(d.differential.toFixed(1)))
+  const hcpIndex: number | null = courseType === 'pp'
+    ? (me?.handicap_index_pp ?? null)
+    : (me?.handicap_index ?? data?.myHandicap ?? null)
+  const hcpHistory: number[] = (data?.whsHistory ?? [])
+    .filter(d => (courseType === 'pp') === !!d.is_pp)
+    .map(d => parseFloat(d.differential.toFixed(1)))
   const allPlayers: OtherPlayer[] = data?.otherPlayers ?? []
 
   const statScores = (data?.scores ?? []) as unknown as StatScore[]
@@ -75,7 +79,10 @@ export default function StatsPage() {
         bunkers: myS.filter(s => s.in_bunker).length,
         players: coPlayers, won, scores: holeScores,
       }
-    }).filter(r => r.total > 0)
+    })
+      .filter(r => r.total > 0)
+      // Filter by course type (golf vs Pitch & Putt) — drives every stat below.
+      .filter(r => (courseType === 'pp') === r.course_name.startsWith('P&P'))
   })()
 
   // Course stats
@@ -238,12 +245,22 @@ export default function StatsPage() {
       <div className="sticky top-0 bg-[#f4f1e9] z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
         <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16] mb-2">Stats</h1>
-        <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4]">
+        <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] mb-2">
           {SECTIONS.map(s => (
             <button key={s.key} onClick={() => setSection(s.key)}
               className="flex-1 py-1.5 rounded-full text-[11px] font-bold transition"
               style={{ backgroundColor: section === s.key ? '#0e1a16' : 'transparent', color: section === s.key ? '#fff' : '#6b7a72' }}>
               {s.label}
+            </button>
+          ))}
+        </div>
+        {/* Golf / P&P filter — applies to every stat */}
+        <div className="flex gap-1.5">
+          {([['golf','Golf'],['pp','Pitch & Putt']] as const).map(([key, label]) => (
+            <button key={key} onClick={() => { setCourseType(key); setSelectedCourse(null) }}
+              className="flex-1 py-1.5 rounded-full text-[11px] font-bold border transition"
+              style={{ backgroundColor: courseType === key ? '#1f8a5b' : '#fff', color: courseType === key ? '#fff' : '#6b7a72', borderColor: courseType === key ? '#1f8a5b' : '#e5e0d4' }}>
+              {label}
             </button>
           ))}
         </div>
@@ -712,18 +729,6 @@ export default function StatsPage() {
         {/* ── CAMPOS ── */}
         {section === 'campos' && (
           <div className="space-y-2">
-            {/* Golf / P&P filter */}
-            {!selectedCourse && (
-              <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4]">
-                {([['golf','Golf'],['pp','Pitch & Putt']] as const).map(([key, label]) => (
-                  <button key={key} onClick={() => { setCamposTab(key); setSelectedCourse(null) }}
-                    className="flex-1 py-1.5 rounded-full text-[12px] font-bold transition"
-                    style={{ backgroundColor: camposTab === key ? '#0e1a16' : 'transparent', color: camposTab === key ? '#fff' : '#6b7a72' }}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
             {selectedCourse && (() => {
               const c = courseStats.find(x => x.name === selectedCourse)
               if (!c) return null
@@ -839,7 +844,6 @@ export default function StatsPage() {
             })()}
 
             {!selectedCourse && courseStats.length > 0 ? courseStats
-              .filter(c => camposTab === 'pp' ? c.name.startsWith('P&P') : !c.name.startsWith('P&P'))
               .map(c => {
               const deltaBest = c.best ? c.best - c.par : null
               const vsRecord  = c.record && c.best ? c.best - c.record : null
