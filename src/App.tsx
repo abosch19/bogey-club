@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useConvexAuth } from 'convex/react'
+import { TabBar } from '@/components/ui/tab-bar'
 
 import HomePage from '@/app/page'
 import LoginPage from '@/app/login/page'
@@ -25,6 +26,8 @@ import RondaModalidadPage from '@/app/ronda/modalidad/page'
 import RondaParejasPage from '@/app/ronda/parejas/page'
 
 const PUBLIC_ROUTES = ['/login', '/registro', '/onboarding']
+/** Routes that show the persistent bottom tab bar. */
+const TAB_ROUTES = ['/', '/liga', '/stats', '/perfil']
 
 function Spinner() {
   return (
@@ -48,6 +51,13 @@ function AuthGuard({ children }: { children: ReactNode }) {
   }
 
   return <>{children}</>
+}
+
+/** Renders the bottom bar only on tab routes; stays mounted so it never flickers. */
+function PersistentTabBar() {
+  const { pathname } = useLocation()
+  if (!TAB_ROUTES.includes(pathname)) return null
+  return <TabBar />
 }
 
 export function App() {
@@ -78,6 +88,7 @@ export function App() {
           <Route path="/ronda/parejas" element={<RondaParejasPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <PersistentTabBar />
       </AuthGuard>
     </div>
   )

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
-import { TabBar } from '@/components/ui/tab-bar'
 
 export default function LigaPage() {
   const data = useQuery(api.leagues.listForUser)
@@ -161,7 +160,6 @@ export default function LigaPage() {
           </div>
         )}
       </div>
-      <TabBar />
     </div>
   )
 }

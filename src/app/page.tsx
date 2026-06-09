@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { formatHandicap } from '@/lib/golf'
-import { TabBar } from '@/components/ui/tab-bar'
 
 type LeagueStanding = { profile_id: string; name: string; avatar_color: string; total_points: number }
 type LastRound = { course_id: string; course_name: string; player_ids: string[]; guests: string[]; modes: string[]; hole_mode: string; league_id?: string }
@@ -305,7 +304,6 @@ export default function HomePage() {
           )}
         </div>
       </div>
-      <TabBar />
     </div>
   )
 }

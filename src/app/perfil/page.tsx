@@ -4,7 +4,6 @@ import { useQuery, useMutation } from 'convex/react'
 import { useAuthActions } from '@convex-dev/auth/react'
 import { api } from '@convex/_generated/api'
 import { formatHandicap, formatDate, countingRounds } from '@/lib/golf'
-import { TabBar } from '@/components/ui/tab-bar'
 
 function Sparkline({ diffs }: { diffs: { diff: number }[] }) {
   if (diffs.length < 2) return null
@@ -237,7 +236,6 @@ export default function PerfilPage() {
           Cerrar sesión
         </button>
       </div>
-      <TabBar />
     </div>
   )
 }

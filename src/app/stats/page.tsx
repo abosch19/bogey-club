@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { formatDate, formatHandicap } from '@/lib/golf'
-import { TabBar } from '@/components/ui/tab-bar'
 
 function Sparkline({ values, color = '#1f8a5b' }: { values: number[]; color?: string }) {
   if (values.length < 2) return null
@@ -911,7 +910,6 @@ export default function StatsPage() {
           </div>
         )}
       </div>
-      <TabBar />
     </div>
   )
 }
