@@ -10,6 +10,16 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@convex': path.resolve(__dirname, './convex'),
     },
+    // Ensure a single React instance (Legend State otherwise loads its own).
+    dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: {
+    include: [
+      '@legendapp/state',
+      '@legendapp/state/react',
+      '@legendapp/state/sync',
+      '@legendapp/state/persist-plugins/local-storage',
+    ],
   },
   server: {
     port: 3000,

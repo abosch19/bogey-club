@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from 'convex/react'
+import { useValue } from '@legendapp/state/react'
 import { api } from '@convex/_generated/api'
 import { formatHandicap, scoreChipClass } from '@/lib/golf'
+import { lastRound$, type LastRound } from '@/lib/store'
 
 type LeagueStanding = { profile_id: string; name: string; avatar_color: string; total_points: number }
-type LastRound = { course_id: string; course_name: string; player_ids: string[]; guests: string[]; modes: string[]; hole_mode: string; league_id?: string }
 
 const GOLF_QUOTES = [
   { text: "El golf es el único deporte donde puedes hacer trampa y luego confesar en el hoyo 18.", author: "Anónimo del vestuario" },
@@ -111,15 +112,8 @@ export default function HomePage() {
   const dailyQuote = GOLF_QUOTES[new Date().getDate() % GOLF_QUOTES.length]
   const data = useQuery(api.home.dashboard)
   const recentRounds = useQuery(api.home.recentRounds) ?? []
-  const [lastRound, setLastRound]     = useState<LastRound | null>(null)
+  const lastRound = useValue(lastRound$)
   const [quickStarting, setQuickStarting] = useState(false)
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('lastRound')
-      if (stored) setLastRound(JSON.parse(stored))
-    } catch {}
-  }, [])
 
   useEffect(() => {
     if (data === null) window.location.href = '/onboarding'

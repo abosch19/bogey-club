@@ -4,6 +4,7 @@ import { useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { GAME_MODES, type GameMode } from '@/lib/types'
+import { lastRound$ } from '@/lib/store'
 
 function SeleccionarModalidadPage() {
   const navigate = useNavigate()
@@ -75,20 +76,18 @@ function SeleccionarModalidadPage() {
         ...(leagueId ? { league_id: leagueId as Id<'leagues'> } : {}),
         ...(scrambleTeams ? { scramble_teams: scrambleTeams } : {}),
       })
-      // Save last round config for quick-start
-      try {
-        const courseName = searchParams.get('course_name') ?? courseId
-        localStorage.setItem('lastRound', JSON.stringify({
-          course_id: courseId,
-          course_name: courseName,
-          player_ids: playerIds,
-          guests,
-          modes,
-          hole_mode: holeMode,
-          ...(leagueId ? { league_id: leagueId } : {}),
-          ...(scrambleTeams ? { scramble_teams: scrambleTeams } : {}),
-        }))
-      } catch {}
+      // Save last round config for quick-start (persisted via Legend State)
+      const courseName = searchParams.get('course_name') ?? courseId
+      lastRound$.set({
+        course_id: courseId,
+        course_name: courseName,
+        player_ids: playerIds,
+        guests,
+        modes,
+        hole_mode: holeMode,
+        ...(leagueId ? { league_id: leagueId } : {}),
+        ...(scrambleTeams ? { scramble_teams: scrambleTeams } : {}),
+      })
       navigate(`/scorecard?round=${data.round_id}`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al crear la ronda'
