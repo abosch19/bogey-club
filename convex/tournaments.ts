@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
-import { requireProfile, resolvePlayer } from './helpers'
+import { requireProfile, resolvePlayer, indexForCourse } from './helpers'
 import { courseHandicap } from '../src/lib/golf'
 
 const today = () => new Date().toISOString().split('T')[0]
@@ -87,14 +87,16 @@ export const create = mutation({
         notes: 'all',
       })
       for (const p of groupPlayers) {
+        const prof = await ctx.db.get(p.id)
+        const idx = prof ? indexForCourse(prof, course?.name ?? '') : p.handicap_index ?? 0
         await ctx.db.insert('round_players', {
           roundId,
           profileId: p.id,
           guestId: null,
           is_guest: false,
           course_handicap: course
-            ? courseHandicap(p.handicap_index ?? 0, course.slope, course.course_rating, course.par)
-            : Math.round(p.handicap_index ?? 0),
+            ? courseHandicap(idx, course.slope, course.course_rating, course.par)
+            : Math.round(idx),
         })
       }
       await ctx.db.insert('round_modes', { roundId, mode, is_primary: true })

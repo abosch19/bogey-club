@@ -82,8 +82,12 @@ export default function PerfilPage() {
             </div>
             <div className="flex items-end justify-between border-t border-white/10 pt-3">
               <div>
-                <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Índice WHS</p>
+                <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Índice golf</p>
                 <p className="text-white text-[42px] font-black leading-none">{formatHandicap(profile.handicap_index)}</p>
+              </div>
+              <div className="text-center">
+                <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">P&P</p>
+                <p className="text-white text-[28px] font-black leading-none">{formatHandicap(profile.handicap_index_pp ?? null)}</p>
               </div>
               <div className="text-right">
                 <p className="font-mono text-[9px] text-white/50 uppercase">Rondas</p>
@@ -170,21 +174,31 @@ export default function PerfilPage() {
           )}
         </div>
 
-        {/* Recalcular + Reiniciar hándicap */}
+        {/* Recalcular WHS + editar hándicaps (golf / P&P) */}
+        <button onClick={recalculate} disabled={recalculating}
+          className="w-full py-3 rounded-[14px] text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60 mb-2">
+          {recalculating ? 'Calculando...' : 'Recalcular WHS'}
+        </button>
         <div className="grid grid-cols-2 gap-2 mb-3">
-          <button onClick={recalculate} disabled={recalculating}
-            className="py-3 rounded-[14px] text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60">
-            {recalculating ? 'Calculando...' : 'Recalcular WHS'}
-          </button>
           <button onClick={() => {
-            const val = prompt(`Introduce tu hándicap actual (0–54):\nActual: ${profile.handicap_index?.toFixed(1)}`)
+            const val = prompt(`Hándicap de golf (0–54):\nActual: ${profile.handicap_index?.toFixed(1) ?? '–'}`)
             if (val === null) return
             const num = parseFloat(val)
             if (isNaN(num) || num < 0 || num > 54) { alert('Valor inválido. Debe ser entre 0 y 54.'); return }
             setHandicap({ handicap_index: num })
           }}
             className="py-3 rounded-[14px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80">
-            Reiniciar hándicap
+            Editar golf
+          </button>
+          <button onClick={() => {
+            const val = prompt(`Hándicap de Pitch & Putt (0–54):\nActual: ${profile.handicap_index_pp?.toFixed(1) ?? '–'}`)
+            if (val === null) return
+            const num = parseFloat(val)
+            if (isNaN(num) || num < 0 || num > 54) { alert('Valor inválido. Debe ser entre 0 y 54.'); return }
+            setHandicap({ handicap_index_pp: num })
+          }}
+            className="py-3 rounded-[14px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80">
+            Editar P&P
           </button>
         </div>
 

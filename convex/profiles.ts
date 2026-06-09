@@ -38,17 +38,24 @@ export const myDifferentials = query({
   },
 })
 
-/** Set a handicap index — for self, or for another player if the caller is admin. */
+/** Set a handicap index (golf and/or P&P) — for self, or another player if admin. */
 export const setHandicap = mutation({
-  args: { handicap_index: v.number(), profileId: v.optional(v.id('profiles')) },
-  handler: async (ctx, { handicap_index, profileId }) => {
+  args: {
+    handicap_index: v.optional(v.number()),
+    handicap_index_pp: v.optional(v.number()),
+    profileId: v.optional(v.id('profiles')),
+  },
+  handler: async (ctx, { handicap_index, handicap_index_pp, profileId }) => {
     const me = await requireProfile(ctx)
     let target = me._id
     if (profileId && profileId !== me._id) {
       if (!(await isAdmin(ctx))) throw new Error('Sin permisos')
       target = profileId
     }
-    await ctx.db.patch(target, { handicap_index })
+    const patch: { handicap_index?: number; handicap_index_pp?: number } = {}
+    if (handicap_index !== undefined) patch.handicap_index = handicap_index
+    if (handicap_index_pp !== undefined) patch.handicap_index_pp = handicap_index_pp
+    if (Object.keys(patch).length > 0) await ctx.db.patch(target, patch)
     return { ok: true }
   },
 })

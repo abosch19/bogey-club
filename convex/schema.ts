@@ -16,6 +16,7 @@ export default defineSchema({
     email: v.optional(v.string()),
     name: v.string(),
     handicap_index: v.number(),
+    handicap_index_pp: v.optional(v.number()),
     avatar_color: v.string(),
     supabaseId: v.optional(v.string()),
   })
@@ -152,6 +153,7 @@ export default defineSchema({
     slope: v.number(),
     differential: v.number(),
     is_counting: v.boolean(),
+    is_pp: v.optional(v.boolean()),
     played_at: v.string(),
   })
     .index('by_profile', ['profileId'])

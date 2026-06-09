@@ -35,6 +35,11 @@ export function courseHandicap(index: number, slope: number, cr: number, par: nu
   return Math.round(index * (slope / 113) + (cr - par))
 }
 
+/** Pitch & Putt courses are flagged by a "P&P" name prefix. */
+export function isPitchAndPutt(courseName: string): boolean {
+  return courseName.startsWith('P&P')
+}
+
 // ─── Stableford ──────────────────────────────────────────────
 export function stablefordPts(gross: number, par: number, strokesRcv: number): number {
   const net = gross - strokesRcv

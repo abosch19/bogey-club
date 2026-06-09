@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { mutation } from './_generated/server'
-import { requireProfile } from './helpers'
+import { requireProfile, indexForCourse } from './helpers'
 import { courseHandicap } from '../src/lib/golf'
 
 /**
@@ -23,7 +23,7 @@ export const add = mutation({
       const round = await ctx.db.get(roundId)
       const course = round ? await ctx.db.get(round.courseId) : null
       if (profile && course) {
-        hcp = courseHandicap(profile.handicap_index, course.slope, course.course_rating, course.par)
+        hcp = courseHandicap(indexForCourse(profile, course.name), course.slope, course.course_rating, course.par)
       } else if (profile) {
         hcp = Math.round(profile.handicap_index)
       }

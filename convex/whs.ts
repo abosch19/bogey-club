@@ -2,7 +2,7 @@ import { mutation } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { requireProfile } from './helpers'
-import { scoreDifferential, countingRounds, calcHandicapIndex } from '../src/lib/golf'
+import { scoreDifferential, countingRounds, calcHandicapIndex, isPitchAndPutt } from '../src/lib/golf'
 
 /**
  * Rebuild every WHS differential for a profile from its completed, non-practice
@@ -48,33 +48,40 @@ export async function recalcProfile(ctx: MutationCtx, profileId: Id<'profiles'>)
       differential: diff,
       played_at: round.date,
       is_counting: false,
+      is_pp: isPitchAndPutt(course.name),
     }
     if (existing) await ctx.db.patch(existing._id, data)
     else await ctx.db.insert('whs_differentials', data)
     processed++
   }
 
-  // Recompute which differentials count (best N of last 20) + handicap index.
-  const allDiffs = (
-    await ctx.db
-      .query('whs_differentials')
-      .withIndex('by_profile', (q) => q.eq('profileId', profileId))
-      .collect()
-  )
-    .sort((a, b) => (a.played_at < b.played_at ? 1 : -1))
-    .slice(0, 20)
+  // Recompute counting differentials + handicap index, separately per type
+  // (golf vs Pitch & Putt → independent indices).
+  const everyDiff = await ctx.db
+    .query('whs_differentials')
+    .withIndex('by_profile', (q) => q.eq('profileId', profileId))
+    .collect()
 
-  if (allDiffs.length > 0) {
-    const nCount = countingRounds(allDiffs.length)
-    const sorted = [...allDiffs].sort((a, b) => a.differential - b.differential)
+  // Process one pool (best N of its last 20) and patch the given index field.
+  const processPool = async (
+    pool: typeof everyDiff,
+    field: 'handicap_index' | 'handicap_index_pp',
+  ) => {
+    const last20 = [...pool].sort((a, b) => (a.played_at < b.played_at ? 1 : -1)).slice(0, 20)
+    if (last20.length === 0) return
+    const nCount = countingRounds(last20.length)
+    const sorted = [...last20].sort((a, b) => a.differential - b.differential)
     const countingIds = new Set(sorted.slice(0, nCount).map((d) => d._id))
-    for (const d of allDiffs) {
+    for (const d of last20) {
       const counting = countingIds.has(d._id)
       if (d.is_counting !== counting) await ctx.db.patch(d._id, { is_counting: counting })
     }
-    const newIndex = calcHandicapIndex(allDiffs.map((d) => d.differential))
-    if (newIndex !== null) await ctx.db.patch(profileId, { handicap_index: newIndex })
+    const newIndex = calcHandicapIndex(last20.map((d) => d.differential))
+    if (newIndex !== null) await ctx.db.patch(profileId, { [field]: newIndex })
   }
+
+  await processPool(everyDiff.filter((d) => !d.is_pp), 'handicap_index')
+  await processPool(everyDiff.filter((d) => d.is_pp), 'handicap_index_pp')
 
   return processed
 }

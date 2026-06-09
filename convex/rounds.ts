@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
-import { getMyProfile, requireProfile, resolvePlayer } from './helpers'
+import { getMyProfile, requireProfile, resolvePlayer, indexForCourse } from './helpers'
 import { recalcProfile } from './whs'
 import { courseHandicap } from '../src/lib/golf'
 
@@ -107,7 +107,9 @@ export const create = mutation({
           if (id && team) teamMap[id] = parseInt(team)
         })
       } else {
-        const sorted = [...profiles].sort((a, b) => a.handicap_index - b.handicap_index)
+        const idxOf = (p: (typeof profiles)[number]) =>
+          course ? indexForCourse(p, course.name) : p.handicap_index
+        const sorted = [...profiles].sort((a, b) => idxOf(a) - idxOf(b))
         if (sorted.length === 2) sorted.forEach((p) => (teamMap[p._id] = 1))
         else sorted.forEach((p, i) => (teamMap[p._id] = i % 2 === 0 ? 1 : 2))
       }
@@ -123,7 +125,7 @@ export const create = mutation({
           isScramble && teamMap[p._id]
             ? teamMap[p._id]
             : course
-              ? courseHandicap(p.handicap_index, course.slope, course.course_rating, course.par)
+              ? courseHandicap(indexForCourse(p, course.name), course.slope, course.course_rating, course.par)
               : Math.round(p.handicap_index),
       })
     }
