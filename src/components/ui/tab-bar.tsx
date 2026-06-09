@@ -17,7 +17,7 @@ export function TabBar() {
   ]
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-[#e5e0d4] z-50">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-[#e5e0d4] z-50 pb-2">
       <div className="flex items-stretch">
         {tabs.map(({ key, href, label, icon }) => {
           const isActive = key === active
