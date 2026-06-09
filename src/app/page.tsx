@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { formatHandicap } from '@/lib/golf'
+import { formatHandicap, scoreChipClass } from '@/lib/golf'
 
 type LeagueStanding = { profile_id: string; name: string; avatar_color: string; total_points: number }
 type LastRound = { course_id: string; course_name: string; player_ids: string[]; guests: string[]; modes: string[]; hole_mode: string; league_id?: string }
@@ -28,9 +28,89 @@ function holeBarColor(delta: number | null): string {
   return '#c6432d'
 }
 
+function fmtDelta(delta: number | null): string {
+  if (delta === null) return '–'
+  if (delta === 0) return 'E'
+  return delta > 0 ? `+${delta}` : `${delta}`
+}
+
+function fmtRoundDate(date: string): string {
+  const d = new Date(`${date}T00:00:00`)
+  if (isNaN(d.getTime())) return date
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+}
+
+type RoundHole   = { hole_number: number; par: number }
+type RoundPlayer = {
+  name: string; avatar_color: string; is_guest: boolean
+  total: number | null; delta: number | null; holes_played: number
+  hole_scores: { hole_number: number; strokes: number }[]
+}
+
+/** One nine (OUT / IN) of a round's mini scorecard. */
+function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: RoundPlayer[]; label: string }) {
+  if (holes.length === 0) return null
+  const blockPar = holes.reduce((a, h) => a + h.par, 0)
+  return (
+    <table className="w-full text-center" style={{ minWidth: `${holes.length * 24 + 92}px` }}>
+      <thead>
+        <tr className="border-y border-[#efebe1] bg-[#faf8f2]">
+          <td className="font-mono text-[9px] text-[#6b7a72] py-1.5 px-2 text-left">H</td>
+          {holes.map(h => <td key={h.hole_number} className="font-mono text-[10px] font-bold text-[#0e1a16] py-1.5 px-0.5">{h.hole_number}</td>)}
+          <td className="font-mono text-[9px] text-[#6b7a72] py-1.5 px-2">{label}</td>
+        </tr>
+        <tr className="border-b border-[#efebe1]">
+          <td className="font-mono text-[9px] text-[#6b7a72] px-2 py-1 text-left">PAR</td>
+          {holes.map(h => <td key={h.hole_number} className="font-mono text-[9px] text-[#6b7a72] py-1 px-0.5">{h.par}</td>)}
+          <td className="font-mono text-[10px] font-bold text-[#0e1a16] py-1 px-2">{blockPar}</td>
+        </tr>
+      </thead>
+      <tbody>
+        {players.map((p, pi) => {
+          const byHole = new Map(p.hole_scores.map(s => [s.hole_number, s.strokes]))
+          const blockScores = holes.map(h => byHole.get(h.hole_number)).filter((s): s is number => s != null)
+          const blockTotal = blockScores.length ? blockScores.reduce((a, s) => a + s, 0) : null
+          const blockDelta = blockTotal !== null
+            ? holes.reduce((a, h) => { const s = byHole.get(h.hole_number); return s != null ? a + (s - h.par) : a }, 0)
+            : null
+          return (
+            <tr key={pi} className="border-t border-[#efebe1]">
+              <td className="px-2 py-1.5">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ backgroundColor: p.avatar_color }}>
+                  {p.name[0]?.toUpperCase()}
+                </div>
+              </td>
+              {holes.map(h => {
+                const s = byHole.get(h.hole_number)
+                const d = s != null ? s - h.par : null
+                return (
+                  <td key={h.hole_number} className="py-1.5 px-0.5">
+                    {s != null
+                      ? <div className={`w-[20px] h-[20px] rounded-[5px] flex items-center justify-center font-mono text-[10px] font-bold mx-auto ${scoreChipClass(d!)}`}>{s}</div>
+                      : <span className="text-[#c4bfb5] text-[12px]">·</span>}
+                  </td>
+                )
+              })}
+              <td className="px-2 py-1.5">
+                {blockTotal !== null ? (
+                  <div>
+                    <p className="font-mono text-[11px] font-black text-[#0e1a16] leading-none">{blockTotal}</p>
+                    <p className="font-mono text-[8px] font-bold" style={{ color: (blockDelta ?? 0) <= 0 ? '#1f8a5b' : '#9b6e1a' }}>{fmtDelta(blockDelta)}</p>
+                  </div>
+                ) : <span className="text-[#c4bfb5] text-[12px]">–</span>}
+              </td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
+  )
+}
+
 export default function HomePage() {
   const dailyQuote = GOLF_QUOTES[new Date().getDate() % GOLF_QUOTES.length]
   const data = useQuery(api.home.dashboard)
+  const recentRounds = useQuery(api.home.recentRounds) ?? []
   const [lastRound, setLastRound]     = useState<LastRound | null>(null)
   const [quickStarting, setQuickStarting] = useState(false)
 
@@ -297,6 +377,50 @@ export default function HomePage() {
                       <p className="text-[11px] text-[#6b7a72] mt-0.5">{item.detail}</p>
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Últimas partidas de todos — tarjeta por partida, ordenadas por fecha */}
+          {recentRounds.length > 0 && (
+            <div>
+              <div className="flex items-baseline justify-between mb-2 px-1">
+                <h3 className="text-[17px] font-bold text-[#0e1a16]">Últimas partidas</h3>
+                <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-wide">Todos</span>
+              </div>
+              <div className="space-y-2">
+                {recentRounds.map(r => (
+                  <Link key={r.id} to={`/scorecard?round=${r.id}`}
+                    className="block bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden active:scale-[0.99] transition">
+                    {/* Cabecera de la partida */}
+                    <div className="flex items-center justify-between px-3 pt-2.5 pb-2">
+                      <p className="text-[13px] font-bold text-[#0e1a16] truncate">
+                        {r.course_name}
+                        {r.is_practice && <span className="text-[#6b7a72] font-normal"> · práctica</span>}
+                      </p>
+                      <span className="font-mono text-[10px] text-[#6b7a72] flex-shrink-0 ml-2">{fmtRoundDate(r.date)}</span>
+                    </div>
+                    {/* Mini scorecard — 2 filas: OUT (1-9) / IN (10-18) */}
+                    {r.holes.length > 0 ? (() => {
+                      const front = r.holes.filter(h => h.hole_number <= 9)
+                      const back  = r.holes.filter(h => h.hole_number >= 10)
+                      return (
+                        <div>
+                          <div className="overflow-x-auto">
+                            <ScoreNine holes={front} players={r.players} label={back.length ? 'OUT' : 'TOT'} />
+                          </div>
+                          {back.length > 0 && (
+                            <div className="overflow-x-auto border-t-2 border-[#efebe1]">
+                              <ScoreNine holes={back} players={r.players} label="IN" />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })() : (
+                      <p className="px-3 pb-3 text-[11px] text-[#6b7a72]">Sin golpes anotados</p>
+                    )}
                   </Link>
                 ))}
               </div>

@@ -1,7 +1,7 @@
 import { query } from './_generated/server'
 import type { QueryCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
-import { getMyProfile } from './helpers'
+import { getMyProfile, resolvePlayer } from './helpers'
 
 type HoleScore = { hole_number: number; strokes: number; par: number }
 
@@ -243,5 +243,97 @@ export const dashboard = query({
       feed,
       completedRoundsCount,
     }
+  },
+})
+
+/** The 10 most recent completed rounds across all players, newest first. */
+export const recentRounds = query({
+  args: {},
+  handler: async (ctx) => {
+    const me = await getMyProfile(ctx)
+    if (!me) return []
+
+    const completed = (
+      await ctx.db
+        .query('rounds')
+        .withIndex('by_status', (q) => q.eq('status', 'completed'))
+        .collect()
+    )
+      .sort((a, b) =>
+        a.date === b.date ? b._creationTime - a._creationTime : b.date.localeCompare(a.date),
+      )
+      .slice(0, 10)
+
+    return await Promise.all(
+      completed.map(async (r) => {
+        const course = await ctx.db.get(r.courseId)
+        const courseHoles = await ctx.db
+          .query('holes')
+          .withIndex('by_course', (q) => q.eq('courseId', r.courseId))
+          .collect()
+        const parOf = (hole: number) => courseHoles.find((h) => h.hole_number === hole)?.par ?? 4
+
+        const rps = await ctx.db
+          .query('round_players')
+          .withIndex('by_round', (q) => q.eq('roundId', r._id))
+          .collect()
+
+        const allScores = (
+          await ctx.db
+            .query('scores')
+            .withIndex('by_round', (q) => q.eq('roundId', r._id))
+            .collect()
+        ).filter((s) => s.strokes != null)
+
+        // Holes that actually have scores, in order — the columns of the card.
+        const holeNumbers = [...new Set(allScores.map((s) => s.hole_number))].sort((a, b) => a - b)
+        const holes = holeNumbers.map((hn) => ({ hole_number: hn, par: parOf(hn) }))
+
+        const players = await Promise.all(
+          rps.map(async (rp) => {
+            const info = await resolvePlayer(ctx, rp)
+            const ps =
+              !rp.is_guest && rp.profileId
+                ? allScores.filter((s) => s.profileId === rp.profileId)
+                : []
+            const holeScores = ps.map((s) => ({
+              hole_number: s.hole_number,
+              strokes: s.strokes as number,
+            }))
+            const total = holeScores.length
+              ? holeScores.reduce((a, s) => a + s.strokes, 0)
+              : null
+            const delta = holeScores.length
+              ? holeScores.reduce((a, s) => a + (s.strokes - parOf(s.hole_number)), 0)
+              : null
+            return {
+              name: info.name,
+              avatar_color: info.avatar_color,
+              is_guest: rp.is_guest,
+              total,
+              delta,
+              holes_played: holeScores.length,
+              hole_scores: holeScores,
+            }
+          }),
+        )
+
+        // Best score first; players without a score (guests) go last.
+        players.sort((a, b) => {
+          if (a.total === null) return 1
+          if (b.total === null) return -1
+          return a.total - b.total
+        })
+
+        return {
+          id: r._id as Id<'rounds'>,
+          course_name: course?.name ?? 'Campo',
+          date: r.date,
+          is_practice: r.is_practice,
+          holes,
+          players,
+        }
+      }),
+    )
   },
 })
