@@ -5,6 +5,7 @@ import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { scoreChipClass, stablefordPts, strokesReceived } from '@/lib/golf'
 import { Link } from 'react-router-dom'
+import { Drawer } from 'vaul'
 
 type Player = { id: string; name: string; avatar_color: string; course_handicap: number; is_guest: boolean }
 type Hole   = { hole_number: number; par: number; stroke_index: number }
@@ -349,19 +350,19 @@ function TarjetaPage() {
         </div>
       </div>
 
-      {/* Bet modal */}
-      {showBetModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }}>
-          <div className="w-full max-w-[430px] bg-white rounded-t-[28px] p-5 pb-10">
-            <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-4"/>
-            <h2 className="text-[18px] font-black text-[#0e1a16] mb-1">Apuesta de la ronda</h2>
-            <p className="text-[12px] text-[#6b7a72] mb-4">El que pierda tiene que cumplirla. Se mostrará al firmar.</p>
+      {/* Bet bottom sheet (Vaul) */}
+      <Drawer.Root open={showBetModal} onOpenChange={setShowBetModal}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-50" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }} />
+          <Drawer.Content className="fixed bottom-0 inset-x-0 z-50 mx-auto max-w-[430px] bg-white rounded-t-[28px] p-5 pb-10 outline-none">
+            <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-4" />
+            <Drawer.Title className="text-[18px] font-black text-[#0e1a16] mb-1">Apuesta de la ronda</Drawer.Title>
+            <Drawer.Description className="text-[12px] text-[#6b7a72] mb-4">El que pierda tiene que cumplirla. Se mostrará al firmar.</Drawer.Description>
             <input
               value={bet}
               onChange={e => setBet(e.target.value)}
               placeholder="Ej: el que pierde paga las cervezas..."
               className="w-full border-2 border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] outline-none focus:border-[#e8b75a] mb-4"
-              autoFocus
             />
             <div className="flex gap-2">
               <button onClick={() => setShowBetModal(false)}
@@ -379,9 +380,9 @@ function TarjetaPage() {
                 {savingBet ? 'Guardando...' : bet ? 'Guardar apuesta' : 'Quitar apuesta'}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
 
       {/* Edit players modal */}
       {showEditPlayers && (
