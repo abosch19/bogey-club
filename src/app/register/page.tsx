@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthActions } from '@convex-dev/auth/react'
 
 function LogoPin() {
@@ -25,18 +25,26 @@ export default function RegistroPage() {
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
   const { signIn } = useAuthActions()
+  const navigate = useNavigate()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (password.length < 6) { setError('La contraseña debe tener mínimo 6 caracteres.'); return }
+    if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres.'); return }
     setLoading(true)
     setError('')
 
     try {
       await signIn('password', { email, password, name, flow: 'signUp' })
-      window.location.href = '/onboarding'
+      navigate('/onboarding', { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo crear la cuenta.')
+      const msg = err instanceof Error ? err.message : ''
+      if (/invalid password/i.test(msg)) {
+        setError('La contraseña debe tener al menos 8 caracteres.')
+      } else if (/already|exists|in use/i.test(msg)) {
+        setError('Ya existe una cuenta con ese email. Inicia sesión.')
+      } else {
+        setError('No se pudo crear la cuenta. Inténtalo de nuevo.')
+      }
       setLoading(false)
     }
   }
@@ -80,9 +88,10 @@ export default function RegistroPage() {
               </label>
               <input
                 type="password" value={password} onChange={e => setPassword(e.target.value)}
-                required placeholder="Mínimo 6 caracteres"
+                required placeholder="Mínimo 8 caracteres"
                 className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
+              <p className="text-[11px] text-[#6b7a72] mt-1.5">Al menos 8 caracteres.</p>
             </div>
 
             {error && (

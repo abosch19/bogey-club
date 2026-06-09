@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 
@@ -15,6 +16,7 @@ export default function OnboardingPage() {
   const [error, setError]   = useState('')
   const num = parseFloat(hcp) || 0
   const setHandicap = useMutation(api.profiles.setHandicap)
+  const navigate = useNavigate()
 
   function adjust(delta: number) {
     const next = Math.min(54, Math.max(0, Math.round((num + delta) * 10) / 10))
@@ -32,7 +34,7 @@ export default function OnboardingPage() {
 
     try {
       await setHandicap({ handicap_index: value })
-      window.location.href = '/'
+      navigate('/', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar.')
       setLoading(false)

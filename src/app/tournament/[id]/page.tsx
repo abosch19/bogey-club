@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
@@ -42,6 +42,7 @@ function GroupScoresLoader({ roundId, onScores }: { roundId: Id<'rounds'>; onSco
 
 export default function TorneoPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const tournamentId = id as Id<'tournaments'>
 
   const me   = useQuery(api.profiles.me)
@@ -55,8 +56,8 @@ export default function TorneoPage() {
 
   // Redirect to login if not authenticated
   useEffect(() => {
-    if (me === null) { window.location.href = '/login' }
-  }, [me])
+    if (me === null) { navigate('/login', { replace: true }) }
+  }, [me, navigate])
 
   // Build players from the reactive tournament data
   const players: TPlayer[] = useMemo(() => {

@@ -20,8 +20,8 @@ export default function EditCampoPage() {
   // Admin gate
   useEffect(() => {
     if (me === undefined) return
-    if (!me || !me.is_admin) { window.location.href = '/'; return }
-  }, [me])
+    if (!me || !me.is_admin) { navigate('/', { replace: true }); return }
+  }, [me, navigate])
 
   useEffect(() => {
     if (course === undefined) return

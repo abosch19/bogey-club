@@ -246,11 +246,10 @@ function TarjetaPage() {
       <div className="safe-top px-[14px] pt-3 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-[#6b7a72] font-semibold text-[13px]">
+            <Link to="/" className="flex items-center gap-1 text-[#6b7a72] font-semibold text-[13px]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              Atrás
-            </button>
-            <Link to="/" className="font-mono text-[10px] text-[#6b7a72] bg-[#f4f1e9] px-2.5 py-1 rounded-full">Inicio</Link>
+              Inicio
+            </Link>
           </div>
           <span className="font-mono text-[10px] text-[#6b7a72]">{myScores.length} / {holes.length} HOYOS</span>
         </div>

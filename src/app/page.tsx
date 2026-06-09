@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from 'convex/react'
 import { useValue } from '@legendapp/state/react'
 import { api } from '@convex/_generated/api'
@@ -114,10 +114,11 @@ export default function HomePage() {
   const recentRounds = useQuery(api.home.recentRounds) ?? []
   const lastRound = useValue(lastRound$)
   const [quickStarting, setQuickStarting] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    if (data === null) window.location.href = '/onboarding'
-  }, [data])
+    if (data === null) navigate('/onboarding', { replace: true })
+  }, [data, navigate])
 
   function quickStart(lr: LastRound) {
     // Navigate to jugadores with course prefilled so user can review/modify
@@ -128,7 +129,7 @@ export default function HomePage() {
       ...(lr.player_ids?.length ? { prefill_players: lr.player_ids.join(',') } : {}),
       ...(lr.league_id ? { league: lr.league_id } : {}),
     })
-    window.location.href = `/round/players?${params}`
+    navigate(`/round/players?${params}`)
   }
 
   if (data === undefined || data === null) {

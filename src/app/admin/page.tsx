@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -13,13 +13,14 @@ export default function AdminPage() {
   const overview = useQuery(api.admin.overview)
   const removeLeague  = useMutation(api.leagues.remove)
   const setHandicap   = useMutation(api.profiles.setHandicap)
+  const navigate = useNavigate()
 
   // Auth + admin gate
   useEffect(() => {
     if (me === undefined) return
-    if (me === null) { window.location.href = '/login'; return }
-    if (!me.is_admin) { window.location.href = '/'; return }
-  }, [me])
+    if (me === null) { navigate('/login', { replace: true }); return }
+    if (!me.is_admin) { navigate('/', { replace: true }); return }
+  }, [me, navigate])
 
   async function deleteLeague(id: Id<'leagues'>) {
     if (!confirm('¿Borrar esta liga?')) return

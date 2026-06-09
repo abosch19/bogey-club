@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthActions } from '@convex-dev/auth/react'
 
 function LogoPin() {
@@ -24,6 +24,7 @@ export default function LoginPage() {
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
   const { signIn } = useAuthActions()
+  const navigate = useNavigate()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -31,7 +32,7 @@ export default function LoginPage() {
     setError('')
     try {
       await signIn('password', { email, password, flow: 'signIn' })
-      window.location.href = '/'
+      navigate('/', { replace: true })
     } catch {
       setError('Email o contraseña incorrectos.')
       setLoading(false)

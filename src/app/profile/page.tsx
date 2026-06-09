@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { useAuthActions } from '@convex-dev/auth/react'
 import { api } from '@convex/_generated/api'
@@ -25,7 +25,9 @@ export default function PerfilPage() {
   const rawDiffs = useQuery(api.profiles.myDifferentials)
   const recalc = useMutation(api.whs.recalc)
   const setHandicap = useMutation(api.profiles.setHandicap)
+  const deleteMe = useMutation(api.profiles.deleteMe)
   const { signOut } = useAuthActions()
+  const navigate = useNavigate()
   const [recalculating, setRecalculating] = useState(false)
 
   const email = profile?.email ?? ''
@@ -45,7 +47,18 @@ export default function PerfilPage() {
 
   async function handleSignOut() {
     await signOut()
-    window.location.href = '/login'
+    navigate('/login', { replace: true })
+  }
+
+  async function handleDeleteProfile() {
+    if (!confirm('¿Borrar tu perfil? Se eliminarán tus rondas, golpes y estadísticas. Esta acción no se puede deshacer.')) return
+    try {
+      await deleteMe({})
+      await signOut()
+      navigate('/login', { replace: true })
+    } catch (err: unknown) {
+      alert('No se pudo borrar el perfil: ' + (err instanceof Error ? err.message : 'Error desconocido'))
+    }
   }
 
   if (profile === undefined || profile === null) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
@@ -247,6 +260,12 @@ export default function PerfilPage() {
         <button onClick={handleSignOut}
           className="w-full py-3.5 rounded-[16px] font-semibold text-[15px] border-2 border-[#c6432d] text-[#c6432d] bg-white transition active:opacity-80">
           Cerrar sesión
+        </button>
+
+        {/* Delete profile — discreet */}
+        <button onClick={handleDeleteProfile}
+          className="block mx-auto mt-4 text-[12px] font-semibold text-[#a09a90] hover:text-[#c6432d] underline underline-offset-2 transition">
+          Borrar perfil
         </button>
       </div>
     </div>
