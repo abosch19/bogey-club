@@ -1,5 +1,6 @@
-import { ReactNode, useEffect } from 'react'
-import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router'
+import { ReactNode, useEffect, useState } from 'react'
+import { flushSync } from 'react-dom'
+import { Navigate, Route, Routes, useLocation, useNavigationType, useSearchParams } from 'react-router'
 import { useConvexAuth, useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { TabBar } from '@/components/ui/tab-bar'
@@ -59,21 +60,45 @@ function AuthGuard({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
-/** Reset scroll to the top on every route change so tabs don't share scrollY. */
-function ScrollToTop() {
-  const { pathname } = useLocation()
-  useEffect(() => {
-    window.scrollTo(0, 0)
-    document.scrollingElement?.scrollTo(0, 0)
-  }, [pathname])
-  return null
-}
+/** Drives route changes through the View Transitions API. The rendered
+ *  location lags one frame behind the router's so the old screen can be
+ *  snapshotted; `data-nav` on <html> picks the animation in globals.css:
+ *  push (slide in from the right), pop (slide back out) or fade (tab switch).
+ *  Falls back to an instant swap without the API or with reduced motion.
+ *  Scroll resets inside the transition so tabs don't share scrollY. */
+function TransitionRoutes({ children }: { children: ReactNode }) {
+  const location = useLocation()
+  const navigationType = useNavigationType()
+  const [displayLocation, setDisplayLocation] = useState(location)
 
-/** Renders the bottom bar only on tab routes; stays mounted so it never flickers. */
-function PersistentTabBar() {
-  const { pathname } = useLocation()
-  if (!TAB_ROUTES.includes(pathname)) return null
-  return <TabBar />
+  useEffect(() => {
+    if (location.key === displayLocation.key) return
+
+    const commit = () => {
+      flushSync(() => setDisplayLocation(location))
+      window.scrollTo(0, 0)
+      document.scrollingElement?.scrollTo(0, 0)
+    }
+
+    if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      commit()
+      return
+    }
+
+    const tabSwitch =
+      TAB_ROUTES.includes(displayLocation.pathname) && TAB_ROUTES.includes(location.pathname)
+    document.documentElement.dataset.nav = tabSwitch ? 'fade' : navigationType === 'POP' ? 'pop' : 'push'
+    document.startViewTransition(commit).finished.finally(() => {
+      delete document.documentElement.dataset.nav
+    })
+  }, [location, displayLocation, navigationType])
+
+  return (
+    <>
+      <Routes location={displayLocation}>{children}</Routes>
+      {TAB_ROUTES.includes(displayLocation.pathname) && <TabBar />}
+    </>
+  )
 }
 
 /** Subscribes to every tab's queries so they stay cached — switching tabs
@@ -96,10 +121,9 @@ function KeepWarm() {
 export function App() {
   return (
     <div className="mx-auto max-w-[430px] min-h-screen relative">
-      <ScrollToTop />
       <KeepWarm />
       <AuthGuard>
-        <Routes>
+        <TransitionRoutes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -121,8 +145,7 @@ export function App() {
           <Route path="/round/format" element={<RoundFormatPage />} />
           <Route path="/round/pairs" element={<RoundPairsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        <PersistentTabBar />
+        </TransitionRoutes>
       </AuthGuard>
     </div>
   )

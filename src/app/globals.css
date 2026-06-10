@@ -53,3 +53,43 @@ html, body {
 @media (display-mode: standalone) {
   .tabbar-pb { padding-bottom: max(22px, calc(env(safe-area-inset-bottom) + 8px)); }
 }
+
+/* ——— Page transitions (View Transitions API) ———
+   TransitionRoutes in App.tsx sets data-nav on <html> for the duration of
+   each navigation: push | pop | fade. Browsers without the API never run
+   these — navigation is instant. */
+@keyframes vt-slide-in-right { from { transform: translateX(100%); } }
+@keyframes vt-slide-out-right { to { transform: translateX(100%); } }
+@keyframes vt-push-under { to { transform: translateX(-28%); } }
+@keyframes vt-pop-under { from { transform: translateX(-28%); } }
+@keyframes vt-fade-in { from { opacity: 0; } }
+@keyframes vt-fade-out { to { opacity: 0; } }
+
+html[data-nav]::view-transition { background: var(--c-bg); }
+
+/* Push: the new screen slides in over the old one, iOS style. */
+html[data-nav='push']::view-transition-new(root) {
+  animation: vt-slide-in-right 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+html[data-nav='push']::view-transition-old(root) {
+  animation: vt-push-under 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Pop (back): the old screen slides away revealing the previous one. */
+html[data-nav='pop']::view-transition-old(root) {
+  animation: vt-slide-out-right 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  z-index: 1;
+}
+html[data-nav='pop']::view-transition-new(root) {
+  animation: vt-pop-under 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Fade: quick cross-fade between bottom tabs. */
+html[data-nav='fade']::view-transition-old(root) { animation: vt-fade-out 160ms ease; }
+html[data-nav='fade']::view-transition-new(root) { animation: vt-fade-in 160ms ease; }
+
+/* The tab bar transitions independently so it never slides with the page. */
+.vt-tab-bar { view-transition-name: tab-bar; }
+html[data-nav]::view-transition-group(tab-bar) { z-index: 2; }
+html[data-nav='push']::view-transition-old(tab-bar) { animation: vt-fade-out 160ms ease both; }
+html[data-nav='pop']::view-transition-new(tab-bar) { animation: vt-fade-in 160ms ease both; }
