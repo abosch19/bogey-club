@@ -275,7 +275,7 @@ function RoundStats({ players, scores, holes, myId }: RoundStatsProps) {
   return (
     <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
       <div className="px-4 py-3 border-b border-[#efebe1]">
-        <p className="font-bold text-[14px] text-[#0e1a16]">Stats de la ronda</p>
+        <p className="font-bold text-[14px] text-[#0e1a16]">Estadísticas de la ronda</p>
       </div>
       {/* Column headers */}
       <div className="border-b border-[#efebe1] bg-[#f4f1e9]" style={grid}>
