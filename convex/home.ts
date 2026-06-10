@@ -109,6 +109,7 @@ async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
   type FeedItem = {
     id: string
     round_id: Id<'rounds'>
+    profile_id: Id<'profiles'> | null
     name: string
     avatar_url: string | null
     action: string
@@ -185,6 +186,7 @@ async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
       return {
         id: r._id + pid,
         round_id: r._id,
+        profile_id: p?._id ?? null,
         name: p ? [p.name, p.last_name].filter(Boolean).join(' ') : 'Jugador',
         avatar_url: await avatarUrl(ctx, p),
         action,
@@ -305,6 +307,7 @@ export const recentRounds = query({
               : null
             return {
               name: info.name,
+              profile_id: !rp.is_guest && rp.profileId ? rp.profileId : null,
               avatar_url: info.avatar_url,
               is_guest: rp.is_guest,
               total,

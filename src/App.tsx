@@ -12,6 +12,7 @@ import OnboardingPage from '@/app/onboarding/page'
 import ProfilePage from '@/app/profile/page'
 import StatsPage from '@/app/stats/page'
 import PlayersPage from '@/app/players/page'
+import PlayerPage from '@/app/player/[id]/page'
 import ScorecardPage from '@/app/scorecard/page'
 import CoursePage from '@/app/course/[id]/page'
 import AdminPage from '@/app/admin/page'
@@ -154,6 +155,7 @@ export function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/stats" element={<StatsPage />} />
           <Route path="/players" element={<PlayersPage />} />
+          <Route path="/player/:id" element={<PlayerPage />} />
           <Route path="/summary" element={<SummaryRedirect />} />
           <Route path="/scorecard" element={<ScorecardPage />} />
           <Route path="/course/:id" element={<CoursePage />} />

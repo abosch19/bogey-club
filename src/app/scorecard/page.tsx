@@ -9,6 +9,7 @@ import { Link } from 'react-router'
 import { Drawer } from 'vaul'
 import { HoleSheet } from '@/components/HoleSheet'
 import { Avatar, avatarColor } from '@/components/ui/avatar'
+import { PlayerLink } from '@/components/ui/player-link'
 
 type Player = { id: string; name: string; course_handicap: number; is_guest: boolean; avatar_url: string | null }
 type Hole   = { hole_number: number; par: number; stroke_index: number }
@@ -67,7 +68,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                 const blockDelta = blockTotal ? blockTotal - blockPar : null
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
-                    <td className="px-2 py-1.5"><Avatar name={p.name} src={p.avatar_url} size={24} /></td>
+                    <td className="px-2 py-1.5"><PlayerLink profileId={p.is_guest ? null : p.id}><Avatar name={p.name} src={p.avatar_url} size={24} /></PlayerLink></td>
                     {group.map(h => {
                       const s = getScore(p.id, h.hole_number)
                       const d = s != null ? s - h.par : null
@@ -99,7 +100,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
                     <td className="px-2 py-1">
-                      <Avatar name={p.name} src={p.avatar_url} size={24} />
+                      <PlayerLink profileId={p.is_guest ? null : p.id}><Avatar name={p.name} src={p.avatar_url} size={24} /></PlayerLink>
                     </td>
                     {group.map(h => {
                       const s = getScore(p.id, h.hole_number)
@@ -148,7 +149,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                 const endSt = lastScored ? matchState.get(lastScored.hole_number) : undefined
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
-                    <td className="px-2 py-1.5"><Avatar name={p.name} src={p.avatar_url} size={24} /></td>
+                    <td className="px-2 py-1.5"><PlayerLink profileId={p.is_guest ? null : p.id}><Avatar name={p.name} src={p.avatar_url} size={24} /></PlayerLink></td>
                     {group.map(h => {
                       const st = matchState.get(h.hole_number)
                       const cell = !st
@@ -207,7 +208,7 @@ function Clasificacion({ ranking, getTotal, realPar }: ClasificacionProps) {
               style={{ backgroundColor: isFirst ? '#e8b75a' : '#f4f1e9', color: isFirst ? '#0e1a16' : '#6b7a72' }}>
               {i + 1}
             </div>
-            <Avatar name={p.name} src={p.avatar_url} size={40} />
+            <PlayerLink profileId={p.is_guest ? null : p.id}><Avatar name={p.name} src={p.avatar_url} size={40} /></PlayerLink>
             <div className="flex-1">
               <p className="font-bold text-[15px]" style={{ color: isFirst ? '#fff' : '#0e1a16' }}>{p.name}</p>
               <p className="font-mono text-[10px]" style={{ color: isFirst ? 'rgba(255,255,255,0.5)' : '#6b7a72' }}>Hcp {p.course_handicap}</p>
@@ -274,7 +275,7 @@ function RoundStats({ players, scores, holes }: RoundStatsProps) {
               <tr className="border-t border-[#efebe1]">
                 <td className="pt-2 pb-1 text-left">
                   <div className="flex items-center gap-2">
-                    <Avatar name={p.name} src={p.avatar_url} size={24} />
+                    <PlayerLink profileId={p.is_guest ? null : p.id}><Avatar name={p.name} src={p.avatar_url} size={24} /></PlayerLink>
                     <span className="font-semibold text-[12px] text-[#0e1a16]">{p.name.split(' ')[0]}</span>
                   </div>
                 </td>
@@ -533,7 +534,7 @@ function ScorecardHeader({
             const delta = getDelta(p.id)
             return (
               <div key={p.id} className="flex items-center gap-2">
-                <Avatar name={p.name} src={p.avatar_url} size={28} />
+                <PlayerLink profileId={p.is_guest ? null : p.id}><Avatar name={p.name} src={p.avatar_url} size={28} /></PlayerLink>
                 {total > 0 ? (
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-mono text-[20px] font-black text-[#0e1a16] leading-none">{total}</span>
@@ -568,7 +569,7 @@ function ScorecardHeader({
         <div className="bg-white rounded-[16px] px-4 py-3 border border-[#e5e0d4] mb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Avatar name={matchplayResult.a.name} src={matchplayResult.a.avatar_url} size={32} />
+              <PlayerLink profileId={matchplayResult.a.is_guest ? null : matchplayResult.a.id}><Avatar name={matchplayResult.a.name} src={matchplayResult.a.avatar_url} size={32} /></PlayerLink>
               <span className="font-bold text-[13px] text-[#0e1a16]">{matchplayResult.a.name.split(' ')[0]}</span>
             </div>
             <div className="text-center px-4">
@@ -577,7 +578,7 @@ function ScorecardHeader({
             </div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-[13px] text-[#0e1a16]">{matchplayResult.b.name.split(' ')[0]}</span>
-              <Avatar name={matchplayResult.b.name} src={matchplayResult.b.avatar_url} size={32} />
+              <PlayerLink profileId={matchplayResult.b.is_guest ? null : matchplayResult.b.id}><Avatar name={matchplayResult.b.name} src={matchplayResult.b.avatar_url} size={32} /></PlayerLink>
             </div>
           </div>
         </div>

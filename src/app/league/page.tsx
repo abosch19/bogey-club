@@ -4,6 +4,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { Avatar } from '@/components/ui/avatar'
+import { PlayerLink } from '@/components/ui/player-link'
 
 export default function LigaPage() {
   const data = useQuery(api.leagues.listForUser)
@@ -146,8 +147,8 @@ export default function LigaPage() {
                         <div key={s.profile_id} className="flex items-center gap-3 py-1.5 px-2 rounded-[12px]"
                           style={{ backgroundColor: i === 0 ? '#f6e6c4' : 'transparent' }}>
                           <span className="font-mono text-[12px] font-bold w-5 text-center" style={{ color: i === 0 ? '#9b6e1a' : '#6b7a72' }}>{i+1}</span>
-                          <Avatar name={s.name} size={28} />
-                          <span className="flex-1 text-[13px] font-semibold text-[#0e1a16]">{s.name}</span>
+                          <PlayerLink profileId={s.profile_id}><Avatar name={s.name} size={28} /></PlayerLink>
+                          <PlayerLink profileId={s.profile_id} className="flex-1 text-[13px] font-semibold text-[#0e1a16]">{s.name}</PlayerLink>
                           <span className="font-mono text-[14px] font-black text-[#0e1a16]">{s.total_points}</span>
                           <span className="font-mono text-[9px] text-[#6b7a72]">PTS</span>
                         </div>

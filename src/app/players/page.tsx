@@ -42,7 +42,8 @@ export default function JugadoresPage() {
 
         <div className="space-y-2">
           {filtered.map((p, i) => (
-            <div key={p.id} className={`bg-white rounded-[16px] p-4 border flex items-center gap-3 ${p.id === myId ? 'border-[#1f8a5b]' : 'border-[#e5e0d4]'}`}>
+            <Link key={p.id} to={`/player/${p.id}`}
+              className={`bg-white rounded-[16px] p-4 border flex items-center gap-3 active:scale-[0.99] transition ${p.id === myId ? 'border-[#1f8a5b]' : 'border-[#e5e0d4]'}`}>
               <span className="font-mono text-[12px] font-bold text-[#6b7a72] w-5 text-center">{i + 1}</span>
               <Avatar name={p.name} src={p.avatar_url} size={44} />
               <div className="flex-1 min-w-0">
@@ -56,7 +57,8 @@ export default function JugadoresPage() {
                 <p className="font-mono text-[11px] text-[#6b7a72] uppercase">HCP</p>
                 <p className="font-mono text-[18px] font-black text-[#0e1a16]">{formatHandicap(p.handicap_index)}</p>
               </div>
-            </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
+            </Link>
           ))}
         </div>
       </div>
