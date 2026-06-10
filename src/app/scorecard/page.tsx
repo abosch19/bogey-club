@@ -783,11 +783,11 @@ function TarjetaPage() {
     if (players.length < 2) return null
     const [a, b] = players
     let state = 0
-    holes.forEach(h => {
+    for (const h of holes) {
       const w = holeWinner(h.hole_number)
       if (w?.id === a.id) state++
       else if (w?.id === b.id) state--
-    })
+    }
     const label = state === 0 ? 'AS' : state > 0 ? `${state} UP` : `${-state} UP`
     const leader = state === 0 ? null : state > 0 ? a : b
     return { state, label, leader, a, b }

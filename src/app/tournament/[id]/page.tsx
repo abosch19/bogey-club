@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { Link } from 'react-router'
 import { useQuery } from 'convex/react'
@@ -176,7 +176,7 @@ export default function TorneoPage() {
   const me   = useQuery(api.profiles.me)
   const data = useQuery(api.tournaments.get, { tournamentId })
 
-  const [activeGroup, setActiveGroup] = useState<number | null>(null)
+  const [chosenGroup, setActiveGroup] = useState<number | null>(null)
   const [tab, setTab]               = useState<'leaderboard'|'grupos'>('leaderboard')
 
   const myId = me?._id ?? ''
@@ -217,25 +217,23 @@ export default function TorneoPage() {
     return byPlayer
   }, [data])
 
-  // Set my group as active once data loads
-  useEffect(() => {
-    if (!data || !myId) return
-    setActiveGroup(prev => prev ?? (players.find(p => p.id === myId)?.group ?? 1))
-  }, [data, myId, players])
+  // Until the user picks a group explicitly, follow my own group.
+  const activeGroup = chosenGroup ?? (players.find(p => p.id === myId)?.group ?? 1)
 
   // "hace Xs" live indicator. `now` ticks every second; `lastUpdate` is the
   // baseline. secondsAgo is DERIVED in render (a plain const, not state), so no
   // effect syncs it. The baseline is re-based when fresh data arrives via the
-  // sanctioned adjust-state-during-render pattern (no effect, no Date.now in JSX).
+  // sanctioned adjust-state-during-render pattern (compare against previous
+  // state, not a ref — refs can't be read during render).
   const [now, setNow] = useState(() => Date.now())
   const [lastUpdate, setLastUpdate] = useState(0)
-  const dataRef = useRef<typeof data>(undefined)
+  const [seenData, setSeenData] = useState<typeof data>(undefined)
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(t)
   }, [])
-  if (data && dataRef.current !== data) {
-    dataRef.current = data
+  if (data && seenData !== data) {
+    setSeenData(data)
     setLastUpdate(now)
   }
   const secondsAgo = now && lastUpdate ? Math.max(0, Math.floor((now - lastUpdate) / 1000)) : 0

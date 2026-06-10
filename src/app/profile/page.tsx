@@ -41,9 +41,8 @@ export default function PerfilPage() {
       alert(`Hándicap recalculado correctamente (${data.rounds_processed ?? 0} rondas procesadas)`)
     } catch (err: unknown) {
       alert('Error al recalcular: ' + (err instanceof Error ? err.message : 'Error desconocido'))
-    } finally {
-      setRecalculating(false)
     }
+    setRecalculating(false)
   }
 
   async function handleSignOut() {

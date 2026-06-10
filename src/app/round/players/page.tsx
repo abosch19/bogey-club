@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, Suspense } from 'react'
+import { useState, useMemo, Suspense } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
@@ -28,8 +28,7 @@ function SeleccionarJugadoresPage() {
       : [{ _id: p._id, name: p.name, handicap_index: p.handicap_index }],
   )
 
-  const [selected, setSelected] = useState<Player[]>([])
-  const selectionInit = useRef(false)
+  const [selectedOverride, setSelected] = useState<Player[] | null>(null)
   const [search, setSearch] = useState('')
 
   // Guest form
@@ -40,22 +39,21 @@ function SeleccionarJugadoresPage() {
     ? { _id: me._id, name: [me.name, me.last_name].filter(Boolean).join(' '), handicap_index: me.handicap_index }
     : null
 
-  // Initialize selection once me + profiles are loaded
-  useEffect(() => {
-    if (selectionInit.current || !me || !profiles) return
-    selectionInit.current = true
-    const mePlayer: Player = { _id: me._id, name: [me.name, me.last_name].filter(Boolean).join(' '), handicap_index: me.handicap_index }
+  // Selection defaults to the URL prefills (falling back to me) until the user
+  // touches it — derived, so no init effect is needed while data loads.
+  const defaultSelected: Player[] = (() => {
+    if (!meParsed || !profiles) return []
     if (prefillPlayers.length > 0) {
       const prefilled = profiles.flatMap(p =>
         prefillPlayers.includes(p._id)
           ? [{ _id: p._id, name: p.name, handicap_index: p.handicap_index }]
           : [],
       )
-      setSelected(prefilled.length > 0 ? prefilled : [mePlayer])
-    } else {
-      setSelected([mePlayer])
+      if (prefilled.length > 0) return prefilled
     }
-  }, [me, profiles, prefillPlayers])
+    return [meParsed]
+  })()
+  const selected = selectedOverride ?? defaultSelected
 
   function togglePlayer(p: Player) {
     const totalWithMe = selected.length // me is always included

@@ -19,9 +19,11 @@ export default function LigaPage() {
     setDeleting(leagueId)
     try {
       await removeLeague({ league_id: leagueId })
-    } finally {
+    } catch (err) {
       setDeleting(null)
+      throw err
     }
+    setDeleting(null)
   }
 
   if (data === undefined) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>

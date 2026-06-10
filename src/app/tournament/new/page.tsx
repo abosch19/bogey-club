@@ -41,6 +41,27 @@ function autoGroup(players: Player[], groupSize: number): Player[] {
 
 function NuevoTorneoPage() {
   const navigate = useNavigate()
+
+  const me            = useQuery(api.profiles.me)
+  const coursesData   = useQuery(api.courses.list)
+  const profilesData  = useQuery(api.players.all)
+
+  // Auth gate
+  useEffect(() => {
+    if (me === null) navigate('/login')
+  }, [me, navigate])
+
+  if (!me || coursesData === undefined || profilesData === undefined) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
+
+  return <NuevoTorneoWizard meId={me._id} coursesData={coursesData} profilesData={profilesData} />
+}
+
+function NuevoTorneoWizard({ meId, coursesData, profilesData }: {
+  meId: Id<'profiles'>
+  coursesData: { _id: Id<'courses'>; name: string; par: number; holes_count: number }[]
+  profilesData: { _id: Id<'profiles'>; name: string; handicap_index: number }[]
+}) {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [config, setConfig] = useState<{
     name: string
@@ -48,45 +69,30 @@ function NuevoTorneoPage() {
     mode: string
     groupSize: number
     search: string
-  }>({ name: '', courseId: '', mode: 'stableford', groupSize: 3, search: '' })
+  }>(() => ({
+    name: '',
+    courseId: (searchParams.get('course') as Id<'courses'> | null) ?? coursesData[0]?._id ?? '',
+    mode: 'stableford',
+    groupSize: 3,
+    search: '',
+  }))
   const [flow, setFlow] = useState<{ step: 'config'|'grupos'; saving: boolean }>({ step: 'config', saving: false })
-  const [selected, setSelected] = useState<Player[]>([])
+  // Pre-selection from URL params, falling back to me
+  const [selected, setSelected] = useState<Player[]>(() => {
+    const allP: Player[] = profilesData.map(p => ({ id: p._id, name: p.name, handicap_index: p.handicap_index, group: 1 }))
+    const preselectedIds = searchParams.get('players')?.split(',').filter(Boolean) ?? []
+    const presels = preselectedIds.length > 0 ? allP.filter(p => preselectedIds.includes(p.id)) : []
+    return presels.length > 0 ? presels : allP.filter(p => p.id === meId)
+  })
   const [groups, setGroups]   = useState<Player[]>([])
 
   const { name, courseId, mode, groupSize, search } = config
   const { step, saving } = flow
 
-  const me            = useQuery(api.profiles.me)
-  const coursesData   = useQuery(api.courses.list)
-  const profilesData  = useQuery(api.players.all)
   const createTournament = useMutation(api.tournaments.create)
 
-  const courses: Course[] = (coursesData ?? []).map(c => ({ id: c._id, name: c.name, par: c.par, holes_count: c.holes_count }))
-  const allProfiles: Player[] = (profilesData ?? []).map(p => ({ id: p._id, name: p.name, handicap_index: p.handicap_index, group: 1 }))
-
-  const loading = me === undefined || coursesData === undefined || profilesData === undefined
-
-  // Auth gate + initial selection from URL params
-  useEffect(() => {
-    if (me === undefined || coursesData === undefined || profilesData === undefined) return
-    if (me === null) { navigate('/login'); return }
-
-    const allP: Player[] = (profilesData ?? []).map(p => ({ id: p._id, name: p.name, handicap_index: p.handicap_index, group: 1 }))
-
-    // Pre-select players from URL params
-    const preselectedIds = searchParams.get('players')?.split(',').filter(Boolean) ?? []
-    const preCoursId = searchParams.get('course')
-    if (preCoursId) setConfig(c => ({ ...c, courseId: preCoursId as Id<'courses'> }))
-    else if (coursesData?.length) setConfig(c => ({ ...c, courseId: coursesData[0]._id }))
-
-    if (preselectedIds.length > 0) {
-      const presels = allP.filter(p => preselectedIds.includes(p.id))
-      setSelected(presels.length > 0 ? presels : allP.filter(p => p.id === me._id))
-    } else {
-      const meP = allP.find(p => p.id === me._id)
-      if (meP) setSelected([meP])
-    }
-  }, [me, coursesData, profilesData, navigate, searchParams])
+  const courses: Course[] = coursesData.map(c => ({ id: c._id, name: c.name, par: c.par, holes_count: c.holes_count }))
+  const allProfiles: Player[] = profilesData.map(p => ({ id: p._id, name: p.name, handicap_index: p.handicap_index, group: 1 }))
 
   function togglePlayer(p: Player) {
     if (selected.find(s => s.id === p.id)) setSelected(selected.filter(s => s.id !== p.id))
@@ -122,8 +128,6 @@ function NuevoTorneoPage() {
       setFlow(f => ({ ...f, saving: false }))
     }
   }
-
-  if (loading) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
   return (
     <div className="min-h-screen bg-[#f4f1e9]">

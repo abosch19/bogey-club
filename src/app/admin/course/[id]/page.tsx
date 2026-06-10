@@ -1,21 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useQuery, useMutation } from 'convex/react'
+import type { FunctionReturnType } from 'convex/server'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 
 type Hole = { _id: Id<'holes'>; hole_number: number; par: number; stroke_index: number; distance_m: number | null }
+type CourseData = NonNullable<FunctionReturnType<typeof api.courses.get>>
 
 export default function EditCampoPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [holes, setHoles]     = useState<Hole[]>([])
-  const [saving, setSaving]   = useState(false)
-  const [msg, setMsg]         = useState('')
 
   const me     = useQuery(api.profiles.me)
   const course = useQuery(api.courses.get, { courseId: id as Id<'courses'> })
-  const editCourseHoles = useMutation(api.admin.editCourseHoles)
 
   // Admin gate
   useEffect(() => {
@@ -23,20 +21,26 @@ export default function EditCampoPage() {
     if (!me || !me.is_admin) { navigate('/', { replace: true }); return }
   }, [me, navigate])
 
-  useEffect(() => {
-    if (course === undefined) return
-    if (course) {
-      setHoles(
-        course.holes.map((h: any) => ({
-          _id: h._id,
-          hole_number: h.hole_number,
-          par: h.par,
-          stroke_index: h.stroke_index,
-          distance_m: h.distance_m ?? null,
-        })),
-      )
-    }
-  }, [course])
+  if (!course || !me?.is_admin) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
+
+  return <AdminCourseEditor key={course._id} course={course} />
+}
+
+function AdminCourseEditor({ course }: { course: CourseData }) {
+  const navigate = useNavigate()
+  const [holes, setHoles] = useState<Hole[]>(() =>
+    course.holes.map((h: any) => ({
+      _id: h._id,
+      hole_number: h.hole_number,
+      par: h.par,
+      stroke_index: h.stroke_index,
+      distance_m: h.distance_m ?? null,
+    })),
+  )
+  const [saving, setSaving]   = useState(false)
+  const [msg, setMsg]         = useState('')
+
+  const editCourseHoles = useMutation(api.admin.editCourseHoles)
 
   function updateHole(holeId: Id<'holes'>, field: keyof Hole, value: string) {
     setHoles(prev => prev.map(h => h._id === holeId ? { ...h, [field]: parseInt(value) || 0 } : h))
@@ -55,10 +59,6 @@ export default function EditCampoPage() {
       setMsg('Error al guardar.')
     }
   }
-
-  if (course === undefined || me === undefined || !me?.is_admin) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
-
-  if (!course) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-8">
