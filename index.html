@@ -16,9 +16,50 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <meta name="theme-color" content="#0e1a16" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <style>
+      /* Splash mostrado mientras carga el bundle JS; React lo reemplaza al montar. */
+      #splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #f4f1e9;
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      }
+      #splash .wordmark {
+        margin-top: 12px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: #0e1a16;
+      }
+      #splash .spin {
+        margin-top: 28px;
+        width: 28px;
+        height: 28px;
+        border-radius: 9999px;
+        border: 2px solid #1f8a5b;
+        border-top-color: transparent;
+        animation: splash-spin 0.8s linear infinite;
+      }
+      @keyframes splash-spin { to { transform: rotate(360deg); } }
+    </style>
   </head>
   <body class="font-sans bg-[#f4f1e9] text-[#0e1a16]">
-    <div id="root"></div>
+    <div id="root">
+      <div id="splash">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <circle cx="32" cy="32" r="30" fill="#9bc9a3"/>
+          <path d="M24 16 L24 50" stroke="#0e1a16" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16"/>
+          <circle cx="24" cy="50" r="2.6" fill="#0e1a16"/>
+        </svg>
+        <div class="wordmark">Bogey <span style="color:#1f8a5b">Club</span></div>
+        <div class="spin"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
