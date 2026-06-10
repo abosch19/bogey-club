@@ -76,34 +76,48 @@ export default function PerfilPage() {
 
       <div className="px-[14px] pt-4 pb-4">
         {/* Member card */}
-        <div className="rounded-[22px] p-5 mb-3 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-          <div className="absolute right-[-40px] top-[-40px] w-[160px] h-[160px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.85 }}/>
+        <div className="rounded-[22px] p-5 mb-3 relative overflow-hidden shadow-[0_18px_40px_rgba(14,26,22,0.32)]"
+          style={{ background: 'linear-gradient(140deg, #0a1511 0%, #0e1a16 46%, #17291f 100%)' }}>
+          {/* Green glow orb */}
+          <div className="absolute right-[-50px] top-[-50px] w-[190px] h-[190px] rounded-full"
+            style={{ background: 'radial-gradient(circle at 35% 35%, #2aa86f 0%, #1f8a5b 55%, rgba(31,138,91,0) 72%)' }}/>
+          {/* Credit-card pinstripes + diagonal sheen */}
+          <div className="absolute inset-0 opacity-[0.04]"
+            style={{ backgroundImage: 'repeating-linear-gradient(135deg, #fff 0 1px, transparent 1px 9px)' }}/>
+          <div className="absolute inset-0"
+            style={{ background: 'linear-gradient(115deg, transparent 32%, rgba(255,255,255,0.07) 46%, transparent 58%)' }}/>
           <div className="relative">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <svg width="22" height="22" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="30" fill="#9bc9a3"/><path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round"/><path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16"/></svg>
                 <span className="text-white text-[14px] font-bold">Bogey Club</span>
               </div>
-              <span className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Socio</span>
+              <span className="font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-[#e8b75a] bg-[#e8b75a]/10 border border-[#e8b75a]/30 px-2.5 py-1 rounded-full">
+                Socio
+              </span>
             </div>
-            <div className="flex items-center gap-4 mb-4">
-              <Avatar name={fullName} src={profile.avatar_url} size={56} />
+            <div className="flex items-center gap-4 mb-5">
+              <Avatar name={fullName} src={profile.avatar_url} size={56}
+                className="ring-2 ring-[#1f8a5b] ring-offset-2 ring-offset-[#0e1a16]" />
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="text-white text-[20px] font-bold leading-tight">{fullName}</p>
+                  <p className="text-white text-[21px] font-black tracking-tight leading-tight">{fullName}</p>
                   {profile.clubs_sponsor_url && (
                     /* Sponsor logos come dark on white — invert to read on the dark card. */
                     <img src={profile.clubs_sponsor_url} alt="Sponsor de palos"
                       className="h-[13px] w-auto opacity-80" style={{ filter: 'brightness(0) invert(1)' }} />
                   )}
                 </div>
-                <p className="text-white/50 text-[12px] mt-0.5">{email}</p>
+                <p className="text-white/45 text-[12px] mt-0.5">{email}</p>
               </div>
             </div>
-            <div className="flex items-end justify-between border-t border-white/10 pt-3">
+            <div className="flex items-end justify-between border-t border-white/10 pt-3.5">
               <div>
                 <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Índice golf</p>
-                <p className="text-white text-[42px] font-black leading-none">{formatHandicap(profile.handicap_index)}</p>
+                <p className="text-[44px] font-black leading-none"
+                  style={{ background: 'linear-gradient(180deg, #ffffff 25%, #9bc9a3)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  {formatHandicap(profile.handicap_index)}
+                </p>
               </div>
               <div className="text-center">
                 <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">P&P</p>
@@ -114,6 +128,10 @@ export default function PerfilPage() {
                 <p className="text-white text-[20px] font-black">{diffs.length}</p>
               </div>
             </div>
+            {/* Embossed member strip */}
+            <p className="mt-4 font-mono text-[9px] tracking-[0.3em] text-white/25 uppercase">
+              BC-{profile._id.slice(-4).toUpperCase()} · Miembro desde {new Date(profile._creationTime).getFullYear()}
+            </p>
           </div>
         </div>
 
