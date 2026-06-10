@@ -84,12 +84,25 @@ function AuthGuard({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+/** True when the browser already animated the navigation itself (iOS edge-swipe
+ *  back/forward) — running our own view transition on top replays the slide. */
+let uaHandledTransition = false
+window.addEventListener('popstate', (e) => {
+  uaHandledTransition = (e as PopStateEvent & { hasUAVisualTransition?: boolean }).hasUAVisualTransition ?? false
+})
+
+/** Scroll position per history entry, restored on pop instead of jumping to top. */
+const scrollPositions = new Map<string, number>()
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+
 /** Drives route changes through the View Transitions API. The rendered
  *  location lags one frame behind the router's so the old screen can be
  *  snapshotted; `data-nav` on <html> picks the animation in globals.css:
  *  push (slide in from the right), pop (slide back out) or fade (tab switch).
- *  Falls back to an instant swap without the API or with reduced motion.
- *  Scroll resets inside the transition so tabs don't share scrollY. */
+ *  Falls back to an instant swap without the API, with reduced motion, or
+ *  when the UA already animated the gesture (hasUAVisualTransition).
+ *  Scroll resets inside the transition so tabs don't share scrollY; pops
+ *  restore the scroll the screen had when it was left. */
 function TransitionRoutes({ children }: { children: ReactNode }) {
   const location = useLocation()
   const navigationType = useNavigationType()
@@ -98,20 +111,27 @@ function TransitionRoutes({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (location.key === displayLocation.key) return
 
+    scrollPositions.set(displayLocation.key, window.scrollY)
+    const isPop = navigationType === 'POP'
+
     const commit = () => {
       flushSync(() => setDisplayLocation(location))
-      window.scrollTo(0, 0)
-      document.scrollingElement?.scrollTo(0, 0)
+      const y = isPop ? scrollPositions.get(location.key) ?? 0 : 0
+      window.scrollTo(0, y)
+      document.scrollingElement?.scrollTo(0, y)
     }
 
-    if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const skipForUA = isPop && uaHandledTransition
+    uaHandledTransition = false
+
+    if (skipForUA || !document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       commit()
       return
     }
 
     const tabSwitch =
       TAB_ROUTES.includes(displayLocation.pathname) && TAB_ROUTES.includes(location.pathname)
-    document.documentElement.dataset.nav = tabSwitch ? 'fade' : navigationType === 'POP' ? 'pop' : 'push'
+    document.documentElement.dataset.nav = tabSwitch ? 'fade' : isPop ? 'pop' : 'push'
     document.startViewTransition(commit).finished.finally(() => {
       delete document.documentElement.dataset.nav
     })
