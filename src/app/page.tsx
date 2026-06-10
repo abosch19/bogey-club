@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { scoreChipClass } from '@/lib/golf'
+import { ScoreMark } from '@/components/ui/score-mark'
 import { Avatar } from '@/components/ui/avatar'
 
 type LeagueStanding = { profile_id: string; name: string; total_points: number }
@@ -91,7 +91,7 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
                 return (
                   <td key={h.hole_number} className="py-1.5 px-0.5">
                     {s != null
-                      ? <div className={`w-[20px] h-[20px] rounded-[5px] flex items-center justify-center font-mono text-[10px] font-bold mx-auto ${scoreChipClass(d!)}`}>{s}</div>
+                      ? <ScoreMark strokes={s} delta={d!} size={20} />
                       : <span className="text-[#c4bfb5] text-[12px]">·</span>}
                   </td>
                 )

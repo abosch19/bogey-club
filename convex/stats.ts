@@ -18,8 +18,9 @@ export const forUser = query({
         .withIndex('by_profile', (q) => q.eq('profileId', me._id))
         .collect()
     )
-      .sort((a, b) => (a.played_at < b.played_at ? -1 : 1))
+      .sort((a, b) => (a.played_at < b.played_at ? 1 : -1))
       .slice(0, 20)
+      .reverse()
       .map((d) => ({ differential: d.differential, played_at: d.played_at, is_pp: d.is_pp ?? false }))
 
     const otherPlayers = (await ctx.db.query('profiles').collect()).flatMap((p) =>

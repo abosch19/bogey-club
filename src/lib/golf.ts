@@ -1,11 +1,3 @@
-// Returns Tailwind classes for score chip
-export function scoreChipClass(delta: number): string {
-  if (delta <= -1) return 'bg-[#dde7fb] text-[#2a6fdb]'
-  if (delta === 0)  return 'bg-[#d9eedd] text-[#1f8a5b]'
-  if (delta === 1)  return 'bg-[#f6e6c4] text-[#9b6e1a]'
-  return 'bg-[#fadcd6] text-[#a83a25]'
-}
-
 // ─── Handicap helpers ────────────────────────────────────────
 export function strokesReceived(courseHcp: number, holeStrokeIndex: number): number {
   let s = 0

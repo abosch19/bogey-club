@@ -3,7 +3,8 @@ import { useState, Suspense, Fragment } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
-import { scoreChipClass, stablefordPts, strokesReceived } from '@/lib/golf'
+import { stablefordPts, strokesReceived } from '@/lib/golf'
+import { ScoreMark } from '@/components/ui/score-mark'
 import { Link } from 'react-router'
 import { Drawer } from 'vaul'
 import { HoleSheet } from '@/components/HoleSheet'
@@ -71,7 +72,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                       const s = getScore(p.id, h.hole_number)
                       const d = s != null ? s - h.par : null
                       const chip = s != null
-                        ? <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold ${scoreChipClass(d!)}`}>{s}</div>
+                        ? <ScoreMark strokes={s} delta={d!} size={22} />
                         : <span className="text-[#c4bfb5] text-[13px]">·</span>
                       return (
                         <td key={h.hole_number} className="py-1.5 px-0.5">
@@ -114,7 +115,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                           )}
                           {s != null ? (
                             <div className="text-center">
-                              <div className={`w-[22px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[11px] font-bold mx-auto ${scoreChipClass(s - h.par)}`}>{s}</div>
+                              <ScoreMark strokes={s} delta={s - h.par} size={22} />
                               {pts !== null && (
                                 <p className="font-mono text-[9px] font-black leading-none mt-0.5"
                                   style={{ color: pts>=3?'#2a6fdb':pts===2?'#1f8a5b':pts===1?'#9b6e1a':'#a83a25' }}>
@@ -482,6 +483,8 @@ type ScorecardHeaderProps = {
   myScoresCount: number
   holesCount: number
   getTotal: (pid: string) => number
+  /** Strokes over/under par across the holes the player has scored so far. */
+  getDelta: (pid: string) => number
   viewMode: ViewMode
   setViewMode: (m: ViewMode) => void
   matchplayResult: MatchplayResult | null
@@ -490,7 +493,7 @@ type ScorecardHeaderProps = {
 
 function ScorecardHeader({
   roundId, myId, courseName, modes, players, customBet, allProfiles, isPractice, isActive, completed,
-  myScoresCount, holesCount, getTotal, viewMode, setViewMode, matchplayResult, availableModes,
+  myScoresCount, holesCount, getTotal, getDelta, viewMode, setViewMode, matchplayResult, availableModes,
 }: ScorecardHeaderProps) {
   return (
     <div className="safe-top px-[14px] pt-3 pb-2">
@@ -507,31 +510,43 @@ function ScorecardHeader({
       </div>
 
       {/* Mini info bar — morph target of the round cards in home/stats */}
-      <div className="flex items-center justify-between bg-white rounded-[16px] px-3 py-2 border border-[#e5e0d4] mb-2"
+      <div className="bg-white rounded-[16px] px-3.5 py-3 border border-[#e5e0d4] mb-2"
         style={{ viewTransitionName: 'round-card' }}>
-        <div>
-          <p className="font-bold text-[13px] text-[#0e1a16] leading-tight">{courseName}</p>
-          <div className="flex gap-1.5 mt-0.5 flex-wrap">
-            {modes.map(m => <span key={m} className="font-mono text-[9px] text-[#6b7a72] bg-[#f4f1e9] px-2 py-0.5 rounded-full uppercase">{m === 'stroke' ? 'Stroke' : m === 'stableford' ? 'Stableford' : m === 'matchplay_hcp' ? 'Matchplay Hcp' : m}</span>)}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-bold text-[15px] text-[#0e1a16] leading-tight truncate">{courseName}</p>
+            <div className="flex gap-1.5 mt-1 flex-wrap">
+              {modes.map(m => <span key={m} className="font-mono text-[9px] text-[#6b7a72] bg-[#f4f1e9] px-2 py-0.5 rounded-full uppercase">{m === 'stroke' ? 'Stroke' : m === 'stableford' ? 'Stableford' : m === 'matchplay_hcp' ? 'Matchplay Hcp' : m}</span>)}
+            </div>
           </div>
+          {!completed && (
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <BetControl roundId={roundId} customBet={customBet} />
+              <EditPlayersControl roundId={roundId} myId={myId} players={players} allProfiles={allProfiles} isPractice={isPractice} isActive={isActive} />
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          {/* Player totals mini */}
+        {/* Live score strip: total + over/under par through the holes played */}
+        <div className="mt-2.5 pt-2.5 border-t border-[#efebe1] flex items-center gap-x-5 gap-y-2 flex-wrap">
           {players.map(p => {
             const total = getTotal(p.id)
+            const delta = getDelta(p.id)
             return (
-              <div key={p.id} className="text-center">
-                <Avatar name={p.name} size={28} className="mx-auto" />
-                {total > 0 && <p className="font-mono text-[11px] font-black text-[#0e1a16] mt-0.5">{total}</p>}
+              <div key={p.id} className="flex items-center gap-2">
+                <Avatar name={p.name} size={28} />
+                {total > 0 ? (
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-mono text-[20px] font-black text-[#0e1a16] leading-none">{total}</span>
+                    <span className="font-mono text-[12px] font-bold" style={{ color: delta <= 0 ? '#1f8a5b' : '#9b6e1a' }}>
+                      {delta > 0 ? `+${delta}` : delta === 0 ? 'E' : delta}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[#c4bfb5] text-[13px] font-mono">—</span>
+                )}
               </div>
             )
           })}
-          {!completed && (
-            <>
-              <BetControl roundId={roundId} customBet={customBet} />
-              <EditPlayersControl roundId={roundId} myId={myId} players={players} allProfiles={allProfiles} isPractice={isPractice} isActive={isActive} />
-            </>
-          )}
         </div>
       </div>
 
@@ -578,10 +593,17 @@ function ScoreLegend({ viewMode }: ScoreLegendProps) {
     <div className="flex items-center justify-center gap-3 py-2 flex-wrap">
       {viewMode === 'stroke' ? (
         <>
-          <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#dde7fb]"/><span className="text-[10px] text-[#6b7a72]">Eagle/Birdie</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#d9eedd]"/><span className="text-[10px] text-[#6b7a72]">Par</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#f6e6c4]"/><span className="text-[10px] text-[#6b7a72]">Bogey</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] bg-[#fadcd6]"/><span className="text-[10px] text-[#6b7a72]">Doble+</span></div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded-full border-[1.5px] border-[#0e1a16] flex items-center justify-center"><div className="w-2 h-2 rounded-full border border-[#0e1a16]"/></div>
+            <span className="text-[10px] text-[#6b7a72]">Eagle</span>
+          </div>
+          <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-full border-[1.5px] border-[#0e1a16]"/><span className="text-[10px] text-[#6b7a72]">Birdie</span></div>
+          <div className="flex items-center gap-1.5"><span className="text-[10px] text-[#6b7a72]">Par</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded-[3px] border-[1.5px] border-[#0e1a16]"/><span className="text-[10px] text-[#6b7a72]">Bogey</span></div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded-[3px] border-[1.5px] border-[#0e1a16] flex items-center justify-center"><div className="w-2 h-2 rounded-[1px] border border-[#0e1a16]"/></div>
+            <span className="text-[10px] text-[#6b7a72]">Doble+</span>
+          </div>
         </>
       ) : viewMode === 'stableford' ? (
         <>
@@ -716,6 +738,8 @@ function TarjetaPage() {
     // Each displayed hole (incl. 10-18 in 9_twice) has its own stored score.
     scores.find(s => s.profile_id === pid && s.hole_number === h)?.strokes ?? null
   const getTotal  = (pid: string) => holes.reduce((a, h) => { const s = getScore(pid, h.hole_number); return s ? a + s : a }, 0)
+  /** Over/under par across the holes the player has scored ("vas +3"). */
+  const getDelta  = (pid: string) => holes.reduce((a, h) => { const s = getScore(pid, h.hole_number); return s ? a + (s - h.par) : a }, 0)
 
   const myScores   = holes.filter(h => getScore(myId, h.hole_number) != null).map(h => h.hole_number)
   const nextHole   = holes.find(h => !myScores.includes(h.hole_number))
@@ -869,6 +893,7 @@ function TarjetaPage() {
         myScoresCount={myScores.length}
         holesCount={holes.length}
         getTotal={getTotal}
+        getDelta={getDelta}
         viewMode={viewMode}
         setViewMode={setViewMode}
         matchplayResult={matchplayResult}
