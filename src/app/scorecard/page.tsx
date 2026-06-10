@@ -5,7 +5,6 @@ import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { stablefordPts, strokesReceived } from '@/lib/golf'
 import { ScoreMark } from '@/components/ui/score-mark'
-import { Link } from 'react-router'
 import { Drawer } from 'vaul'
 import { HoleSheet } from '@/components/HoleSheet'
 import { Avatar, avatarColor } from '@/components/ui/avatar'
@@ -496,14 +495,15 @@ function ScorecardHeader({
   roundId, myId, courseName, modes, players, customBet, allProfiles, isPractice, isActive, completed,
   myScoresCount, holesCount, getTotal, getDelta, viewMode, setViewMode, matchplayResult, availableModes,
 }: ScorecardHeaderProps) {
+  const navigate = useNavigate()
   return (
     <div className="safe-top px-[14px] pt-3 pb-2">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-1 text-[#6b7a72] font-semibold text-[13px]">
+          <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-1 text-[#6b7a72] font-semibold text-[13px]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Inicio
-          </Link>
+            Atrás
+          </button>
         </div>
         {completed
           ? <span className="font-mono text-[9px] font-bold text-[#1f8a5b] bg-[#d9eedd] px-2 py-1 rounded-full uppercase tracking-wide">Firmada</span>
