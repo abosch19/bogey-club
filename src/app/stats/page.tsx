@@ -5,6 +5,7 @@ import { api } from '@convex/_generated/api'
 import { formatDate, formatHandicap } from '@/lib/golf'
 import { Avatar, avatarColor } from '@/components/ui/avatar'
 import { HeroCard } from '@/components/ui/hero-card'
+import { Segmented } from '@/components/ui/segmented'
 
 function Sparkline({ values, color = '#1f8a5b' }: { values: number[]; color?: string }) {
   if (values.length < 2) return null
@@ -49,6 +50,11 @@ function CountUp({ value, format }: { value: number; format: (v: number) => stri
 }
 
 const PAR_TYPES = [3, 4, 5]
+
+const COURSE_TYPES = [
+  { key: 'golf', label: 'Golf' },
+  { key: 'pp',   label: 'Pitch & Putt' },
+] as const
 
 const SECTIONS = [
   { key: 'general', label: 'General' },
@@ -222,25 +228,9 @@ export default function StatsPage() {
       <div className="sticky top-0 bg-[#f4f1e9]/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
         <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16] mb-2">Estadísticas</h1>
-        <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] mb-2">
-          {SECTIONS.map(s => (
-            <button type="button" key={s.key} onClick={() => setSection(s.key)}
-              className="flex-1 py-1.5 rounded-full text-[11px] font-bold transition"
-              style={{ backgroundColor: section === s.key ? '#0e1a16' : 'transparent', color: section === s.key ? '#fff' : '#6b7a72' }}>
-              {s.label}
-            </button>
-          ))}
-        </div>
+        <Segmented options={SECTIONS} value={section} onChange={setSection} className="mb-2" />
         {/* Golf / P&P filter — applies to every stat */}
-        <div className="flex gap-1.5">
-          {([['golf','Golf'],['pp','Pitch & Putt']] as const).map(([key, label]) => (
-            <button type="button" key={key} onClick={() => setCourseType(key)}
-              className="flex-1 py-1.5 rounded-full text-[11px] font-bold border transition"
-              style={{ backgroundColor: courseType === key ? '#1f8a5b' : '#fff', color: courseType === key ? '#fff' : '#6b7a72', borderColor: courseType === key ? '#1f8a5b' : '#e5e0d4' }}>
-              {label}
-            </button>
-          ))}
-        </div>
+        <Segmented options={COURSE_TYPES} value={courseType} onChange={setCourseType} color="#1f8a5b" />
       </div>
       <div className="px-[14px] pt-4 pb-4">
         {section === 'general' && (
