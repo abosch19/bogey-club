@@ -1,5 +1,5 @@
 import { useSearchParams, useNavigate } from 'react-router'
-import { useState, Suspense, Fragment } from 'react'
+import { useState, Suspense } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -12,7 +12,7 @@ import { PlayerLink } from '@/components/ui/player-link'
 
 type Player = { id: string; name: string; course_handicap: number; is_guest: boolean; avatar_url: string | null }
 type Hole   = { hole_number: number; par: number; stroke_index: number }
-type Score  = { profile_id: string; hole_number: number; strokes: number | null; putts: number | null; gir: boolean | null; fairway: boolean | null; penalties: number | null }
+type Score  = { profile_id: string; hole_number: number; strokes: number | null; putts: number | null; gir: boolean | null; fairway: boolean | null; penalties: number | null; in_bunker: boolean | null }
 
 const SPINNER = <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 
@@ -227,77 +227,91 @@ function Clasificacion({ ranking, getTotal, realPar }: ClasificacionProps) {
   )
 }
 
-type RoundStatsProps = { players: Player[]; scores: Score[]; holes: Hole[] }
+type RoundStatsProps = { players: Player[]; scores: Score[]; holes: Hole[]; myId: string }
 
-/** Per-player stats of a finished round (putts, fairways, GIR, penalties, score distribution). */
-function RoundStats({ players, scores, holes }: RoundStatsProps) {
+/** Per-player stats of a finished round — same comparative table as Stats > Social > Métricas. */
+function RoundStats({ players, scores, holes, myId }: RoundStatsProps) {
   const parByHole = new Map(holes.map(h => [h.hole_number, h.par]))
-  const rows = players.map(p => {
-    const mine     = scores.filter(s => s.profile_id === p.id && s.strokes != null)
-    const putts    = mine.some(s => s.putts != null) ? mine.reduce((a, s) => a + (s.putts ?? 0), 0) : null
-    const fwTotal  = mine.filter(s => s.fairway !== null).length
-    const fw       = fwTotal > 0 ? Math.round(mine.filter(s => s.fairway === true).length / fwTotal * 100) : null
-    const gir      = mine.some(s => s.gir !== null) && mine.length > 0
-      ? Math.round(mine.filter(s => s.gir === true).length / mine.length * 100) : null
-    const penalties = mine.some(s => s.penalties != null) ? mine.reduce((a, s) => a + (s.penalties ?? 0), 0) : null
-    // Score distribution vs par (same buckets and colors as the stats page).
+  const cols = players.map(p => {
+    const mine   = scores.filter(s => s.profile_id === p.id && s.strokes != null)
+    const played = mine.length
+    const fwTotal = mine.filter(s => s.fairway !== null).length
     const deltas = mine.flatMap(s => {
       const par = parByHole.get(s.hole_number)
       return par != null ? [s.strokes! - par] : []
     })
-    const dist = [
-      { label: 'Birdie', n: deltas.filter(d => d <= -1).length, color: '#2a6fdb', bg: '#dde7fb' },
-      { label: 'Par',    n: deltas.filter(d => d === 0).length,  color: '#1f8a5b', bg: '#d9eedd' },
-      { label: 'Bogey',  n: deltas.filter(d => d === 1).length,  color: '#9b6e1a', bg: '#f6e6c4' },
-      { label: 'Doble+', n: deltas.filter(d => d >= 2).length,   color: '#a83a25', bg: '#fadcd6' },
-    ]
-    return { p, putts, fw, gir, penalties, dist, played: mine.length }
+    return {
+      p, played,
+      total:     played ? mine.reduce((a, s) => a + (s.strokes ?? 0), 0) : null,
+      gir:       mine.some(s => s.gir !== null) && played > 0 ? Math.round(mine.filter(s => s.gir === true).length / played * 100) : null,
+      fw:        fwTotal > 0 ? Math.round(mine.filter(s => s.fairway === true).length / fwTotal * 100) : null,
+      putts:     mine.some(s => s.putts != null) ? mine.reduce((a, s) => a + (s.putts ?? 0), 0) : null,
+      penalties: mine.some(s => s.penalties != null) ? mine.reduce((a, s) => a + (s.penalties ?? 0), 0) : null,
+      bunkers:   played ? mine.filter(s => s.in_bunker === true).length : null,
+      birdies:   played ? deltas.filter(d => d <= -1).length : null,
+      pars:      played ? deltas.filter(d => d === 0).length : null,
+      bogeys:    played ? deltas.filter(d => d === 1).length : null,
+      doubles:   played ? deltas.filter(d => d >= 2).length : null,
+    }
   })
-  if (!rows.some(r => r.played > 0)) return null
+  if (!cols.some(c => c.played > 0)) return null
+
+  const rows = [
+    { label: 'Golpes',   vals: cols.map(c => c.total),     pct: false, lower: true },
+    { label: 'GIR %',    vals: cols.map(c => c.gir),       pct: true,  lower: false },
+    { label: 'Calles %', vals: cols.map(c => c.fw),        pct: true,  lower: false },
+    { label: 'Putts',    vals: cols.map(c => c.putts),     pct: false, lower: true },
+    { label: 'Penaltis', vals: cols.map(c => c.penalties), pct: false, lower: true },
+    { label: 'Búnkers',  vals: cols.map(c => c.bunkers),   pct: false, lower: true },
+    { label: 'Birdies',  vals: cols.map(c => c.birdies),   pct: false, lower: false },
+    { label: 'Pares',    vals: cols.map(c => c.pars),      pct: false, lower: false },
+    { label: 'Bogeys',   vals: cols.map(c => c.bogeys),    pct: false, lower: true },
+    { label: 'Doble+',   vals: cols.map(c => c.doubles),   pct: false, lower: true },
+  ]
+
+  const compare = cols.filter(c => c.played > 0).length > 1
+  const grid = { display: 'grid', gridTemplateColumns: `minmax(76px, 1.1fr) repeat(${cols.length}, 1fr)` }
 
   return (
-    <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
-      <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-2">Stats de la ronda</p>
-      <table className="w-full text-center">
-        <thead>
-          <tr>
-            <td aria-label="Jugador"/>
-            <td className="font-mono text-[9px] text-[#6b7a72] uppercase pb-1.5">Putts</td>
-            <td className="font-mono text-[9px] text-[#6b7a72] uppercase pb-1.5">FW</td>
-            <td className="font-mono text-[9px] text-[#6b7a72] uppercase pb-1.5">GIR</td>
-            <td className="font-mono text-[9px] text-[#6b7a72] uppercase pb-1.5">Penaltis</td>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(({ p, putts, fw, gir, penalties, dist }) => (
-            <Fragment key={p.id}>
-              <tr className="border-t border-[#efebe1]">
-                <td className="pt-2 pb-1 text-left">
-                  <div className="flex items-center gap-2">
-                    <PlayerLink profileId={p.is_guest ? null : p.id}><Avatar name={p.name} src={p.avatar_url} size={24} /></PlayerLink>
-                    <span className="font-semibold text-[12px] text-[#0e1a16]">{p.name.split(' ')[0]}</span>
+    <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+      <div className="px-4 py-3 border-b border-[#efebe1]">
+        <p className="font-bold text-[14px] text-[#0e1a16]">Stats de la ronda</p>
+      </div>
+      {/* Column headers */}
+      <div className="border-b border-[#efebe1] bg-[#f4f1e9]" style={grid}>
+        <div className="py-2 px-4"/>
+        {cols.map(({ p }, i) => (
+          <div key={p.id || i} className="py-2 px-1 text-center">
+            <PlayerLink profileId={p.is_guest ? null : p.id}><Avatar name={p.name} src={p.avatar_url} size={24} className="mx-auto mb-0.5" /></PlayerLink>
+            <p className="font-mono text-[9px] font-bold uppercase truncate" style={{ color: p.id === myId ? '#1f8a5b' : avatarColor(p.name) }}>
+              {p.id === myId ? 'Tú' : p.name.split(' ')[0]}
+            </p>
+          </div>
+        ))}
+      </div>
+      {/* Rows */}
+      <div className="divide-y divide-[#efebe1]">
+        {rows.map(row => {
+          const nums  = row.vals.filter((x): x is number => x != null)
+          const best  = compare && nums.length > 1 ? (row.lower ? Math.min(...nums) : Math.max(...nums)) : null
+          const worst = compare && nums.length > 1 ? (row.lower ? Math.max(...nums) : Math.min(...nums)) : null
+          return (
+            <div key={row.label} className="px-4 py-2.5" style={grid}>
+              <p className="text-[12px] text-[#6b7a72] py-0.5">{row.label}</p>
+              {row.vals.map((v, i) => {
+                const wins = v != null && best != null && best !== worst && v === best
+                return (
+                  <div key={cols[i].p.id || i} className="text-center py-0.5 rounded-[6px] mx-1" style={{ backgroundColor: wins ? '#d9eedd' : 'transparent' }}>
+                    <p className="font-mono text-[14px] font-black" style={{ color: wins ? '#1f8a5b' : '#0e1a16' }}>
+                      {v != null ? `${v}${row.pct ? '%' : ''}` : '–'}
+                    </p>
                   </div>
-                </td>
-                <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{putts ?? '–'}</td>
-                <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{fw != null ? `${fw}%` : '–'}</td>
-                <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{gir != null ? `${gir}%` : '–'}</td>
-                <td className="font-mono text-[13px] font-bold text-[#0e1a16]">{penalties ?? '–'}</td>
-              </tr>
-              <tr>
-                <td colSpan={5} className="pb-2.5 text-left">
-                  <div className="flex gap-1.5 flex-wrap pl-8">
-                    {dist.map(c => (
-                      <span key={c.label} className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: c.bg, color: c.color }}>
-                        {c.n} {c.label}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-              </tr>
-            </Fragment>
-          ))}
-        </tbody>
-      </table>
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -711,7 +725,7 @@ function TarjetaPage() {
   const totalHoles  = holeMode === '9_twice' ? 18 : holeMode === 'front' || holeMode === 'back' ? 9 : base
   const allHoles: Hole[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
   const players: Player[] = (data?.players ?? []).map(p => ({ id: p.profileId ?? '', name: p.name ?? 'Inv', course_handicap: p.course_handicap ?? 0, is_guest: p.is_guest, avatar_url: p.avatar_url ?? null }))
-  const scores: Score[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null, putts: s.putts ?? null, gir: s.gir ?? null, fairway: s.fairway ?? null, penalties: s.penalties ?? null }))
+  const scores: Score[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null, putts: s.putts ?? null, gir: s.gir ?? null, fairway: s.fairway ?? null, penalties: s.penalties ?? null, in_bunker: s.in_bunker ?? null }))
   const modes = (data?.modes ?? []).length ? (data?.modes ?? []) : ['stroke']
 
   // Bet input value: derived from notes (the live-edited value lives inside BetControl)
@@ -919,7 +933,7 @@ function TarjetaPage() {
         )}
 
         {/* Stats of the finished round */}
-        {completed && <RoundStats players={players} scores={scores} holes={holes} />}
+        {completed && <RoundStats players={players} scores={scores} holes={holes} myId={myId} />}
       </div>
 
       {/* CTA */}

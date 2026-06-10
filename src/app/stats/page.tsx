@@ -221,7 +221,7 @@ export default function StatsPage() {
       {/* Header sticky */}
       <div className="sticky top-0 bg-[#f4f1e9]/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
-        <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16] mb-2">Stats</h1>
+        <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16] mb-2">Estadísticas</h1>
         <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] mb-2">
           {SECTIONS.map(s => (
             <button type="button" key={s.key} onClick={() => setSection(s.key)}
@@ -257,9 +257,8 @@ export default function StatsPage() {
         )}
         {section === 'social' && (
           <SocialSection
-            rounds={rounds} n={n} totalWins={totalWins} companions={companions} nemesis={nemesis}
-            allPlayers={allPlayers} myId={myId} winPhrase={winPhrase} lossPhrase={lossPhrase}
-            avgScore={avgScore} girPct={girPct} fwPct={fwPct} avgPutts={avgPutts}
+            rounds={rounds} statScores={statScores} n={n} totalWins={totalWins} companions={companions} nemesis={nemesis}
+            winPhrase={winPhrase} lossPhrase={lossPhrase}
           />
         )}
         {/* key=courseType resets the selected course when switching golf/P&P */}
@@ -517,13 +516,11 @@ function HoyosSection({
 
 // ── SOCIAL ───────────────────────────────────────────────────
 function SocialSection({
-  rounds, n, totalWins, companions, nemesis, allPlayers, myId, winPhrase, lossPhrase,
-  avgScore, girPct, fwPct, avgPutts,
+  rounds, statScores, n, totalWins, companions, nemesis, winPhrase, lossPhrase,
 }: {
-  rounds: RoundStat[]; n: number; totalWins: number; companions: Companion[]
-  nemesis: Companion | null; allPlayers: OtherPlayer[]; myId: string
+  rounds: RoundStat[]; statScores: StatScore[]; n: number; totalWins: number; companions: Companion[]
+  nemesis: Companion | null
   winPhrase: string; lossPhrase: string
-  avgScore: number | null; girPct: number | null; fwPct: number | null; avgPutts: string | null
 }) {
   const [comparePlayerId, setComparePlayerId] = useState<string | null>(null)
   const [socialPeriod, setSocialPeriod]       = useState<'all'|'10'|'5'|'3'>('all')
@@ -624,12 +621,26 @@ function SocialSection({
           const other = comparePlayerId ? companions.find(c => c.id === comparePlayerId) : null
           const otherRounds = other ? rounds.filter(r => r.players.includes(other.id)) : []
           const oSocialR = socialPeriod === 'all' ? otherRounds : otherRounds.slice(0, parseInt(socialPeriod))
-          const oAvg  = oSocialR.length ? Math.round(oSocialR.reduce((a,r)=>a+r.total,0)/oSocialR.length) : null
-          const oGir  = oSocialR.length ? Math.round(oSocialR.reduce((a,r)=>a+(r.gir_total>0?r.gir/r.gir_total*100:0),0)/oSocialR.length) : null
-          const oFw   = oSocialR.length ? Math.round(oSocialR.reduce((a,r)=>a+(r.fairways_total>0?r.fairways/r.fairways_total*100:0),0)/oSocialR.length) : null
-          const oPutt = oSocialR.length ? parseFloat((oSocialR.reduce((a,r)=>a+r.putts,0)/oSocialR.length).toFixed(1)) : null
-          const oPen  = oSocialR.length ? parseFloat((oSocialR.reduce((a,r)=>a+r.penalties,0)/oSocialR.length).toFixed(1)) : null
-          const oBunk = oSocialR.length ? parseFloat((oSocialR.reduce((a,r)=>a+r.bunkers,0)/oSocialR.length).toFixed(1)) : null
+          // The other player's per-round stats come from their own scores — RoundStat only holds mine
+          const oStats = other ? oSocialR.flatMap(r => {
+            const oS = statScores.filter(s => s.round_id === r.id && s.profile_id === other.id)
+            const total = oS.reduce((a, s) => a + (s.strokes ?? 0), 0)
+            if (total <= 0) return []
+            return [{
+              total,
+              putts: oS.reduce((a, s) => a + (s.putts ?? 0), 0),
+              gir: oS.filter(s => s.gir).length, gir_total: oS.length,
+              fairways: oS.filter(s => s.fairway === true).length, fairways_total: oS.filter(s => s.fairway !== null).length,
+              penalties: oS.reduce((a, s) => a + (s.penalties ?? 0), 0),
+              bunkers: oS.filter(s => s.in_bunker).length,
+            }]
+          }) : []
+          const oAvg  = oStats.length ? Math.round(oStats.reduce((a,r)=>a+r.total,0)/oStats.length) : null
+          const oGir  = oStats.length ? Math.round(oStats.reduce((a,r)=>a+(r.gir_total>0?r.gir/r.gir_total*100:0),0)/oStats.length) : null
+          const oFw   = oStats.length ? Math.round(oStats.reduce((a,r)=>a+(r.fairways_total>0?r.fairways/r.fairways_total*100:0),0)/oStats.length) : null
+          const oPutt = oStats.length ? parseFloat((oStats.reduce((a,r)=>a+r.putts,0)/oStats.length).toFixed(1)) : null
+          const oPen  = oStats.length ? parseFloat((oStats.reduce((a,r)=>a+r.penalties,0)/oStats.length).toFixed(1)) : null
+          const oBunk = oStats.length ? parseFloat((oStats.reduce((a,r)=>a+r.bunkers,0)/oStats.length).toFixed(1)) : null
 
           const rows = [
             { label: 'Media golpes', mine: sAvgScore ? `${sAvgScore} (${sAvgDelta!=null&&sAvgDelta>0?'+':''}${sAvgDelta})` : '–', theirs: oAvg ? `${oAvg}` : '–', mineN: sAvgScore, theirN: oAvg, lower: true },
@@ -671,15 +682,6 @@ function SocialSection({
       {/* Nemesis — solo si te han ganado alguna vez */}
       <SocialNemesis nemesis={nemesis} />
 
-      {/* Comparativa con usuario seleccionado */}
-      {companions.length > 0 && (
-        <SocialCompareMetrics
-          rounds={rounds} companions={companions} allPlayers={allPlayers} myId={myId}
-          comparePlayerId={comparePlayerId} setComparePlayerId={setComparePlayerId}
-          avgScore={avgScore} girPct={girPct} fwPct={fwPct} avgPutts={avgPutts}
-        />
-      )}
-
       {/* Head-to-head con V-E-D */}
       {companions.length > 0 && <SocialHeadToHead companions={companions} />}
 
@@ -701,96 +703,6 @@ function SocialNemesis({ nemesis }: { nemesis: Companion | null }) {
         </div>
         <p className="text-[13px] text-[#a83a25] font-semibold">te ganó {nemesis.losses}×</p>
       </div>
-    </div>
-  )
-}
-
-function SocialCompareMetrics({
-  rounds, companions, allPlayers, myId, comparePlayerId, setComparePlayerId,
-  avgScore, girPct, fwPct, avgPutts,
-}: {
-  rounds: RoundStat[]; companions: Companion[]; allPlayers: OtherPlayer[]; myId: string
-  comparePlayerId: string | null; setComparePlayerId: (id: string | null) => void
-  avgScore: number | null; girPct: number | null; fwPct: number | null; avgPutts: string | null
-}) {
-  return (
-    <div>
-      <h2 className="text-[14px] font-bold text-[#0e1a16] mb-2">Comparar métricas</h2>
-      {/* Player selector */}
-      <div className="flex gap-2 flex-wrap mb-3">
-        {companions.map(c => (
-          <button type="button" key={c.id} onClick={() => setComparePlayerId(comparePlayerId === c.id ? null : c.id)}
-            className="flex items-center gap-2 px-3 py-2 rounded-full border transition text-[12px] font-bold"
-            style={{ backgroundColor: comparePlayerId === c.id ? avatarColor(c.name) : '#fff', borderColor: comparePlayerId === c.id ? avatarColor(c.name) : '#e5e0d4', color: comparePlayerId === c.id ? '#fff' : '#0e1a16' }}>
-            <Avatar name={c.name} size={20} />
-            {c.name.split(' ')[0]}
-          </button>
-        ))}
-      </div>
-
-      {/* Side-by-side comparison */}
-      {comparePlayerId && (() => {
-        const other = companions.find(c => c.id === comparePlayerId)
-        if (!other) return null
-        // Get other's rounds stats
-        const otherRounds = rounds.filter(r => r.players.includes(comparePlayerId))
-        const oAvgScore = otherRounds.length ? Math.round(otherRounds.reduce((a, r) => a + r.total, 0) / otherRounds.length) : null
-        const oGirPct   = otherRounds.length ? Math.round(otherRounds.reduce((a, r) => a + (r.gir_total > 0 ? r.gir / r.gir_total * 100 : 0), 0) / otherRounds.length) : null
-        const oFwPct    = otherRounds.length ? Math.round(otherRounds.reduce((a, r) => a + (r.fairways_total > 0 ? r.fairways / r.fairways_total * 100 : 0), 0) / otherRounds.length) : null
-        const oPutts    = otherRounds.length ? parseFloat((otherRounds.reduce((a, r) => a + r.putts, 0) / otherRounds.length).toFixed(1)) : null
-
-        const rows = [
-          { label: 'Media golpes', mine: avgScore, theirs: oAvgScore, lower: true },
-          { label: 'GIR %',         mine: girPct != null ? `${girPct}%` : null, theirs: oGirPct != null ? `${oGirPct}%` : null, lower: false },
-          { label: 'Calles %',      mine: fwPct != null ? `${fwPct}%` : null,  theirs: oFwPct != null ? `${oFwPct}%` : null,  lower: false },
-          { label: 'Putts / ronda', mine: avgPutts, theirs: oPutts, lower: true },
-        ]
-
-        return (
-          <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
-            {/* Header */}
-            <div className="grid grid-cols-3 border-b border-[#efebe1]">
-              <div className="py-3 px-3"/>
-              <div className="py-3 px-3 text-center border-l border-[#efebe1]">
-                <Avatar name={(allPlayers.find(p => p.id === myId) as any)?.name ?? 'Tú'} size={28} className="mx-auto mb-0.5" />
-                <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Tú</p>
-              </div>
-              <div className="py-3 px-3 text-center border-l border-[#efebe1]">
-                <Avatar name={other.name} size={28} className="mx-auto mb-0.5" />
-                <p className="font-mono text-[9px] text-[#6b7a72] uppercase truncate">{other.name.split(' ')[0]}</p>
-              </div>
-            </div>
-            {rows.map(row => {
-              const mineN = typeof row.mine === 'number' ? row.mine : null
-              const theirN = typeof row.theirs === 'number' ? row.theirs : null
-              const mineWins  = mineN !== null && theirN !== null && (row.lower ? mineN < theirN : mineN > theirN)
-              const theirWins = mineN !== null && theirN !== null && (row.lower ? theirN < mineN : theirN > mineN)
-              return (
-                <div key={row.label} className="grid grid-cols-3 border-t border-[#efebe1]">
-                  <div className="py-2.5 px-3 flex items-center">
-                    <p className="text-[11px] text-[#6b7a72]">{row.label}</p>
-                  </div>
-                  <div className="py-2.5 px-3 text-center border-l border-[#efebe1]" style={{ backgroundColor: mineWins ? '#d9eedd' : 'transparent' }}>
-                    <p className="font-mono text-[14px] font-black" style={{ color: mineWins ? '#1f8a5b' : '#0e1a16' }}>{row.mine ?? '–'}</p>
-                  </div>
-                  <div className="py-2.5 px-3 text-center border-l border-[#efebe1]" style={{ backgroundColor: theirWins ? '#fadcd6' : 'transparent' }}>
-                    <p className="font-mono text-[14px] font-black" style={{ color: theirWins ? '#a83a25' : '#0e1a16' }}>{row.theirs ?? '–'}</p>
-                  </div>
-                </div>
-              )
-            })}
-            <div className="grid grid-cols-3 border-t border-[#e5e0d4] bg-[#f4f1e9]">
-              <div className="py-2 px-3"><p className="text-[10px] text-[#6b7a72]">Victorias juntos</p></div>
-              <div className="py-2 px-3 text-center border-l border-[#efebe1]">
-                <p className="font-mono text-[13px] font-black text-[#1f8a5b]">{other.wins}</p>
-              </div>
-              <div className="py-2 px-3 text-center border-l border-[#efebe1]">
-                <p className="font-mono text-[13px] font-black text-[#a83a25]">{other.losses}</p>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
     </div>
   )
 }
