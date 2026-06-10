@@ -570,18 +570,29 @@ function ScorecardHeader({
         </div>
       </div>
 
-      {/* Mode tabs */}
-      {availableModes.length > 1 && (
-        <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] mb-2">
-          {availableModes.map(m => (
-            <button type="button" key={m.key} onClick={() => setViewMode(m.key)}
-              className="flex-1 py-1.5 rounded-full text-[11px] font-bold transition"
-              style={{ backgroundColor: viewMode === m.key ? '#0e1a16' : 'transparent', color: viewMode === m.key ? '#fff' : '#6b7a72' }}>
-              {m.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Mode tabs — the dark pill slides to the active tab */}
+      {availableModes.length > 1 && (() => {
+        const activeIdx = Math.max(0, availableModes.findIndex(m => m.key === viewMode))
+        const n = availableModes.length
+        return (
+          <div className="relative flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] mb-2">
+            <div aria-hidden
+              className="absolute top-1 bottom-1 left-1 rounded-full bg-[#0e1a16] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0.28,1)]"
+              style={{
+                // p-1 (4px each side) + gap-1 (4px) between the n buttons
+                width: `calc((100% - ${8 + (n - 1) * 4}px) / ${n})`,
+                transform: `translateX(calc(${activeIdx * 100}% + ${activeIdx * 4}px))`,
+              }} />
+            {availableModes.map(m => (
+              <button type="button" key={m.key} onClick={() => setViewMode(m.key)}
+                className="relative flex-1 py-1.5 rounded-full text-[11px] font-bold transition-colors duration-300"
+                style={{ color: viewMode === m.key ? '#fff' : '#6b7a72' }}>
+                {m.label}
+              </button>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* Matchplay live result */}
       {(viewMode === 'matchplay_hcp' || viewMode === 'matchplay') && matchplayResult && (
