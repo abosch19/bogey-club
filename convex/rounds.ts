@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { query, mutation } from './_generated/server'
+import { query, mutation, internalMutation } from './_generated/server'
 import { getMyProfile, requireProfile, resolvePlayer, indexForCourse } from './helpers'
 import { recalcProfile } from './whs'
 import { courseHandicap } from '../src/lib/golf'
@@ -264,5 +264,60 @@ export const remove = mutation({
 
     await ctx.db.delete(round_id)
     return { ok: true }
+  },
+})
+
+/** Admin/CLI cleanup: delete a round (even signed competitive ones) with full
+ *  fallout — same cascade as `remove`, plus WHS recalc for its players and
+ *  clearing the course record when this round produced it. */
+export const internalRemove = internalMutation({
+  args: { round_id: v.id('rounds') },
+  handler: async (ctx, { round_id }) => {
+    const round = await ctx.db.get(round_id)
+    if (!round) throw new Error('Round not found')
+    const rps = await ctx.db
+      .query('round_players')
+      .withIndex('by_round', (q) => q.eq('roundId', round_id))
+      .collect()
+    const profileIds = rps.flatMap((rp) => (!rp.is_guest && rp.profileId ? [rp.profileId] : []))
+
+    const byRound = async (table: 'scores' | 'round_modes' | 'round_players') =>
+      ctx.db
+        .query(table)
+        .withIndex('by_round', (q) => q.eq('roundId', round_id))
+        .collect()
+    await Promise.all((await byRound('scores')).map((s) => ctx.db.delete(s._id)))
+    await Promise.all((await byRound('round_modes')).map((m) => ctx.db.delete(m._id)))
+    await Promise.all((await byRound('round_players')).map((rp) => ctx.db.delete(rp._id)))
+    const diffs = await ctx.db
+      .query('whs_differentials')
+      .filter((q) => q.eq(q.field('roundId'), round_id))
+      .collect()
+    await Promise.all(diffs.map((d) => ctx.db.delete(d._id)))
+    const tgs = await ctx.db
+      .query('tournament_groups')
+      .withIndex('by_round', (q) => q.eq('roundId', round_id))
+      .collect()
+    await Promise.all(tgs.map((tg) => ctx.db.delete(tg._id)))
+    const lrs = await ctx.db
+      .query('league_rounds')
+      .withIndex('by_round', (q) => q.eq('roundId', round_id))
+      .collect()
+    await Promise.all(lrs.map((lr) => ctx.db.delete(lr._id)))
+    await ctx.db.delete(round_id)
+
+    // WHS indices rebuild from the players' remaining rounds.
+    for (const pid of profileIds) await recalcProfile(ctx, pid)
+
+    // Course record: clear it if this round produced it (same date + a holder who played here).
+    const course = await ctx.db.get(round.courseId)
+    if (
+      course?.record_date === round.date &&
+      course.record_holder_id &&
+      profileIds.some((p) => p === course.record_holder_id)
+    ) {
+      await ctx.db.patch(round.courseId, { record_score: null, record_holder_id: null, record_date: null })
+    }
+    return { ok: true, players_recalced: profileIds.length }
   },
 })
