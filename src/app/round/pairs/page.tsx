@@ -18,7 +18,6 @@ function ParejasPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const courseId   = searchParams.get('course') ?? ''
-  const isPractice = searchParams.get('practice') === 'true'
   const playersParam = searchParams.get('players') ?? ''
   const holeMode   = searchParams.get('hole_mode') ?? 'all'
   const leagueId   = searchParams.get('league') ?? ''
@@ -75,7 +74,6 @@ function ParejasPage() {
     setSaving(true)
     const params = new URLSearchParams({
       course: courseId,
-      practice: String(isPractice),
       players: playersParam,
       hole_mode: holeMode,
       scramble_teams: players.map(p => `${p._id}:${p.team}`).join(','),

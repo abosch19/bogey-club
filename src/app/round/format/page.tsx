@@ -10,7 +10,6 @@ function SeleccionarModalidadPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const courseId   = searchParams.get('course') ?? ''
-  const isPractice = searchParams.get('practice') === 'true'
   const playerIds  = searchParams.get('players')?.split(',').filter(Boolean) ?? []
   const guests     = searchParams.get('guests')?.split('|').filter(Boolean) ?? []
   const leagueId    = searchParams.get('league') ?? ''
@@ -54,7 +53,6 @@ function SeleccionarModalidadPage() {
       if (isScrambleSelected && !scrambleTeams && totalPlayers >= 4) {
         const params = new URLSearchParams({
           course: courseId,
-          practice: String(isPractice),
           players: playerIds.join(','),
           hole_mode: holeMode,
           ...(leagueId ? { league: leagueId } : {}),
@@ -68,7 +66,6 @@ function SeleccionarModalidadPage() {
       const modes = isScrambleSelected ? extras : ['stroke', ...extras]
       const data = await createRound({
         course_id: courseId as Id<'courses'>,
-        is_practice: isPractice,
         player_ids: playerIds as Id<'profiles'>[],
         guests,
         modes,
@@ -257,8 +254,8 @@ function SeleccionarModalidadPage() {
           style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}>
           <span>
             {isScrambleSelected
-              ? `Scramble${isPractice ? ' · Práctica' : ''}`
-              : `Stroke${extras.length > 0 ? ` + ${extras.map(e => GAME_MODES.find(m => m.id === e)?.name.split(' ')[0]).join(' + ')}` : ' Play'}${isPractice ? ' · Práctica' : ''}`
+              ? 'Scramble'
+              : `Stroke${extras.length > 0 ? ` + ${extras.map(e => GAME_MODES.find(m => m.id === e)?.name.split(' ')[0]).join(' + ')}` : ' Play'}`
             }
           </span>
           <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">

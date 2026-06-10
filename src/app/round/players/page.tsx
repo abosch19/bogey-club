@@ -10,7 +10,6 @@ function SeleccionarJugadoresPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const courseId = searchParams.get('course') ?? ''
-  const isPractice    = searchParams.get('practice') === 'true'
   const leagueId      = searchParams.get('league') ?? ''
   const holeMode      = searchParams.get('hole_mode') ?? 'all'
   const prefillPlayers = searchParams.get('prefill_players')?.split(',').filter(Boolean) ?? []
@@ -85,7 +84,6 @@ function SeleccionarJugadoresPage() {
       const params = new URLSearchParams({
         course: courseId,
         players: playerIds,
-        practice: String(isPractice),
         ...(guestData ? { guests: guestData } : {}),
       })
       navigate(`/tournament/new?${params}`)
@@ -96,7 +94,6 @@ function SeleccionarJugadoresPage() {
 
     const params = new URLSearchParams({
       course: courseId,
-      practice: String(isPractice),
       players: playerIds,
       hole_mode: holeMode,
       ...(guestData ? { guests: guestData } : {}),

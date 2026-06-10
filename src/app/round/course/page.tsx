@@ -21,7 +21,6 @@ const isPP = (name: string) => name.startsWith('P&P')
 function SeleccionarCampoPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const isPractice = searchParams.get('practice') === 'true'
   const leagueId   = searchParams.get('league') ?? ''
 
   const courses = useQuery(api.courses.listForNewRound) as Course[] | undefined
@@ -57,7 +56,6 @@ function SeleccionarCampoPage() {
     if (!selected) return
     const params = new URLSearchParams({
       course: selected._id,
-      practice: String(isPractice),
       hole_mode: holeMode,
       ...(leagueId ? { league: leagueId } : {}),
     })

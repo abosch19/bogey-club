@@ -180,14 +180,9 @@ export default function HomePage() {
               <p className="font-mono text-[9px] text-white/35 mt-1">— {DAILY_QUOTE.author}</p>
             </div>
 
-            <div className="flex gap-2">
-              <Link to="/round/course" className="btn-glow flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[15px] text-white transition active:scale-[0.98]">
-                Competitivo
-              </Link>
-              <Link to="/round/course?practice=true" className="flex items-center justify-center px-5 py-3.5 rounded-full font-semibold text-[14px] transition active:scale-[0.98]" style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)', color: '#fff' }}>
-                Práctica
-              </Link>
-            </div>
+            <Link to="/round/course" className="btn-glow flex items-center justify-center py-3.5 rounded-full font-bold text-[15px] text-white transition active:scale-[0.98]">
+              Empezar ronda
+            </Link>
           </HeroCard>
 
           {/* Onboarding card — only when 0 completed rounds and no active round */}

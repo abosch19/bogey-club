@@ -69,7 +69,6 @@ export const activeIdForUser = query({
 export const create = mutation({
   args: {
     course_id: v.id('courses'),
-    is_practice: v.optional(v.boolean()),
     player_ids: v.optional(v.array(v.id('profiles'))),
     guests: v.optional(v.array(v.string())),
     modes: v.optional(v.array(v.string())),
@@ -84,7 +83,7 @@ export const create = mutation({
       courseId: args.course_id,
       createdBy: me._id,
       status: 'active',
-      is_practice: args.is_practice ?? false,
+      is_practice: false,
       date: today(),
       notes: args.hole_mode ?? 'all',
     })
