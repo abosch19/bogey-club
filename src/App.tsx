@@ -37,7 +37,7 @@ const PUBLIC_ROUTES = ['/login', '/register', '/onboarding']
 const TAB_ROUTES = ['/', '/league', '/stats', '/profile']
 
 /** Mirrors the #splash markup in index.html so the bundle→auth handoff is seamless. */
-function Spinner() {
+function Splash() {
   return (
     <div className="fixed inset-0 bg-[#f4f1e9] flex flex-col items-center justify-center">
       <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
@@ -49,18 +49,31 @@ function Spinner() {
       <div className="mt-3 text-[22px] font-black tracking-tight text-[#0e1a16]">
         Bogey <span className="text-[#1f8a5b]">Club</span>
       </div>
-      <div className="mt-7 w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
     </div>
   )
+}
+
+const SPLASH_MIN_MS = 500
+
+/** Keeps the splash up until 500ms after page load so the logo doesn't flash. */
+function useSplashHold() {
+  const [hold, setHold] = useState(() => performance.now() < SPLASH_MIN_MS)
+  useEffect(() => {
+    if (!hold) return
+    const t = setTimeout(() => setHold(false), Math.max(0, SPLASH_MIN_MS - performance.now()))
+    return () => clearTimeout(t)
+  }, [hold])
+  return hold
 }
 
 /** Client-side replacement for the old Next.js auth middleware. */
 function AuthGuard({ children }: { children: ReactNode }) {
   const { isLoading, isAuthenticated } = useConvexAuth()
+  const holding = useSplashHold()
   const { pathname } = useLocation()
   const isPublic = PUBLIC_ROUTES.includes(pathname)
 
-  if (isLoading) return <Spinner />
+  if (isLoading || holding) return <Splash />
 
   if (!isPublic && !isAuthenticated) return <Navigate to="/login" replace />
   if (isPublic && isAuthenticated && pathname !== '/onboarding') {
