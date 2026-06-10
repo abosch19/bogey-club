@@ -5,7 +5,6 @@ import { authTables } from '@convex-dev/auth/server'
 // Field naming convention:
 //  - Document references use camelCase + Id suffix (courseId, roundId, profileId…)
 //  - Value fields keep the snake_case names used by src/lib/types.ts & golf.ts
-//  - supabaseId holds the old Postgres UUID, used only for data migration mapping.
 
 export default defineSchema({
   // Convex Auth managed tables (users, authAccounts, authSessions, …)
@@ -18,11 +17,9 @@ export default defineSchema({
     last_name: v.optional(v.string()),
     handicap_index: v.number(),
     handicap_index_pp: v.optional(v.number()),
-    supabaseId: v.optional(v.string()),
   })
     .index('by_userId', ['userId'])
-    .index('by_email', ['email'])
-    .index('by_supabaseId', ['supabaseId']),
+    .index('by_email', ['email']),
 
   courses: defineTable({
     name: v.string(),
@@ -35,8 +32,7 @@ export default defineSchema({
     record_score: v.optional(v.union(v.number(), v.null())),
     record_holder_id: v.optional(v.union(v.id('profiles'), v.null())),
     record_date: v.optional(v.union(v.string(), v.null())),
-    supabaseId: v.optional(v.string()),
-  }).index('by_supabaseId', ['supabaseId']),
+  }),
 
   holes: defineTable({
     courseId: v.id('courses'),
@@ -44,10 +40,7 @@ export default defineSchema({
     par: v.number(),
     stroke_index: v.number(),
     distance_m: v.optional(v.union(v.number(), v.null())),
-    supabaseId: v.optional(v.string()),
-  })
-    .index('by_course', ['courseId'])
-    .index('by_supabaseId', ['supabaseId']),
+  }).index('by_course', ['courseId']),
 
   rounds: defineTable({
     courseId: v.id('courses'),
@@ -56,10 +49,7 @@ export default defineSchema({
     createdBy: v.optional(v.union(v.id('profiles'), v.null())),
     is_practice: v.boolean(),
     notes: v.optional(v.union(v.string(), v.null())),
-    supabaseId: v.optional(v.string()),
-  })
-    .index('by_status', ['status'])
-    .index('by_supabaseId', ['supabaseId']),
+  }).index('by_status', ['status']),
 
   round_players: defineTable({
     roundId: v.id('rounds'),
@@ -67,12 +57,10 @@ export default defineSchema({
     guestId: v.optional(v.union(v.id('guest_players'), v.null())),
     is_guest: v.boolean(),
     course_handicap: v.number(),
-    supabaseId: v.optional(v.string()),
   })
     .index('by_round', ['roundId'])
     .index('by_profile', ['profileId'])
-    .index('by_round_and_profile', ['roundId', 'profileId'])
-    .index('by_supabaseId', ['supabaseId']),
+    .index('by_round_and_profile', ['roundId', 'profileId']),
 
   scores: defineTable({
     roundId: v.id('rounds'),
@@ -84,7 +72,6 @@ export default defineSchema({
     gir: v.optional(v.union(v.boolean(), v.null())),
     penalties: v.optional(v.union(v.number(), v.null())),
     in_bunker: v.optional(v.union(v.boolean(), v.null())),
-    supabaseId: v.optional(v.string()),
   })
     .index('by_round', ['roundId'])
     .index('by_round_and_hole', ['roundId', 'hole_number'])
@@ -95,14 +82,12 @@ export default defineSchema({
     name: v.string(),
     handicap_index: v.number(),
     createdBy: v.optional(v.union(v.id('profiles'), v.null())),
-    supabaseId: v.optional(v.string()),
-  }).index('by_supabaseId', ['supabaseId']),
+  }),
 
   round_modes: defineTable({
     roundId: v.id('rounds'),
     mode: v.string(),
     is_primary: v.boolean(),
-    supabaseId: v.optional(v.string()),
   }).index('by_round', ['roundId']),
 
   leagues: defineTable({
@@ -111,14 +96,12 @@ export default defineSchema({
     total_rounds: v.number(),
     mode: v.string(),
     active: v.boolean(),
-    supabaseId: v.optional(v.string()),
-  }).index('by_supabaseId', ['supabaseId']),
+  }),
 
   league_players: defineTable({
     leagueId: v.id('leagues'),
     profileId: v.id('profiles'),
     is_admin: v.boolean(),
-    supabaseId: v.optional(v.string()),
   })
     .index('by_league', ['leagueId'])
     .index('by_profile', ['profileId'])
@@ -130,7 +113,6 @@ export default defineSchema({
     total_points: v.number(),
     rounds_played: v.number(),
     wins: v.number(),
-    supabaseId: v.optional(v.string()),
   })
     .index('by_league', ['leagueId'])
     .index('by_league_and_profile', ['leagueId', 'profileId']),
@@ -140,7 +122,6 @@ export default defineSchema({
     roundId: v.id('rounds'),
     round_number: v.number(),
     played_at: v.string(),
-    supabaseId: v.optional(v.string()),
   })
     .index('by_league', ['leagueId'])
     .index('by_round', ['roundId']),
@@ -166,21 +147,18 @@ export default defineSchema({
     createdBy: v.optional(v.union(v.id('profiles'), v.null())),
     status: v.string(),
     date: v.string(),
-    supabaseId: v.optional(v.string()),
-  }).index('by_supabaseId', ['supabaseId']),
+  }),
 
   tournament_players: defineTable({
     tournamentId: v.id('tournaments'),
     profileId: v.optional(v.union(v.id('profiles'), v.null())),
     group_number: v.number(),
-    supabaseId: v.optional(v.string()),
   }).index('by_tournament', ['tournamentId']),
 
   tournament_groups: defineTable({
     tournamentId: v.id('tournaments'),
     group_number: v.number(),
     roundId: v.id('rounds'),
-    supabaseId: v.optional(v.string()),
   })
     .index('by_tournament', ['tournamentId'])
     .index('by_round', ['roundId']),

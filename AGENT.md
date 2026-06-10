@@ -66,7 +66,6 @@ Path aliases: `@/*` → `src/*`, `@convex/*` → `convex/*`.
 ### Backend (Convex)
 - One file per domain in `convex/` (rounds, scores, leagues, tournaments, …); shared helpers in `convex/helpers.ts`.
 - Schema in `convex/schema.ts`. Auth via `@convex-dev/auth` (`convex/auth.ts`, `auth.config.ts`).
-- The `supabase/` folder is legacy from the pre-Convex era — do not build on it.
 
 ### Quality
 - `react-doctor` runs in CI on pushes to main (`doctor.config.json` excludes `convex/**`). Run the `/doctor` skill before committing React changes.
