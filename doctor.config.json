@@ -1,6 +1,14 @@
 {
+  "$schema": "https://react.doctor/schema/config.json",
   "deadCode": false,
   "ignore": {
-    "files": ["convex/**"]
+    "files": [
+      "convex/**"
+    ]
+  },
+  "rules": {
+    "react-doctor/no-flush-sync": "off",
+    "react-doctor/no-document-start-view-transition": "off",
+    "react-doctor/no-chain-state-updates": "off"
   }
 }
