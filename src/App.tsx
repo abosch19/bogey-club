@@ -46,7 +46,7 @@ function Splash() {
         <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16" />
         <circle cx="24" cy="50" r="2.6" fill="#0e1a16" />
       </svg>
-      <div className="mt-3 text-[22px] font-black tracking-tight text-[#0e1a16]">
+      <div className="mt-3 text-[22px] leading-none font-black tracking-tight text-[#0e1a16]">
         Bogey <span className="text-[#1f8a5b]">Club</span>
       </div>
     </div>

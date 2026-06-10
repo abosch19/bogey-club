@@ -32,7 +32,10 @@
         margin-top: 12px;
         font-size: 22px;
         font-weight: 900;
-        letter-spacing: -0.02em;
+        /* line-height fijo: si se hereda, el preflight de Tailwind (1.5) llega
+           con el bundle y recoloca la columna — el logo daba un salto visible. */
+        line-height: 1;
+        letter-spacing: -0.025em;
         color: #0e1a16;
       }
     </style>
