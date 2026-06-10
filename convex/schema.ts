@@ -17,6 +17,10 @@ export default defineSchema({
     last_name: v.optional(v.string()),
     handicap_index: v.number(),
     handicap_index_pp: v.optional(v.number()),
+    /** Convex storage id of the player's photo; UI falls back to initials when unset. */
+    avatar_image: v.optional(v.id('_storage')),
+    /** Convex storage id of the brand logo shown as the player's clubs sponsor. */
+    clubs_sponsor_image: v.optional(v.id('_storage')),
   })
     .index('by_userId', ['userId'])
     .index('by_email', ['email']),

@@ -1,13 +1,20 @@
 import { query } from './_generated/server'
+import { avatarUrl } from './helpers'
 
 /** All registered players ordered by name (for player selection). Names come composed (first + last). */
 export const all = query({
   args: {},
   handler: async (ctx) => {
     const profiles = await ctx.db.query('profiles').collect()
-    return profiles
-      .map((p) => ({ ...p, name: [p.name, p.last_name].filter(Boolean).join(' ') }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+    return (
+      await Promise.all(
+        profiles.map(async (p) => ({
+          ...p,
+          name: [p.name, p.last_name].filter(Boolean).join(' '),
+          avatar_url: await avatarUrl(ctx, p),
+        })),
+      )
+    ).sort((a, b) => a.name.localeCompare(b.name))
   },
 })
 
@@ -36,6 +43,7 @@ export const directory = query({
           name: [p.name, p.last_name].filter(Boolean).join(' '),
           handicap_index: p.handicap_index,
           rounds_played,
+          avatar_url: await avatarUrl(ctx, p),
         }
       }),
     )

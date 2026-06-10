@@ -35,7 +35,7 @@ export function TabBar() {
         })}
         <Link to="/profile" aria-label="Perfil"
           className="w-[62px] h-[46px] flex items-center justify-center rounded-full">
-          <Avatar name={fullName} size={30}
+          <Avatar name={fullName} src={profile?.avatar_url} size={30}
             className={active === 'perfil' ? 'ring-2 ring-[#0e1a16] ring-offset-2 ring-offset-white' : ''} />
         </Link>
       </div>

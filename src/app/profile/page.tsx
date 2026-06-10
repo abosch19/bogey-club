@@ -87,9 +87,16 @@ export default function PerfilPage() {
               <span className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Socio</span>
             </div>
             <div className="flex items-center gap-4 mb-4">
-              <Avatar name={fullName} size={56} />
+              <Avatar name={fullName} src={profile.avatar_url} size={56} />
               <div>
-                <p className="text-white text-[20px] font-bold leading-tight">{fullName}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-white text-[20px] font-bold leading-tight">{fullName}</p>
+                  {profile.clubs_sponsor_url && (
+                    /* Sponsor logos come dark on white — invert to read on the dark card. */
+                    <img src={profile.clubs_sponsor_url} alt="Sponsor de palos"
+                      className="h-[13px] w-auto opacity-80" style={{ filter: 'brightness(0) invert(1)' }} />
+                  )}
+                </div>
                 <p className="text-white/50 text-[12px] mt-0.5">{email}</p>
               </div>
             </div>

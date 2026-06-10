@@ -47,20 +47,26 @@ export function publicProfile(p: Doc<'profiles'> | null) {
 }
 
 /** Resolve the display name for a round_player (registered or guest). */
+/** Serve URL for a profile's avatar photo, or null when none is set. */
+export async function avatarUrl(ctx: QueryCtx, p: Doc<'profiles'> | null): Promise<string | null> {
+  return p?.avatar_image ? await ctx.storage.getUrl(p.avatar_image) : null
+}
+
 export async function resolvePlayer(
   ctx: QueryCtx,
   rp: Doc<'round_players'>,
 ): Promise<{
   name: string
   handicap_index: number
+  avatar_url: string | null
 }> {
   if (!rp.is_guest && rp.profileId) {
     const p = await ctx.db.get(rp.profileId as Id<'profiles'>)
-    if (p) return { name: [p.name, p.last_name].filter(Boolean).join(' '), handicap_index: p.handicap_index }
+    if (p) return { name: [p.name, p.last_name].filter(Boolean).join(' '), handicap_index: p.handicap_index, avatar_url: await avatarUrl(ctx, p) }
   }
   if (rp.guestId) {
     const g = await ctx.db.get(rp.guestId as Id<'guest_players'>)
-    if (g) return { name: g.name, handicap_index: g.handicap_index }
+    if (g) return { name: g.name, handicap_index: g.handicap_index, avatar_url: null }
   }
-  return { name: 'Jugador', handicap_index: 36 }
+  return { name: 'Jugador', handicap_index: 36, avatar_url: null }
 }

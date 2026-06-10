@@ -28,13 +28,25 @@ export function avatarColor(name: string): string {
 
 type AvatarProps = {
   name: string
+  /** Photo URL — when set it replaces the initials. */
+  src?: string | null
   /** Diameter in px (default 32). Font size scales with it. */
   size?: number
   className?: string
   style?: React.CSSProperties
 }
 
-export function Avatar({ name, size = 32, className = '', style }: AvatarProps) {
+export function Avatar({ name, src, size = 32, className = '', style }: AvatarProps) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className={`rounded-full object-cover flex-shrink-0 ${className}`}
+        style={{ width: size, height: size, ...style }}
+      />
+    )
+  }
   return (
     <div
       className={`rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 ${className}`}

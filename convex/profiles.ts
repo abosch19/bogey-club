@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 import { getAuthUserId } from '@convex-dev/auth/server'
-import { query, mutation } from './_generated/server'
-import { getMyProfile, requireProfile, isAdmin, ADMIN_EMAIL } from './helpers'
+import { query, mutation, internalMutation } from './_generated/server'
+import { getMyProfile, requireProfile, isAdmin, ADMIN_EMAIL, avatarUrl } from './helpers'
 
 /** Current user's profile (with email + admin flag), or null. */
 export const me = query({
@@ -17,7 +17,13 @@ export const me = query({
         email = user?.email ?? undefined
       }
     }
-    return { ...profile, email: email ?? '', is_admin: email === ADMIN_EMAIL }
+    return {
+      ...profile,
+      email: email ?? '',
+      is_admin: email === ADMIN_EMAIL,
+      avatar_url: await avatarUrl(ctx, profile),
+      clubs_sponsor_url: profile.clubs_sponsor_image ? await ctx.storage.getUrl(profile.clubs_sponsor_image) : null,
+    }
   },
 })
 
@@ -94,4 +100,31 @@ export const deleteMe = mutation({
     await ctx.db.delete(id)
     return { ok: true }
   },
+})
+
+/** One-off/admin helper: set a player's images by full name (CLI: npx convex run). */
+export const setImagesByName = internalMutation({
+  args: {
+    name: v.string(),
+    avatar_image: v.optional(v.id('_storage')),
+    clubs_sponsor_image: v.optional(v.id('_storage')),
+  },
+  handler: async (ctx, { name, avatar_image, clubs_sponsor_image }) => {
+    const profiles = await ctx.db.query('profiles').collect()
+    const target = profiles.find(
+      (p) => [p.name, p.last_name].filter(Boolean).join(' ').toLowerCase() === name.toLowerCase(),
+    )
+    if (!target) throw new Error(`Profile not found: ${name}`)
+    await ctx.db.patch(target._id, {
+      ...(avatar_image !== undefined ? { avatar_image } : {}),
+      ...(clubs_sponsor_image !== undefined ? { clubs_sponsor_image } : {}),
+    })
+    return { patched: target._id }
+  },
+})
+
+/** One-off/admin helper: upload target for profile images (CLI: npx convex run). */
+export const generateUploadUrl = internalMutation({
+  args: {},
+  handler: async (ctx) => ctx.storage.generateUploadUrl(),
 })

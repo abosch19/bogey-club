@@ -7,7 +7,7 @@ import { Drawer } from 'vaul'
 import { Avatar } from '@/components/ui/avatar'
 
 type Hole   = { hole_number: number; par: number; stroke_index: number; distance_m: number | null }
-type Player = { id: string; name: string; course_handicap: number }
+type Player = { id: string; name: string; course_handicap: number; avatar_url?: string | null }
 type PlayerScore = {
   strokes: number | null
   putts: number | null

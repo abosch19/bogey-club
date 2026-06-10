@@ -1,7 +1,7 @@
 import { query } from './_generated/server'
 import type { QueryCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
-import { getMyProfile, resolvePlayer } from './helpers'
+import { getMyProfile, resolvePlayer, avatarUrl } from './helpers'
 
 type HoleScore = { hole_number: number; strokes: number; par: number }
 
@@ -78,6 +78,7 @@ async function buildActiveLeague(ctx: QueryCtx, me: Doc<'profiles'>) {
         profile_id: s.profileId,
         name: p ? [p.name, p.last_name].filter(Boolean).join(' ') : 'J',
         total_points: s.total_points,
+        avatar_url: await avatarUrl(ctx, p),
       }
     }),
   )
@@ -109,6 +110,7 @@ async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
     id: string
     round_id: Id<'rounds'>
     name: string
+    avatar_url: string | null
     action: string
     detail: string
     time: string
@@ -184,6 +186,7 @@ async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
         id: r._id + pid,
         round_id: r._id,
         name: p ? [p.name, p.last_name].filter(Boolean).join(' ') : 'Jugador',
+        avatar_url: await avatarUrl(ctx, p),
         action,
         detail: `${course?.name ?? 'Campo'} · ${timeStr}`,
         time: timeStr,
@@ -302,6 +305,7 @@ export const recentRounds = query({
               : null
             return {
               name: info.name,
+              avatar_url: info.avatar_url,
               is_guest: rp.is_guest,
               total,
               delta,

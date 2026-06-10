@@ -44,7 +44,7 @@ export default function JugadoresPage() {
           {filtered.map((p, i) => (
             <div key={p.id} className={`bg-white rounded-[16px] p-4 border flex items-center gap-3 ${p.id === myId ? 'border-[#1f8a5b]' : 'border-[#e5e0d4]'}`}>
               <span className="font-mono text-[12px] font-bold text-[#6b7a72] w-5 text-center">{i + 1}</span>
-              <Avatar name={p.name} size={44} />
+              <Avatar name={p.name} src={p.avatar_url} size={44} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-bold text-[14px] text-[#0e1a16]">{p.name}</p>

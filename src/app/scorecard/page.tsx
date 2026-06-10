@@ -10,7 +10,7 @@ import { Drawer } from 'vaul'
 import { HoleSheet } from '@/components/HoleSheet'
 import { Avatar, avatarColor } from '@/components/ui/avatar'
 
-type Player = { id: string; name: string; course_handicap: number; is_guest: boolean }
+type Player = { id: string; name: string; course_handicap: number; is_guest: boolean; avatar_url: string | null }
 type Hole   = { hole_number: number; par: number; stroke_index: number }
 type Score  = { profile_id: string; hole_number: number; strokes: number | null; putts: number | null; gir: boolean | null; fairway: boolean | null; penalties: number | null }
 
@@ -67,7 +67,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                 const blockDelta = blockTotal ? blockTotal - blockPar : null
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
-                    <td className="px-2 py-1.5"><Avatar name={p.name} size={24} /></td>
+                    <td className="px-2 py-1.5"><Avatar name={p.name} src={p.avatar_url} size={24} /></td>
                     {group.map(h => {
                       const s = getScore(p.id, h.hole_number)
                       const d = s != null ? s - h.par : null
@@ -99,7 +99,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
                     <td className="px-2 py-1">
-                      <Avatar name={p.name} size={24} />
+                      <Avatar name={p.name} src={p.avatar_url} size={24} />
                     </td>
                     {group.map(h => {
                       const s = getScore(p.id, h.hole_number)
@@ -148,7 +148,7 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
                 const endSt = lastScored ? matchState.get(lastScored.hole_number) : undefined
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
-                    <td className="px-2 py-1.5"><Avatar name={p.name} size={24} /></td>
+                    <td className="px-2 py-1.5"><Avatar name={p.name} src={p.avatar_url} size={24} /></td>
                     {group.map(h => {
                       const st = matchState.get(h.hole_number)
                       const cell = !st
@@ -207,7 +207,7 @@ function Clasificacion({ ranking, getTotal, realPar }: ClasificacionProps) {
               style={{ backgroundColor: isFirst ? '#e8b75a' : '#f4f1e9', color: isFirst ? '#0e1a16' : '#6b7a72' }}>
               {i + 1}
             </div>
-            <Avatar name={p.name} size={40} />
+            <Avatar name={p.name} src={p.avatar_url} size={40} />
             <div className="flex-1">
               <p className="font-bold text-[15px]" style={{ color: isFirst ? '#fff' : '#0e1a16' }}>{p.name}</p>
               <p className="font-mono text-[10px]" style={{ color: isFirst ? 'rgba(255,255,255,0.5)' : '#6b7a72' }}>Hcp {p.course_handicap}</p>
@@ -274,7 +274,7 @@ function RoundStats({ players, scores, holes }: RoundStatsProps) {
               <tr className="border-t border-[#efebe1]">
                 <td className="pt-2 pb-1 text-left">
                   <div className="flex items-center gap-2">
-                    <Avatar name={p.name} size={24} />
+                    <Avatar name={p.name} src={p.avatar_url} size={24} />
                     <span className="font-semibold text-[12px] text-[#0e1a16]">{p.name.split(' ')[0]}</span>
                   </div>
                 </td>
@@ -371,7 +371,7 @@ type EditPlayersControlProps = {
   roundId: string
   myId: string
   players: Player[]
-  allProfiles: { _id: string; name: string }[] | undefined
+  allProfiles: { _id: string; name: string; avatar_url?: string | null }[] | undefined
   isPractice: boolean
   isActive: boolean
 }
@@ -415,7 +415,7 @@ function EditPlayersControl({ roundId, myId, players, allProfiles, isPractice, i
             <div className="space-y-2 mb-4">
               {players.map(p => (
                 <div key={p.id} className="flex items-center gap-3 bg-[#f4f1e9] rounded-[12px] px-3 py-2.5">
-                  <Avatar name={p.name} size={32} />
+                  <Avatar name={p.name} src={p.avatar_url} size={32} />
                   <span className="flex-1 font-semibold text-[13px] text-[#0e1a16]">{p.name}</span>
                   <span className="font-mono text-[10px] text-[#6b7a72]">hcp {p.course_handicap}</span>
                   {p.id !== myId && (
@@ -432,7 +432,7 @@ function EditPlayersControl({ roundId, myId, players, allProfiles, isPractice, i
               {(allProfiles ?? []).flatMap(p => players.find(rp => rp.id === p._id) ? [] : [(
                 <button type="button" key={p._id} onClick={() => addPlayer(p._id)}
                   className="w-full flex items-center gap-3 bg-white rounded-[12px] px-3 py-2.5 border border-[#e5e0d4] text-left active:opacity-70">
-                  <Avatar name={p.name} size={32} />
+                  <Avatar name={p.name} src={p.avatar_url} size={32} />
                   <span className="flex-1 font-semibold text-[13px] text-[#0e1a16]">{p.name}</span>
                   <span className="font-mono text-[10px] text-[#1f8a5b] font-bold">+ Añadir</span>
                 </button>
@@ -476,7 +476,7 @@ type ScorecardHeaderProps = {
   modes: string[]
   players: Player[]
   customBet: string
-  allProfiles: { _id: string; name: string }[] | undefined
+  allProfiles: { _id: string; name: string; avatar_url?: string | null }[] | undefined
   isPractice: boolean
   isActive: boolean
   completed: boolean
@@ -533,7 +533,7 @@ function ScorecardHeader({
             const delta = getDelta(p.id)
             return (
               <div key={p.id} className="flex items-center gap-2">
-                <Avatar name={p.name} size={28} />
+                <Avatar name={p.name} src={p.avatar_url} size={28} />
                 {total > 0 ? (
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-mono text-[20px] font-black text-[#0e1a16] leading-none">{total}</span>
@@ -568,7 +568,7 @@ function ScorecardHeader({
         <div className="bg-white rounded-[16px] px-4 py-3 border border-[#e5e0d4] mb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Avatar name={matchplayResult.a.name} size={32} />
+              <Avatar name={matchplayResult.a.name} src={matchplayResult.a.avatar_url} size={32} />
               <span className="font-bold text-[13px] text-[#0e1a16]">{matchplayResult.a.name.split(' ')[0]}</span>
             </div>
             <div className="text-center px-4">
@@ -577,7 +577,7 @@ function ScorecardHeader({
             </div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-[13px] text-[#0e1a16]">{matchplayResult.b.name.split(' ')[0]}</span>
-              <Avatar name={matchplayResult.b.name} size={32} />
+              <Avatar name={matchplayResult.b.name} src={matchplayResult.b.avatar_url} size={32} />
             </div>
           </div>
         </div>
@@ -709,7 +709,7 @@ function TarjetaPage() {
   const base        = data?.course?.holes_count ?? 18
   const totalHoles  = holeMode === '9_twice' ? 18 : holeMode === 'front' || holeMode === 'back' ? 9 : base
   const allHoles: Hole[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
-  const players: Player[] = (data?.players ?? []).map(p => ({ id: p.profileId ?? '', name: p.name ?? 'Inv', course_handicap: p.course_handicap ?? 0, is_guest: p.is_guest }))
+  const players: Player[] = (data?.players ?? []).map(p => ({ id: p.profileId ?? '', name: p.name ?? 'Inv', course_handicap: p.course_handicap ?? 0, is_guest: p.is_guest, avatar_url: p.avatar_url ?? null }))
   const scores: Score[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null, putts: s.putts ?? null, gir: s.gir ?? null, fairway: s.fairway ?? null, penalties: s.penalties ?? null }))
   const modes = (data?.modes ?? []).length ? (data?.modes ?? []) : ['stroke']
 

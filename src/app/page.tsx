@@ -5,7 +5,7 @@ import { api } from '@convex/_generated/api'
 import { ScoreMark } from '@/components/ui/score-mark'
 import { Avatar } from '@/components/ui/avatar'
 
-type LeagueStanding = { profile_id: string; name: string; total_points: number }
+type LeagueStanding = { profile_id: string; name: string; total_points: number; avatar_url: string | null }
 
 const GOLF_QUOTES = [
   { text: "El golf es el único deporte donde puedes hacer trampa y luego confesar en el hoyo 18.", author: "Anónimo del vestuario" },
@@ -42,7 +42,7 @@ function fmtRoundDate(date: string): string {
 
 type RoundHole   = { hole_number: number; par: number }
 type RoundPlayer = {
-  name: string; is_guest: boolean
+  name: string; avatar_url: string | null; is_guest: boolean
   total: number | null; delta: number | null; holes_played: number
   hole_scores: { hole_number: number; strokes: number }[]
 }
@@ -83,7 +83,7 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
           return (
             <tr key={p.name} className="border-t border-[#efebe1]">
               <td className="px-2 py-1.5">
-                <Avatar name={p.name} size={20} />
+                <Avatar name={p.name} src={p.avatar_url} size={20} />
               </td>
               {holes.map(h => {
                 const s = byHole.get(h.hole_number)
@@ -280,7 +280,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-2">
                   {activeLeague.top3.map((p: LeagueStanding) => (
                     <div key={p.profile_id} className="flex items-center gap-1.5 rounded-full px-2.5 py-1" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}>
-                      <Avatar name={p.name} size={20} />
+                      <Avatar name={p.name} src={p.avatar_url} size={20} />
                       <span className="font-mono text-[10px] font-bold text-white">{p.total_points}</span>
                     </div>
                   ))}
@@ -319,7 +319,7 @@ export default function HomePage() {
                 {feed.map((item, i) => (
                   <Link key={item.id} to={`/scorecard?round=${item.round_id}`}
                     className={`flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
-                    <Avatar name={item.name} size={36} />
+                    <Avatar name={item.name} src={item.avatar_url} size={36} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-[13px] text-[#0e1a16] leading-tight">
