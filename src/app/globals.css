@@ -96,6 +96,13 @@ html[data-nav='fade']::view-transition-new(root) { animation: vt-fade-in 160ms e
 
 /* The tab bar transitions independently so it never slides with the page. */
 .vt-tab-bar { view-transition-name: tab-bar; }
+/* Snapshots can't capture backdrop-filter (it renders as an opaque square),
+   so while a transition runs (html[data-nav]) the pill goes solid white. */
+html[data-nav] .vt-tab-bar {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: #fff;
+}
 html[data-nav]::view-transition-group(tab-bar) { z-index: 2; }
 html[data-nav='push']::view-transition-old(tab-bar) { animation: vt-fade-out 160ms ease both; }
 html[data-nav='pop']::view-transition-new(tab-bar) { animation: vt-fade-in 160ms ease both; }

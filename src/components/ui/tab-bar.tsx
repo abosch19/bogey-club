@@ -22,7 +22,9 @@ export function TabBar() {
   ]
 
   return (
-    <nav className="vt-tab-bar tabbar-float fixed left-1/2 -translate-x-1/2 z-50 bg-white rounded-full shadow-[0_10px_34px_rgba(14,26,22,0.22),0_2px_8px_rgba(14,26,22,0.08)] px-2 py-1.5">
+    // Glass pill; globals.css drops the blur to solid white while html[data-nav]
+    // is set, because view-transition snapshots render backdrop-filter as a square.
+    <nav className="vt-tab-bar tabbar-float fixed left-1/2 -translate-x-1/2 z-50 bg-white/45 backdrop-blur-md backdrop-saturate-150 rounded-full shadow-[0_10px_34px_rgba(14,26,22,0.22),0_2px_8px_rgba(14,26,22,0.08)] px-2 py-1.5">
       <div className="flex items-center">
         {tabs.map(({ key, href, label, icon }) => {
           const isActive = key === active
