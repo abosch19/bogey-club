@@ -1,6 +1,7 @@
-/* Bogey Club service worker — keeps navigations fresh so the installed PWA
-   picks up new deploys, with an offline fallback. Bump CACHE to invalidate. */
-const CACHE = 'bogey-club-v2'
+/* Bogey Club service worker — serves the cached shell instantly on launch
+   (stale-while-revalidate) and refreshes it in the background, so a new
+   deploy lands on the next launch. Bump CACHE to invalidate. */
+const CACHE = 'bogey-club-v3'
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -37,17 +38,26 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin requests; let Convex (other origins) pass through.
   if (url.origin !== self.location.origin) return
 
-  // SPA navigations: always go to the network and refresh the cached shell,
-  // so a new deploy is picked up; fall back to the cached shell when offline.
+  // SPA navigations: stale-while-revalidate. Serve the cached shell at once
+  // (instant first paint when launching the PWA) and refresh it from the
+  // network in the background — a new deploy shows up on the next launch.
   if (request.mode === 'navigate') {
+    const refresh = fetch(request).then((response) => {
+      const copy = response.clone()
+      return caches
+        .open(CACHE)
+        .then((cache) => cache.put('/index.html', copy))
+        .then(() => response)
+    })
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone()
-          caches.open(CACHE).then((cache) => cache.put('/index.html', copy))
-          return response
-        })
-        .catch(() => caches.match('/index.html').then((r) => r || caches.match('/'))),
+      caches.match('/index.html').then((cached) => {
+        if (cached) {
+          // Keep the SW alive until the background refresh settles.
+          event.waitUntil(refresh.catch(() => {}))
+          return cached
+        }
+        return refresh.catch(() => caches.match('/'))
+      }),
     )
     return
   }

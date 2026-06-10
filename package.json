@@ -8,7 +8,8 @@
     "dev:convex": "convex dev",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "generate:splash": "bun scripts/generate-apple-splash.mjs"
   },
   "dependencies": {
     "@auth/core": "^0.37.0",
@@ -27,6 +28,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.1",
     "babel-plugin-react-compiler": "^1.0.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.3.0",
     "typescript": "^5",
     "vite": "^5.4.0"
