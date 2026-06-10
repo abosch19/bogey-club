@@ -9,6 +9,7 @@ import { Drawer } from 'vaul'
 import { HoleSheet } from '@/components/HoleSheet'
 import { Avatar, avatarColor } from '@/components/ui/avatar'
 import { PlayerLink } from '@/components/ui/player-link'
+import { ShareScorecardButton } from '@/components/ShareScorecard'
 
 type Player = { id: string; name: string; course_handicap: number; is_guest: boolean; avatar_url: string | null }
 type Hole   = { hole_number: number; par: number; stroke_index: number }
@@ -503,11 +504,12 @@ type ScorecardHeaderProps = {
   setViewMode: (m: ViewMode) => void
   matchplayResult: MatchplayResult | null
   availableModes: { key: ViewMode; label: string }[]
+  shareButton?: React.ReactNode
 }
 
 function ScorecardHeader({
   roundId, myId, courseName, modes, players, customBet, allProfiles, isPractice, isActive, completed,
-  myScoresCount, holesCount, getTotal, getDelta, viewMode, setViewMode, matchplayResult, availableModes,
+  myScoresCount, holesCount, getTotal, getDelta, viewMode, setViewMode, matchplayResult, availableModes, shareButton,
 }: ScorecardHeaderProps) {
   const navigate = useNavigate()
   return (
@@ -519,9 +521,12 @@ function ScorecardHeader({
             Atrás
           </button>
         </div>
-        {completed
-          ? <span className="font-mono text-[9px] font-bold text-[#1f8a5b] bg-[#d9eedd] px-2 py-1 rounded-full uppercase tracking-wide">Firmada</span>
-          : <span className="font-mono text-[10px] text-[#6b7a72]">{myScoresCount} / {holesCount} HOYOS</span>}
+        <div className="flex items-center gap-2">
+          {completed
+            ? <span className="font-mono text-[9px] font-bold text-[#1f8a5b] bg-[#d9eedd] px-2 py-1 rounded-full uppercase tracking-wide">Firmada</span>
+            : <span className="font-mono text-[10px] text-[#6b7a72]">{myScoresCount} / {holesCount} HOYOS</span>}
+          {shareButton}
+        </div>
       </div>
 
       {/* Mini info bar — morph target of the round cards in home/stats */}
@@ -913,6 +918,16 @@ function TarjetaPage() {
         setViewMode={setViewMode}
         matchplayResult={matchplayResult}
         availableModes={availableModes}
+        shareButton={
+          <ShareScorecardButton
+            courseName={courseName}
+            dateLabel={(data?.round.date ?? '').split('-').reverse().join('/')}
+            holesLabel={`${holes.length} hoyos`}
+            groups={groups}
+            players={players}
+            getScore={getScore}
+          />
+        }
       />
 
       {/* Scorecard */}
