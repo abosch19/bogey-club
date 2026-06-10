@@ -52,7 +52,14 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
   if (holes.length === 0) return null
   const blockPar = holes.reduce((a, h) => a + h.par, 0)
   return (
-    <table className="w-full text-center" style={{ minWidth: `${holes.length * 24 + 92}px` }}>
+    // table-fixed + colgroup: hole columns share the width equally, so OUT
+    // and IN stay aligned whether or not a hole has a score yet.
+    <table className="w-full text-center table-fixed" style={{ minWidth: `${holes.length * 24 + 92}px` }}>
+      <colgroup>
+        <col style={{ width: 40 }} />
+        {holes.map(h => <col key={h.hole_number} />)}
+        <col style={{ width: 52 }} />
+      </colgroup>
       <thead>
         <tr className="border-y border-[#efebe1] bg-[#faf8f2]">
           <td className="font-mono text-[9px] text-[#6b7a72] py-1.5 px-2 text-left">H</td>
@@ -243,7 +250,8 @@ export default function HomePage() {
               </div>
 
               <Link to={`/scorecard?round=${activeRound.id}`}
-                className="flex items-center justify-between w-full py-3 px-4 rounded-[14px] font-bold text-[14px] text-white transition active:scale-[0.98]"
+                onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
+                className="flex items-center justify-between w-full py-3 px-4 rounded-[16px] font-bold text-[14px] text-white transition active:scale-[0.98]"
                 style={{ backgroundColor: '#0e1a16' }}>
                 <span>Continuar · hoyo {activeRound.next_hole} par {activeRound.next_par}</span>
                 <span className="px-2.5 py-1 rounded-full text-[11px] font-black text-[#0e1a16]" style={{ backgroundColor: '#1f8a5b' }}>→</span>
@@ -346,6 +354,7 @@ export default function HomePage() {
               <div className="space-y-2">
                 {recentRounds.map(r => (
                   <Link key={r.id} to={`/scorecard?round=${r.id}`}
+                    onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
                     className="block bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden active:scale-[0.99] transition">
                     {/* Cabecera de la partida */}
                     <div className="flex items-center justify-between px-3 pt-2.5 pb-2">

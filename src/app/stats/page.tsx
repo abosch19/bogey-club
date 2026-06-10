@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
@@ -7,11 +7,44 @@ import { Avatar, avatarColor } from '@/components/ui/avatar'
 
 function Sparkline({ values, color = '#1f8a5b' }: { values: number[]; color?: string }) {
   if (values.length < 2) return null
-  const w = 200, h = 40, pad = 4
+  const w = 200, h = 44, pad = 4
   const min = Math.min(...values), max = Math.max(...values)
   const range = max - min || 1
-  const pts = values.map((v, i) => `${pad + (i / (values.length - 1)) * (w - pad * 2)},${pad + ((max - v) / range) * (h - pad * 2)}`).join(' ')
-  return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full"><polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  const pts = values.map((v, i) => [
+    pad + (i / (values.length - 1)) * (w - pad * 2),
+    pad + ((max - v) / range) * (h - pad * 2),
+  ] as const)
+  const line = pts.map(p => p.join(',')).join(' ')
+  const area = `${pad},${h - pad} ${line} ${w - pad},${h - pad}`
+  const [lx, ly] = pts[pts.length - 1]
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
+      <defs>
+        <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={color} stopOpacity="0.35" />
+          <stop offset="1" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={area} fill="url(#spark-fill)" />
+      <polyline points={line} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={lx} cy={ly} r="3" fill={color} />
+    </svg>
+  )
+}
+
+/** Eases a number from 0 to its value on mount (used by the WHS hero). */
+function CountUp({ value, format }: { value: number; format: (v: number) => string }) {
+  const [progress, setProgress] = useState(0)
+  useEffect(() => {
+    const started = performance.now()
+    let raf = requestAnimationFrame(function step(now) {
+      const p = Math.min(1, (now - started) / 800)
+      setProgress(1 - Math.pow(1 - p, 3))
+      if (p < 1) raf = requestAnimationFrame(step)
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [])
+  return <>{format(value * progress)}</>
 }
 
 const PAR_TYPES = [3, 4, 5]
@@ -247,6 +280,14 @@ function GeneralSection({
   avgPutts: string | null; girPct: number | null; fwPct: number | null
   totalBirdies: number; totalPars: number; totalBogeys: number; totalDoubles: number; totalHolesP: number
 }) {
+  // Differential trend: second half of the window vs the first (negative = improving).
+  const trend = (() => {
+    if (hcpHistory.length < 4) return null
+    const half = Math.floor(hcpHistory.length / 2)
+    const avg = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length
+    return avg(hcpHistory.slice(-half)) - avg(hcpHistory.slice(0, half))
+  })()
+
   return (
     <div className="space-y-3">
       {/* HCP hero */}
@@ -256,7 +297,15 @@ function GeneralSection({
           <div className="flex items-end justify-between mb-2">
             <div>
               <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">ÍNDICE WHS</p>
-              <p className="text-[52px] font-black text-white leading-none">{hcpIndex != null ? formatHandicap(hcpIndex) : '–'}</p>
+              <p className="text-[52px] font-black text-white leading-none">
+                {hcpIndex != null ? <CountUp value={hcpIndex} format={formatHandicap} /> : '–'}
+              </p>
+              {trend != null && Math.abs(trend) >= 0.05 && (
+                <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full font-mono text-[9px] font-bold"
+                  style={{ backgroundColor: trend < 0 ? '#1f8a5b33' : '#e8b75a26', color: trend < 0 ? '#7dd3a8' : '#e8b75a' }}>
+                  {trend < 0 ? '▼' : '▲'} {Math.abs(trend).toFixed(1)} tendencia
+                </span>
+              )}
             </div>
             <div className="text-right space-y-1.5 pb-1">
               {[['MEJOR', bestScore ?? '–'], ['RONDAS', n], ['VICTORIAS', totalWins]].map(([l, v]) => (
@@ -267,26 +316,47 @@ function GeneralSection({
               ))}
             </div>
           </div>
-          {hcpHistory.length >= 3 && <div className="opacity-60"><Sparkline values={hcpHistory} color="#1f8a5b"/></div>}
+          {hcpHistory.length >= 3 && <div className="opacity-80"><Sparkline values={hcpHistory} color="#1f8a5b"/></div>}
         </div>
       </div>
 
       {n > 0 ? (
         <>
-          {/* KPIs grid */}
+          {/* KPIs grid — arrow compares the last 3 rounds against the overall average */}
           <div className="grid grid-cols-2 gap-2">
-            {[
-              { label: 'Media golpes', value: avgScore ? String(avgScore) : '–', sub: avgDelta != null ? `${avgDelta > 0 ? '+' : ''}${avgDelta} vs par` : '' },
-              { label: 'Putts / ronda', value: avgPutts ?? '–', sub: '' },
-              { label: 'GIR %',         value: girPct != null ? `${girPct}%` : '–', sub: 'greens en reg.' },
-              { label: 'Calles %',      value: fwPct != null ? `${fwPct}%` : '–', sub: 'fairways' },
-            ].map(s => (
-              <div key={s.label} className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
-                <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide">{s.label}</p>
-                <p className="text-[22px] font-black text-[#0e1a16] mt-1 leading-none">{s.value}</p>
-                {s.sub && <p className="text-[10px] text-[#6b7a72] mt-0.5">{s.sub}</p>}
-              </div>
-            ))}
+            {(() => {
+              const recent = rounds.slice(0, 3)
+              const rAvg   = (f: (r: RoundStat) => number) => recent.reduce((a, r) => a + f(r), 0) / recent.length
+              const kpiTrend = (recentVal: number, allVal: number | null, lowerBetter: boolean) => {
+                if (n < 5 || allVal == null || Math.abs(recentVal - allVal) < 0.5) return null
+                const up = recentVal > allVal
+                return { up, good: lowerBetter ? !up : up }
+              }
+              return [
+                { label: 'Media golpes', value: avgScore ? String(avgScore) : '–', sub: avgDelta != null ? `${avgDelta > 0 ? '+' : ''}${avgDelta} vs par` : '',
+                  trend: avgScore != null ? kpiTrend(rAvg(r => r.total), avgScore, true) : null },
+                { label: 'Putts / ronda', value: avgPutts ?? '–', sub: '',
+                  trend: avgPutts != null ? kpiTrend(rAvg(r => r.putts), parseFloat(avgPutts), true) : null },
+                { label: 'GIR %',         value: girPct != null ? `${girPct}%` : '–', sub: 'greens en reg.',
+                  trend: girPct != null ? kpiTrend(rAvg(r => r.gir_total > 0 ? r.gir / r.gir_total * 100 : 0), girPct, false) : null },
+                { label: 'Calles %',      value: fwPct != null ? `${fwPct}%` : '–', sub: 'fairways',
+                  trend: fwPct != null ? kpiTrend(rAvg(r => r.fairways_total > 0 ? r.fairways / r.fairways_total * 100 : 0), fwPct, false) : null },
+              ].map(s => (
+                <div key={s.label} className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
+                  <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide">{s.label}</p>
+                  <div className="flex items-baseline gap-1.5 mt-1">
+                    <p className="text-[22px] font-black text-[#0e1a16] leading-none">{s.value}</p>
+                    {s.trend && (
+                      <span className="font-mono text-[10px] font-bold" style={{ color: s.trend.good ? '#1f8a5b' : '#c6432d' }}
+                        title="Últimas 3 rondas vs tu media">
+                        {s.trend.up ? '▲' : '▼'}
+                      </span>
+                    )}
+                  </div>
+                  {s.sub && <p className="text-[10px] text-[#6b7a72] mt-0.5">{s.sub}</p>}
+                </div>
+              ))
+            })()}
           </div>
 
           {/* Score distribution bars */}
@@ -317,6 +387,7 @@ function GeneralSection({
                 const delta = r.total - r.real_par
                 return (
                   <Link key={r.id} to={`/scorecard?round=${r.id}`}
+                    onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
                     className="bg-white rounded-[16px] p-3.5 border flex items-center gap-3 block"
                     style={{ borderColor: r.total === bestScore ? '#e8b75a' : '#e5e0d4' }}>
                     <div className="flex-1 min-w-0">

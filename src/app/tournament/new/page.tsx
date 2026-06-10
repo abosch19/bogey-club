@@ -150,7 +150,7 @@ function NuevoTorneoWizard({ meId, coursesData, profilesData }: {
 
             <div className="space-y-3">
               {/* Torneo info card */}
-              <div className="bg-[#f4f1e9] rounded-[14px] p-4 mb-3">
+              <div className="bg-[#f4f1e9] rounded-[16px] p-4 mb-3">
                 <p className="font-bold text-[13px] text-[#0e1a16] mb-1">¿Qué es el Torneo del día?</p>
                 <p className="text-[12px] text-[#6b7a72] leading-relaxed">
                   Juntáis a todos (6, 8, 10 jugadores...) y el sistema os divide en grupos equilibrados por hándicap.
@@ -198,7 +198,7 @@ function NuevoTorneoWizard({ meId, coursesData, profilesData }: {
               </div>
 
               {/* Reparto info */}
-              <div className="bg-[#f4f1e9] rounded-[14px] px-4 py-3 flex items-center gap-2">
+              <div className="bg-[#f4f1e9] rounded-[16px] px-4 py-3 flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#6b7a72" strokeWidth="1.8"/><path d="M12 8v4l3 3" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round"/></svg>
                 <p className="text-[12px] text-[#6b7a72]">Los grupos se reparten automáticamente equilibrando hándicap con algo de aleatoriedad. Podrás ajustar en el siguiente paso.</p>
               </div>
@@ -232,7 +232,7 @@ function NuevoTorneoWizard({ meId, coursesData, profilesData }: {
                     const isSel = !!selected.find(s => s.id === p.id)
                     return (
                       <button type="button" key={p.id} onClick={() => togglePlayer(p)}
-                        className="w-full flex items-center gap-3 rounded-[14px] p-3 border transition"
+                        className="w-full flex items-center gap-3 rounded-[16px] p-3 border transition"
                         style={{ backgroundColor: isSel ? '#0e1a16' : '#fff', borderColor: isSel ? '#0e1a16' : '#e5e0d4' }}>
                         <Avatar name={p.name} size={36} />
                         <div className="flex-1 text-left">
@@ -275,7 +275,7 @@ function NuevoTorneoWizard({ meId, coursesData, profilesData }: {
                 const gi = groupNum - 1
                 const gPlayers = groups.filter(p => p.group === groupNum)
                 return (
-                  <div key={groupNum} className="bg-white rounded-[18px] border border-[#e5e0d4] overflow-hidden">
+                  <div key={groupNum} className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
                     <div className="flex items-center gap-2 px-4 py-3 border-b border-[#efebe1]" style={{ backgroundColor: groupColors[gi] + '18' }}>
                       <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[11px] font-black" style={{ backgroundColor: groupColors[gi] }}>
                         {gi + 1}

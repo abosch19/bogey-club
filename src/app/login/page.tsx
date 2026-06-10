@@ -58,7 +58,7 @@ export default function LoginPage() {
                 id="login-email" aria-label="Email"
                 type="email" value={email} onChange={e => setEmail(e.target.value)}
                 required placeholder="tu@email.com"
-                className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+                className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
             </div>
 
@@ -70,7 +70,7 @@ export default function LoginPage() {
                 id="login-password" aria-label="Contraseña"
                 type="password" value={password} onChange={e => setPassword(e.target.value)}
                 required placeholder="••••••••"
-                className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+                className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
             </div>
 
@@ -82,7 +82,7 @@ export default function LoginPage() {
 
             <button
               type="submit" disabled={loading}
-              className="w-full py-3.5 rounded-[14px] font-semibold text-[15px] text-white mt-2 transition active:scale-[0.98] disabled:opacity-60"
+              className="w-full py-3.5 rounded-[16px] font-semibold text-[15px] text-white mt-2 transition active:scale-[0.98] disabled:opacity-60"
               style={{ backgroundColor: '#1f8a5b' }}
             >
               {loading ? 'Entrando…' : 'Entrar'}

@@ -93,3 +93,11 @@ html[data-nav='fade']::view-transition-new(root) { animation: vt-fade-in 160ms e
 html[data-nav]::view-transition-group(tab-bar) { z-index: 2; }
 html[data-nav='push']::view-transition-old(tab-bar) { animation: vt-fade-out 160ms ease both; }
 html[data-nav='pop']::view-transition-new(tab-bar) { animation: vt-fade-in 160ms ease both; }
+
+/* Round card → scorecard morph. Tapping a round card names it `round-card`
+   (App pages set it onClick) so it morphs into the scorecard info bar.
+   :only-child = the element has no counterpart on the other side — fade it
+   instead of letting it linger while the root slides. */
+html[data-nav]::view-transition-group(round-card) { z-index: 1; }
+html[data-nav]::view-transition-old(round-card):only-child { animation: vt-fade-out 140ms ease both; }
+html[data-nav]::view-transition-new(round-card):only-child { animation: vt-fade-in 140ms ease both; }

@@ -103,7 +103,7 @@ export default function OnboardingPage() {
           </div>
 
           {/* Label */}
-          <div className="bg-[#f4f1e9] rounded-[14px] px-4 py-3 mb-7">
+          <div className="bg-[#f4f1e9] rounded-[16px] px-4 py-3 mb-7">
             <p className="text-[13px] font-bold text-[#0e1a16]">{level}</p>
             <p className="text-[12px] text-[#6b7a72] mt-0.5">{sub}</p>
           </div>
@@ -116,7 +116,7 @@ export default function OnboardingPage() {
 
           <button
             type="button" onClick={handleStart} disabled={loading}
-            className="w-full py-3.5 rounded-[14px] font-semibold text-[15px] text-white transition active:scale-[0.98] disabled:opacity-60"
+            className="w-full py-3.5 rounded-[16px] font-semibold text-[15px] text-white transition active:scale-[0.98] disabled:opacity-60"
             style={{ backgroundColor: '#1f8a5b' }}
           >
             {loading ? 'Guardando…' : 'Empezar a jugar →'}

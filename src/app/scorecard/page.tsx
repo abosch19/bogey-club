@@ -34,7 +34,14 @@ function ScoreTable({ group, gi, groupsCount, players, viewMode, getScore, match
   return (
     <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-center" style={{ minWidth: `${group.length * 30 + 80}px` }}>
+        {/* table-fixed + colgroup: hole columns share the width equally, so OUT
+            and IN stay aligned whether or not a hole has a score yet. */}
+        <table className="w-full text-center table-fixed" style={{ minWidth: `${group.length * 30 + 96}px` }}>
+          <colgroup>
+            <col style={{ width: 44 }} />
+            {group.map(h => <col key={h.hole_number} />)}
+            <col style={{ width: 52 }} />
+          </colgroup>
           <thead>
             <tr className="border-b border-[#efebe1]">
               <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2 text-left">H</td>
@@ -334,7 +341,7 @@ function BetControl({ roundId, customBet }: BetControlProps) {
               value={bet}
               onChange={e => setBetEdit(e.target.value)}
               placeholder="Ej: el que pierde paga las cervezas..."
-              className="w-full border-2 border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] outline-none focus:border-[#e8b75a] mb-4"
+              className="w-full border-2 border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] outline-none focus:border-[#e8b75a] mb-4"
             />
             <div className="flex gap-2">
               <button type="button" onClick={() => setShowBetModal(false)}
@@ -499,8 +506,9 @@ function ScorecardHeader({
           : <span className="font-mono text-[10px] text-[#6b7a72]">{myScoresCount} / {holesCount} HOYOS</span>}
       </div>
 
-      {/* Mini info bar */}
-      <div className="flex items-center justify-between bg-white rounded-[14px] px-3 py-2 border border-[#e5e0d4] mb-2">
+      {/* Mini info bar — morph target of the round cards in home/stats */}
+      <div className="flex items-center justify-between bg-white rounded-[16px] px-3 py-2 border border-[#e5e0d4] mb-2"
+        style={{ viewTransitionName: 'round-card' }}>
         <div>
           <p className="font-bold text-[13px] text-[#0e1a16] leading-tight">{courseName}</p>
           <div className="flex gap-1.5 mt-0.5 flex-wrap">
@@ -542,7 +550,7 @@ function ScorecardHeader({
 
       {/* Matchplay live result */}
       {(viewMode === 'matchplay_hcp' || viewMode === 'matchplay') && matchplayResult && (
-        <div className="bg-white rounded-[14px] px-4 py-3 border border-[#e5e0d4] mb-2">
+        <div className="bg-white rounded-[16px] px-4 py-3 border border-[#e5e0d4] mb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Avatar name={matchplayResult.a.name} size={32} />
@@ -606,13 +614,13 @@ function BottomCTA({ allDone, nextHole, completed, signed, saving, customBet, pl
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
       {completed ? (
         <>
-          <div className="bg-[#d9eedd] rounded-[14px] px-4 py-3 mb-2 flex items-center gap-2">
+          <div className="bg-[#d9eedd] rounded-[16px] px-4 py-3 mb-2 flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             <span className="text-[#1f8a5b] font-semibold text-[13px]">Ronda firmada y guardada</span>
           </div>
           {/* Apuesta — si existe en notes */}
           {customBet && (
-            <div className="bg-[#f6e6c4] border-2 border-[#e8b75a] rounded-[14px] px-4 py-3 mb-2">
+            <div className="bg-[#f6e6c4] border-2 border-[#e8b75a] rounded-[16px] px-4 py-3 mb-2">
               <p className="font-mono text-[9px] text-[#9b6e1a] uppercase tracking-wide mb-1">Apuesta de la ronda</p>
               <p className="font-bold text-[15px] text-[#0e1a16]">{customBet}</p>
               {/* Winner */}
@@ -739,7 +747,7 @@ function TarjetaPage() {
     setSignFlow(f => ({ ...f, saving: false, celebrating: true }))
     setTimeout(() => {
       setSignFlow(f => ({ ...f, celebrating: false, signed: true }))
-    }, 2000)
+    }, 2600)
   }
 
   // Matchplay: net winner of a hole (null = tied, unscored, or <2 players).
@@ -799,14 +807,52 @@ function TarjetaPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-32">
-      {celebrating && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0e1a16]">
-          <style>{`@keyframes summary-pop { from { transform: scale(0.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }`}</style>
-          <div className="text-[80px]" style={{ animation: 'summary-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both' }}>&#9971;</div>
-          <p className="text-white text-[28px] font-black mt-4">Ronda firmada!</p>
-          <p className="text-white/60 text-[14px] mt-2">{myTotal} golpes · {celebrationDeltaStr}</p>
-        </div>
-      )}
+      {celebrating && (() => {
+        const myDeltas = holes.flatMap(h => {
+          const s = getScore(myId, h.hole_number)
+          return s ? [s - h.par] : []
+        })
+        const eagles  = myDeltas.filter(d => d <= -2).length
+        const birdies = myDeltas.filter(d => d === -1).length
+        const pars    = myDeltas.filter(d => d === 0).length
+        const highlights = [
+          eagles  > 0 && `🦅 ${eagles} eagle${eagles > 1 ? 's' : ''}`,
+          birdies > 0 && `🐦 ${birdies} birdie${birdies > 1 ? 's' : ''}`,
+          pars    > 0 && `${pars} par${pars > 1 ? 'es' : ''}`,
+        ].filter(Boolean).join(' · ')
+        const colors = ['#1f8a5b', '#e8b75a', '#2a6fdb', '#c6432d', '#9bc9a3', '#ffffff']
+        // Deterministic pseudo-random per piece (Math.random is off-limits with the compiler).
+        const rnd = (i: number, salt: number) => {
+          const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453
+          return x - Math.floor(x)
+        }
+        return (
+          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0e1a16] overflow-hidden">
+            <style>{`
+              @keyframes summary-pop { from { transform: scale(0.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+              @keyframes confetti-fall {
+                from { transform: translateY(-6vh) rotate(0deg); opacity: 1 }
+                85%  { opacity: 1 }
+                to   { transform: translateY(108vh) rotate(660deg); opacity: 0 }
+              }
+            `}</style>
+            {Array.from({ length: 44 }, (_, i) => (
+              <div key={i} className="absolute top-0 rounded-[2px]"
+                style={{
+                  left: `${rnd(i, 1) * 100}%`,
+                  width: 5 + rnd(i, 2) * 5,
+                  height: 9 + rnd(i, 3) * 7,
+                  backgroundColor: colors[i % colors.length],
+                  animation: `confetti-fall ${1.7 + rnd(i, 4) * 1.2}s ${rnd(i, 5) * 0.7}s cubic-bezier(0.25, 0.6, 0.45, 1) both`,
+                }} />
+            ))}
+            <div className="text-[80px]" style={{ animation: 'summary-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both' }}>&#9971;</div>
+            <p className="text-white text-[28px] font-black mt-4">Ronda firmada!</p>
+            <p className="text-white/60 text-[14px] mt-2">{myTotal} golpes · {celebrationDeltaStr}</p>
+            {highlights && <p className="text-white/80 text-[14px] font-semibold mt-3">{highlights}</p>}
+          </div>
+        )
+      })()}
 
       {/* Header */}
       <ScorecardHeader

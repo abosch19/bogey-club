@@ -68,7 +68,7 @@ export default function RegistroPage() {
                 id="register-name"
                 type="text" value={name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 required placeholder="Tu nombre o apodo"
-                className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+                className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
             </div>
 
@@ -80,7 +80,7 @@ export default function RegistroPage() {
                 id="register-last-name"
                 type="text" value={last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))}
                 placeholder="Tus apellidos (opcional)"
-                className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+                className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
             </div>
 
@@ -92,7 +92,7 @@ export default function RegistroPage() {
                 id="register-email"
                 type="email" value={email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                 required placeholder="tu@email.com"
-                className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+                className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
             </div>
 
@@ -104,7 +104,7 @@ export default function RegistroPage() {
                 id="register-password"
                 type="password" value={password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                 required placeholder="Mínimo 8 caracteres"
-                className="w-full border border-[#e5e0d4] rounded-[14px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+                className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
               <p className="text-[11px] text-[#6b7a72] mt-1.5">Al menos 8 caracteres.</p>
             </div>
@@ -117,7 +117,7 @@ export default function RegistroPage() {
 
             <button
               type="submit" disabled={loading}
-              className="w-full py-3.5 rounded-[14px] font-semibold text-[15px] text-white mt-2 transition active:scale-[0.98] disabled:opacity-60"
+              className="w-full py-3.5 rounded-[16px] font-semibold text-[15px] text-white mt-2 transition active:scale-[0.98] disabled:opacity-60"
               style={{ backgroundColor: '#1f8a5b' }}
             >
               {loading ? 'Creando cuenta…' : 'Crear cuenta'}

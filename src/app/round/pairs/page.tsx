@@ -117,7 +117,7 @@ function ParejasPage() {
               ? (members.reduce((a, p) => a + p.handicap_index, 0) / members.length).toFixed(1)
               : '–'
             return (
-              <div key={t} className="rounded-[18px] p-4 border-2"
+              <div key={t} className="rounded-[16px] p-4 border-2"
                 style={{ backgroundColor: tc.light, borderColor: tc.bg }}>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[11px] font-black" style={{ backgroundColor: tc.bg }}>{t}</div>
@@ -146,7 +146,7 @@ function ParejasPage() {
         </div>
 
         {/* Player list to reassign */}
-        <div className="bg-white rounded-[18px] border border-[#e5e0d4] overflow-hidden mb-3">
+        <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden mb-3">
           <div className="px-4 py-3 border-b border-[#efebe1] flex items-center justify-between">
             <p className="font-bold text-[14px] text-[#0e1a16]">Cambiar de equipo</p>
             <button type="button" onClick={swapTeams}

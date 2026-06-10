@@ -104,7 +104,7 @@ function ScrambleSection({ players, par, holeNum, get, setScore, set }: Scramble
                   return (
                     <button key={s} type="button"
                       onClick={() => members.forEach(m => setScore(m.id, s))}
-                      className="flex-1 h-14 rounded-[14px] transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                      className="flex-1 h-14 rounded-[16px] transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
                       style={{
                         backgroundColor: isSel ? c.bg : '#f4f1e9',
                         color: isSel ? c.text : '#9b9b8a',
@@ -158,7 +158,7 @@ function PlayerCard({ player: p, par, hole, roundModes, expanded: isExp, onToggl
   const scoreOpts = [par - 1, par, par + 1, par + 2, par + 3, par + 4].filter(s => s >= 1)
 
   return (
-    <div className="bg-white rounded-[18px] border border-[#e5e0d4] overflow-hidden">
+    <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
       <div className="flex items-center gap-2.5 px-3 pt-3 pb-2.5">
         <div className="flex-shrink-0 text-center" style={{ minWidth: 44 }}>
           <Avatar name={p.name} size={40} className="mx-auto" />
@@ -356,7 +356,7 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
       </div>
 
       {/* Hole hero — solo lo esencial */}
-      <div className="mx-[14px] rounded-[18px] px-4 py-4 mb-3 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
+      <div className="mx-[14px] rounded-[16px] px-4 py-4 mb-3 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
         <div className="absolute right-[-20px] top-[-20px] w-[80px] h-[80px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.85 }}/>
         <div className="flex items-center gap-4 relative">
           <Drawer.Title asChild><div className="text-[52px] font-black text-white leading-none">{holeNum}</div></Drawer.Title>

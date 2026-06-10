@@ -86,7 +86,7 @@ export default function NuevaLigaPage() {
             </div>
           </div>
 
-          <div className="bg-[#f4f1e9] rounded-[14px] p-3 border border-[#e5e0d4]">
+          <div className="bg-[#f4f1e9] rounded-[16px] p-3 border border-[#e5e0d4]">
             <p className="text-[12px] text-[#6b7a72] leading-relaxed">
               Puntuación estilo F1: <strong className="text-[#0e1a16]">25-18-15-12-10-8-6-4-2-1</strong>. Solo puntúa el <strong className="text-[#0e1a16]">50% de jugadores</strong> (redondeando arriba).
             </p>

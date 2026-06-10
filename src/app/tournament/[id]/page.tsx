@@ -33,7 +33,7 @@ function LeaderboardTab({ rankings, myId, mode, coursePar }: { rankings: Ranked[
         const isMe    = p.id === myId
         const delta   = p.score !== null && mode !== 'stableford' ? p.score - coursePar : null
         return (
-          <div key={p.id} className="flex items-center gap-3 rounded-[14px] p-3 border"
+          <div key={p.id} className="flex items-center gap-3 rounded-[16px] p-3 border"
             style={{ backgroundColor: isFirst ? '#0e1a16' : isMe ? '#d9eedd' : '#fff', borderColor: isFirst ? '#0e1a16' : isMe ? '#1f8a5b' : '#e5e0d4' }}>
             <div className="w-7 h-7 rounded-[7px] flex items-center justify-center font-mono font-black text-[13px]"
               style={{ backgroundColor: isFirst ? '#e8b75a' : '#f4f1e9', color: isFirst ? '#0e1a16' : '#6b7a72' }}>

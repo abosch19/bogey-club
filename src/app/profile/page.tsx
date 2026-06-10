@@ -134,7 +134,7 @@ export default function PerfilPage() {
           {diffs.length > 0 && (
             <>
               {/* WHS explanation card */}
-              <div className="bg-[#f4f1e9] rounded-[14px] px-4 py-3 mb-4">
+              <div className="bg-[#f4f1e9] rounded-[16px] px-4 py-3 mb-4">
                 <p className="font-bold text-[13px] text-[#0e1a16] mb-2">¿Qué es el índice WHS?</p>
                 <p className="text-[12px] text-[#6b7a72] leading-relaxed mb-2">
                   Es tu nivel de juego oficial. Se calcula con tus mejores {nCount || 8} diferenciales
@@ -189,7 +189,7 @@ export default function PerfilPage() {
 
         {/* Recalcular WHS + editar hándicaps (golf / P&P) */}
         <button type="button" onClick={recalculate} disabled={recalculating}
-          className="w-full py-3 rounded-[14px] text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60 mb-2">
+          className="w-full py-3 rounded-[16px] text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60 mb-2">
           {recalculating ? 'Calculando...' : 'Recalcular WHS'}
         </button>
         <div className="grid grid-cols-2 gap-2 mb-3">
@@ -200,7 +200,7 @@ export default function PerfilPage() {
             if (isNaN(num) || num < 0 || num > 54) { alert('Valor inválido. Debe ser entre 0 y 54.'); return }
             setHandicap({ handicap_index: num })
           }}
-            className="py-3 rounded-[14px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80">
+            className="py-3 rounded-[16px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80">
             Editar golf
           </button>
           <button type="button" onClick={() => {
@@ -210,7 +210,7 @@ export default function PerfilPage() {
             if (isNaN(num) || num < 0 || num > 54) { alert('Valor inválido. Debe ser entre 0 y 54.'); return }
             setHandicap({ handicap_index_pp: num })
           }}
-            className="py-3 rounded-[14px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80">
+            className="py-3 rounded-[16px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80">
             Editar P&P
           </button>
         </div>
