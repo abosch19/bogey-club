@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { HeroCard } from '@/components/ui/hero-card'
 import { Link, useNavigate } from 'react-router'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
@@ -53,14 +54,11 @@ export default function AdminPage() {
         </div>
 
         {/* Header */}
-        <div className="rounded-[22px] p-4 mb-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-          <div className="absolute right-[-20px] top-[-20px] w-[100px] h-[100px] rounded-full" style={{ backgroundColor: '#c6432d', opacity: 0.8 }}/>
-          <div className="relative">
-            <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">PANEL DE ADMINISTRACIÓN</p>
-            <p className="text-white text-[20px] font-black mt-1">Admin · Bogey Club</p>
-            <p className="text-white/50 text-[12px] mt-0.5">{myEmail}</p>
-          </div>
-        </div>
+        <HeroCard className="p-4 mb-4" orbSize={110} orbColor="#c6432d">
+          <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">PANEL DE ADMINISTRACIÓN</p>
+          <p className="text-white text-[20px] font-black mt-1">Admin · Bogey Club</p>
+          <p className="text-white/50 text-[12px] mt-0.5">{myEmail}</p>
+        </HeroCard>
 
         {msg && <p className="text-[13px] text-[#1f8a5b] bg-[#d9eedd] rounded-[10px] px-4 py-2.5 mb-3">{msg}</p>}
 

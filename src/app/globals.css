@@ -48,6 +48,12 @@ html, body {
 .safe-top { padding-top: max(54px, env(safe-area-inset-top)); }
 .safe-bottom { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
 
+/* Primary action: green gradient with a soft glow. */
+.btn-glow {
+  background: linear-gradient(180deg, #23996a, #1b7b51);
+  box-shadow: 0 6px 18px rgba(31, 138, 91, 0.35);
+}
+
 /* Floating tab bar: lifted off the bottom edge, higher when installed as a PWA. */
 .tabbar-float { bottom: 14px; }
 @media (display-mode: standalone) {

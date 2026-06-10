@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { formatDate, formatHandicap } from '@/lib/golf'
 import { Avatar, avatarColor } from '@/components/ui/avatar'
+import { HeroCard } from '@/components/ui/hero-card'
 
 function Sparkline({ values, color = '#1f8a5b' }: { values: number[]; color?: string }) {
   if (values.length < 2) return null
@@ -218,7 +219,7 @@ export default function StatsPage() {
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
       {/* Header sticky */}
-      <div className="sticky top-0 bg-[#f4f1e9] z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
+      <div className="sticky top-0 bg-[#f4f1e9]/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
         <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16] mb-2">Stats</h1>
         <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] mb-2">
@@ -291,9 +292,8 @@ function GeneralSection({
   return (
     <div className="space-y-3">
       {/* HCP hero */}
-      <div className="rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-        <div className="absolute right-[-30px] top-[-30px] w-[120px] h-[120px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.85 }}/>
-        <div className="relative">
+      <HeroCard className="p-4" orbSize={130}>
+        <div>
           <div className="flex items-end justify-between mb-2">
             <div>
               <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">ÍNDICE WHS</p>
@@ -318,7 +318,7 @@ function GeneralSection({
           </div>
           {hcpHistory.length >= 3 && <div className="opacity-80"><Sparkline values={hcpHistory} color="#1f8a5b"/></div>}
         </div>
-      </div>
+      </HeroCard>
 
       {n > 0 ? (
         <>
@@ -549,9 +549,8 @@ function SocialSection({
         const rate   = total > 0 ? Math.round(wins / total * 100) : 0
         const phrase = selPlayer ? playerPhrase(wins, losses) : (rate >= 50 ? winPhrase : lossPhrase)
         return (
-          <div className="rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-            <div className="absolute right-[-20px] top-[-20px] w-[100px] h-[100px] rounded-full" style={{ backgroundColor: rate >= 50 ? '#1f8a5b' : '#c6432d', opacity: 0.85 }}/>
-            <div className="relative">
+          <HeroCard className="p-4" orbSize={110} orbColor={rate >= 50 ? '#1f8a5b' : '#c6432d'}>
+            <div>
               <div className="flex items-center gap-6 mb-3">
                 <div>
                   <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">
@@ -577,7 +576,7 @@ function SocialSection({
                 <p className="text-white text-[13px] font-semibold">{phrase}</p>
               </div>
             </div>
-          </div>
+          </HeroCard>
         )
       })()}
 

@@ -5,6 +5,7 @@ import { useAuthActions } from '@convex-dev/auth/react'
 import { api } from '@convex/_generated/api'
 import { formatHandicap, formatDate, countingRounds } from '@/lib/golf'
 import { Avatar } from '@/components/ui/avatar'
+import { HeroCard } from '@/components/ui/hero-card'
 
 function Sparkline({ diffs }: { diffs: { diff: number }[] }) {
   if (diffs.length < 2) return null
@@ -69,24 +70,15 @@ export default function PerfilPage() {
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
       {/* Header sticky */}
-      <div className="sticky top-0 bg-[#f4f1e9] z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
+      <div className="sticky top-0 bg-[#f4f1e9]/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
         <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16]">Carnet</h1>
       </div>
 
       <div className="px-[14px] pt-4 pb-4">
         {/* Member card */}
-        <div className="rounded-[22px] p-5 mb-3 relative overflow-hidden shadow-[0_18px_40px_rgba(14,26,22,0.32)]"
-          style={{ background: 'linear-gradient(140deg, #0a1511 0%, #0e1a16 46%, #17291f 100%)' }}>
-          {/* Green glow orb */}
-          <div className="absolute right-[-50px] top-[-50px] w-[190px] h-[190px] rounded-full"
-            style={{ background: 'radial-gradient(circle at 35% 35%, #2aa86f 0%, #1f8a5b 55%, rgba(31,138,91,0) 72%)' }}/>
-          {/* Credit-card pinstripes + diagonal sheen */}
-          <div className="absolute inset-0 opacity-[0.04]"
-            style={{ backgroundImage: 'repeating-linear-gradient(135deg, #fff 0 1px, transparent 1px 9px)' }}/>
-          <div className="absolute inset-0"
-            style={{ background: 'linear-gradient(115deg, transparent 32%, rgba(255,255,255,0.07) 46%, transparent 58%)' }}/>
-          <div className="relative">
+        <HeroCard className="p-5 mb-3">
+          <div>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <svg width="22" height="22" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="30" fill="#9bc9a3"/><path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round"/><path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16"/></svg>
@@ -133,7 +125,7 @@ export default function PerfilPage() {
               BC-{profile._id.slice(-4).toUpperCase()} · Miembro desde {new Date(profile._creationTime).getFullYear()}
             </p>
           </div>
-        </div>
+        </HeroCard>
 
         {/* ── WHS HANDICAP ── */}
         <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4 mb-3">

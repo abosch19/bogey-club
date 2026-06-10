@@ -5,6 +5,7 @@ import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { stablefordPts, strokesReceived } from '@/lib/golf'
+import { HeroCard } from '@/components/ui/hero-card'
 import { Avatar } from '@/components/ui/avatar'
 
 type TPlayer = { id: string; name: string; group: number; handicap: number; round_id: string | null; course_handicap: number }
@@ -276,9 +277,8 @@ export default function TorneoPage() {
         </div>
 
         {/* Tournament hero */}
-        <div className="rounded-[22px] p-4 mb-3 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-          <div className="absolute right-[-20px] top-[-20px] w-[100px] h-[100px] rounded-full" style={{ backgroundColor: '#e8b75a', opacity: 0.9 }}/>
-          <div className="relative">
+        <HeroCard className="p-4 mb-3" orbSize={110} orbColor="#e8b75a">
+          <div>
             <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">
               {course?.name} · {mode.toUpperCase()} · {players.length} JUGADORES
             </p>
@@ -295,7 +295,7 @@ export default function TorneoPage() {
               )}
             </div>
           </div>
-        </div>
+        </HeroCard>
 
         {/* Tabs */}
         <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4] mb-3">

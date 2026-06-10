@@ -675,7 +675,7 @@ function BottomCTA({ allDone, nextHole, completed, signed, saving, customBet, pl
             <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Siguiente</p>
             <p className="text-[15px] font-black">Hoyo {nextHole.hole_number} · par {nextHole.par}</p>
           </div>
-          <span className="text-[#0e1a16] text-[12px] font-black px-3 py-1.5 rounded-full" style={{ backgroundColor: '#1f8a5b' }}>+ ANOTAR</span>
+          <span className="btn-glow text-white text-[12px] font-black px-3 py-1.5 rounded-full">+ ANOTAR</span>
         </button>
       ) : null}
     </div>

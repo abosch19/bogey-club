@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { ScoreMark } from '@/components/ui/score-mark'
 import { Avatar } from '@/components/ui/avatar'
+import { HeroCard } from '@/components/ui/hero-card'
 
 type LeagueStanding = { profile_id: string; name: string; total_points: number; avatar_url: string | null }
 
@@ -135,7 +136,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
       {/* Header sticky — se mantiene arriba al hacer scroll */}
-      <div className="sticky top-0 bg-[#f4f1e9] z-40 flex items-center justify-between px-[14px] pb-2 border-b border-[#e5e0d4]"
+      <div className="sticky top-0 bg-[#f4f1e9]/85 backdrop-blur-md z-40 flex items-center justify-between px-[14px] pb-2 border-b border-[#e5e0d4]"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
         <div className="flex items-center gap-2">
           <svg width="26" height="26" viewBox="0 0 64 64" fill="none">
@@ -146,8 +147,7 @@ export default function HomePage() {
           <span className="text-[26px] font-black tracking-tight text-[#0e1a16]">Bogey Club</span>
         </div>
         <Link to="/round/course"
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-[13px] text-white transition active:scale-[0.97]"
-          style={{ backgroundColor: '#1f8a5b' }}>
+          className="btn-glow flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-[13px] text-white transition active:scale-[0.97]">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
           Nueva
         </Link>
@@ -157,38 +157,37 @@ export default function HomePage() {
 
         <div className="px-[14px] space-y-3 mt-2">
           {/* Hero dark card */}
-          <div className="rounded-[22px] p-5 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-            <div className="absolute top-[-50px] right-[-50px] w-[200px] h-[200px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.92 }}/>
-            <div className="absolute right-[52px] top-[-8px] w-[1.5px] h-[60px] bg-white opacity-85"/>
-            <svg className="absolute right-[34px] top-[-6px]" width="24" height="14" viewBox="0 0 24 14"><path d="M0 0 L20 4 L0 10 Z" fill="white"/></svg>
-            <div className="absolute right-[44px] top-[52px] w-[18px] h-[18px] rounded-full bg-white" style={{ boxShadow: 'inset -2px -2px 0 rgba(0,0,0,0.08)' }}/>
-
-            <div className="relative">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.14)' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#1f8a5b]"/>
-                <span className="text-white text-[11px] font-semibold">Listo para jugar</span>
-              </div>
-              <h1 className="text-white text-[28px] font-black tracking-tight leading-tight mb-3">
-                Buenas, {firstName}.<br/>
-                Toca <span style={{ color: '#1f8a5b' }}>perder bolas.</span>
-              </h1>
-
-              {/* Frase del día — entre el texto y los botones */}
-              <div className="rounded-[12px] px-3 py-2.5 mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                <p className="text-white/70 text-[12px] italic leading-snug">"{DAILY_QUOTE.text}"</p>
-                <p className="font-mono text-[9px] text-white/35 mt-1">— {DAILY_QUOTE.author}</p>
-              </div>
-
-              <div className="flex gap-2">
-                <Link to="/round/course" className="flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[15px] text-[#0e1a16] transition active:scale-[0.98]" style={{ backgroundColor: '#1f8a5b' }}>
-                  Competitivo
-                </Link>
-                <Link to="/round/course?practice=true" className="flex items-center justify-center px-5 py-3.5 rounded-full font-semibold text-[14px] transition active:scale-[0.98]" style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)', color: '#fff' }}>
-                  Práctica
-                </Link>
-              </div>
+          <HeroCard className="p-5" orbSize={200} decor={
+            <>
+              <div className="absolute right-[52px] top-[-8px] w-[1.5px] h-[60px] bg-white opacity-85"/>
+              <svg className="absolute right-[34px] top-[-6px]" width="24" height="14" viewBox="0 0 24 14"><path d="M0 0 L20 4 L0 10 Z" fill="white"/></svg>
+              <div className="absolute right-[44px] top-[52px] w-[18px] h-[18px] rounded-full bg-white" style={{ boxShadow: 'inset -2px -2px 0 rgba(0,0,0,0.08)' }}/>
+            </>
+          }>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.14)' }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#1f8a5b]"/>
+              <span className="text-white text-[11px] font-semibold">Listo para jugar</span>
             </div>
-          </div>
+            <h1 className="text-white text-[28px] font-black tracking-tight leading-tight mb-3">
+              Buenas, {firstName}.<br/>
+              Toca <span style={{ color: '#1f8a5b' }}>perder bolas.</span>
+            </h1>
+
+            {/* Frase del día — entre el texto y los botones */}
+            <div className="rounded-[12px] px-3 py-2.5 mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+              <p className="text-white/70 text-[12px] italic leading-snug">"{DAILY_QUOTE.text}"</p>
+              <p className="font-mono text-[9px] text-white/35 mt-1">— {DAILY_QUOTE.author}</p>
+            </div>
+
+            <div className="flex gap-2">
+              <Link to="/round/course" className="btn-glow flex-1 flex items-center justify-center py-3.5 rounded-full font-bold text-[15px] text-white transition active:scale-[0.98]">
+                Competitivo
+              </Link>
+              <Link to="/round/course?practice=true" className="flex items-center justify-center px-5 py-3.5 rounded-full font-semibold text-[14px] transition active:scale-[0.98]" style={{ backgroundColor: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)', color: '#fff' }}>
+                Práctica
+              </Link>
+            </div>
+          </HeroCard>
 
           {/* Onboarding card — only when 0 completed rounds and no active round */}
           {completedRoundsCount === 0 && !activeRound && (
@@ -261,9 +260,8 @@ export default function HomePage() {
 
           {/* Liga card */}
           {activeLeague ? (
-            <div className="rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-              <div className="absolute right-[-30px] top-[-30px] w-[120px] h-[120px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.7 }}/>
-              <div className="relative">
+            <HeroCard className="p-4" orbSize={120}>
+              <div>
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">
@@ -293,17 +291,18 @@ export default function HomePage() {
                   <Link to="/league" className="font-mono text-[9px] text-white/60 ml-1">Ver liga →</Link>
                 </div>
               </div>
-            </div>
+            </HeroCard>
           ) : (
-            <Link to="/league/new" className="block rounded-[22px] p-4 relative overflow-hidden" style={{ backgroundColor: '#0e1a16' }}>
-              <div className="absolute right-[-30px] top-[-30px] w-[120px] h-[120px] rounded-full" style={{ backgroundColor: '#1f8a5b', opacity: 0.7 }}/>
-              <div className="relative flex items-center justify-between">
-                <div>
-                  <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">LIGA</p>
-                  <p className="text-white text-[18px] font-black tracking-tight mt-1">Crear liga →</p>
+            <Link to="/league/new" className="block">
+              <HeroCard className="p-4" orbSize={120}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-mono text-[9px] text-white/50 uppercase tracking-[0.18em]">LIGA</p>
+                    <p className="text-white text-[18px] font-black tracking-tight mt-1">Crear liga →</p>
+                  </div>
+                  <div className="text-[32px] font-black text-white/30">+</div>
                 </div>
-                <div className="text-[32px] font-black text-white/30">+</div>
-              </div>
+              </HeroCard>
             </Link>
           )}
 

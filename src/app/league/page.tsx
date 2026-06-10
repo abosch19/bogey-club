@@ -31,7 +31,7 @@ export default function LigaPage() {
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-28">
       {/* Header sticky */}
-      <div className="sticky top-0 bg-[#f4f1e9] z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
+      <div className="sticky top-0 bg-[#f4f1e9]/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
         <div className="flex items-center justify-between">
           <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16]">Liga</h1>
