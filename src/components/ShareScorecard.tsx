@@ -25,7 +25,10 @@ export function ShareScorecardButton({ courseName, dateLabel, holesLabel, groups
     setBusy(true)
     try {
       const blob = await renderScorecardImage({ courseName, dateLabel, holesLabel, groups, players, getScore })
-      const file = new File([blob], `tarjeta-${dateLabel.replaceAll('/', '-')}.png`, { type: 'image/png' })
+      // iOS shows the filename as the share-sheet header (it ignores `title`),
+      // so make it readable: "Tarjeta Golf Barcelona - Masía 06-06-2026.png".
+      const safeCourse = courseName.replace(/[\\/:*?"<>|]/g, '').trim()
+      const file = new File([blob], `Tarjeta ${safeCourse} ${dateLabel.replaceAll('/', '-')}.png`, { type: 'image/png' })
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: `Tarjeta · ${courseName}` })
       } else {
