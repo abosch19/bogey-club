@@ -48,10 +48,10 @@ html, body {
 .safe-top { padding-top: max(54px, env(safe-area-inset-top)); }
 .safe-bottom { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
 
-/* Tab bar: a little bottom padding in browser, more when installed as a PWA. */
-.tabbar-pb { padding-bottom: 8px; }
+/* Floating tab bar: lifted off the bottom edge, higher when installed as a PWA. */
+.tabbar-float { bottom: 14px; }
 @media (display-mode: standalone) {
-  .tabbar-pb { padding-bottom: max(22px, calc(env(safe-area-inset-bottom) + 8px)); }
+  .tabbar-float { bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px)); }
 }
 
 /* ——— Page transitions (View Transitions API) ———
