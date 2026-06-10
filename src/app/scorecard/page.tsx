@@ -662,9 +662,9 @@ function TarjetaPage() {
 
   const [viewMode, setViewMode]   = useState<ViewMode>('stroke')
   const [editHole, setEditHole]   = useState<number | null>(null)
-  const [saving, setSaving]       = useState(false)
-  const [signed, setSigned]       = useState(false)
-  const [celebrating, setCelebrating] = useState(false)
+  // Sign-flow state grouped so each transition is one update (saving → celebrating → signed).
+  const [signFlow, setSignFlow]   = useState({ saving: false, signed: false, celebrating: false })
+  const { saving, signed, celebrating } = signFlow
   const finalizeMut = useMutation(api.rounds.finalize)
 
   const myId = me?._id ?? ''
@@ -734,13 +734,11 @@ function TarjetaPage() {
   const ranking = players.toSorted((a, b) => (getTotal(a.id) || 999) - (getTotal(b.id) || 999))
 
   async function handleSign() {
-    setSaving(true)
+    setSignFlow(f => ({ ...f, saving: true }))
     await finalizeMut({ round_id: roundId as Id<'rounds'> })
-    setSaving(false)
-    setCelebrating(true)
+    setSignFlow(f => ({ ...f, saving: false, celebrating: true }))
     setTimeout(() => {
-      setCelebrating(false)
-      setSigned(true)
+      setSignFlow(f => ({ ...f, celebrating: false, signed: true }))
     }, 2000)
   }
 

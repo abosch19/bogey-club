@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -298,13 +298,13 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
   const activePlayer = players.find((p) => p.id === selectedPlayerId) ?? players[0]
 
   // Scores saved on the server for this hole — derived, never copied into state.
-  const serverScores = useMemo(() => {
+  const serverScores = (() => {
     const init: Record<string, PlayerScore> = {}
     for (const s of (data?.scores ?? []).filter(s => s.hole_number === holeNum)) {
       init[s.profileId] = { strokes: s.strokes ?? null, putts: s.putts ?? null, fairway: s.fairway ?? null, gir: s.gir ?? false, in_bunker: s.in_bunker ?? false, penalties: s.penalties ?? 0 }
     }
     return init
-  }, [data, holeNum])
+  })()
 
   // What the UI shows: saved scores with the user's pending edits layered on top.
   const scores: Record<string, PlayerScore> = { ...serverScores, ...edits }

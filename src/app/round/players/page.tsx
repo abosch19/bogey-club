@@ -1,4 +1,4 @@
-import { useState, useMemo, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
@@ -13,10 +13,7 @@ function SeleccionarJugadoresPage() {
   const isPractice    = searchParams.get('practice') === 'true'
   const leagueId      = searchParams.get('league') ?? ''
   const holeMode      = searchParams.get('hole_mode') ?? 'all'
-  const prefillPlayers = useMemo(
-    () => searchParams.get('prefill_players')?.split(',').filter(Boolean) ?? [],
-    [searchParams],
-  )
+  const prefillPlayers = searchParams.get('prefill_players')?.split(',').filter(Boolean) ?? []
 
   const me = useQuery(api.profiles.me)
   const profiles = useQuery(api.players.all)

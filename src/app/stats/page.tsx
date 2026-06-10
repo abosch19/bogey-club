@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
@@ -64,9 +64,9 @@ export default function StatsPage() {
   const [courseType, setCourseType] = useState<'golf'|'pp'>('golf')
 
   const myId = me?._id ?? ''
-  const statScores = useMemo(() => (data?.scores ?? []) as unknown as StatScore[], [data])
+  const statScores = (data?.scores ?? []) as unknown as StatScore[]
 
-  const rounds: RoundStat[] = useMemo(() => {
+  const rounds: RoundStat[] = (() => {
     if (!data) return []
     // Build each round and keep only total > 0 of the active course type in a single pass.
     return data.rounds.flatMap((r) => {
@@ -100,10 +100,10 @@ export default function StatsPage() {
         players: coPlayers, won, scores: holeScores,
       }]
     })
-  }, [data, statScores, myId, courseType])
+  })()
 
   // Course stats
-  const courseStats: CourseStat[] = useMemo(() => {
+  const courseStats: CourseStat[] = (() => {
     const cMap: Record<string, { name: string; scores: number[]; par: number; record: number | null }> = {}
     const coursesById = new Map((data?.courses ?? []).map(c => [String(c.id), c]))
     for (const r of rounds) {
@@ -120,7 +120,7 @@ export default function StatsPage() {
       rounds: c.scores.length,
       last3: c.scores.slice(0, 3),
     })).sort((a, b) => b.rounds - a.rounds)
-  }, [rounds, data])
+  })()
 
   if (data === undefined || me === undefined) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
 

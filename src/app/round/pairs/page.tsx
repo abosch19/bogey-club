@@ -1,4 +1,4 @@
-import { useState, useMemo, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams, useNavigate } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
@@ -32,7 +32,7 @@ function ParejasPage() {
   const [saving, setSaving]   = useState(false)
 
   // Default pairing derived from profiles + selected players (no init effect).
-  const basePlayers = useMemo<Player[]>(() => {
+  const basePlayers: Player[] = (() => {
     if (!allProfiles) return []
     const playerIds = playersParam.split(',').filter(Boolean)
     const profiles = allProfiles
@@ -48,13 +48,13 @@ function ParejasPage() {
       // Snake: index 0,3 → team 1; index 1,2 → team 2 (for 4 players)
       team: (i % 2 === 0 ? 1 : 2) as 1 | 2,
     }))
-  }, [allProfiles, playersParam])
+  })()
 
   // Final pairing = default, flipped if "swap all" is active, then per-player overrides.
-  const players = useMemo<Player[]>(() => basePlayers.map(p => {
+  const players: Player[] = basePlayers.map(p => {
     const base = swapped ? ((p.team === 1 ? 2 : 1) as 1 | 2) : p.team
     return { ...p, team: overrides[p._id] ?? base }
-  }), [basePlayers, swapped, overrides])
+  })
 
   function moveToTeam(playerId: string, team: 1 | 2) {
     setOverrides(prev => ({ ...prev, [playerId]: team }))

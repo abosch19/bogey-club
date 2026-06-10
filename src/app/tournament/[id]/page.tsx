@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { Link } from 'react-router'
 import { useQuery } from 'convex/react'
@@ -187,25 +187,21 @@ export default function TorneoPage() {
   }, [me, navigate])
 
   // Build players from the reactive tournament data
-  const players: TPlayer[] = useMemo(() => {
-    if (!data) return []
-    const { players: tps, groups } = data
-    return tps.map((tp) => {
-      const group = groups.find((g) => g.group_number === tp.group_number)
-      const gp = group?.players.find((p) => p.profileId === tp.profileId)
-      return {
-        id: tp.profileId ?? '',
-        group: tp.group_number,
-        name: gp?.name ?? 'J',
-        handicap: gp?.handicap_index ?? 0,
-        round_id: group?.roundId ?? null,
-        course_handicap: gp?.course_handicap ?? Math.round(gp?.handicap_index ?? 0),
-      }
-    })
-  }, [data])
+  const players: TPlayer[] = !data ? [] : data.players.map((tp) => {
+    const group = data.groups.find((g) => g.group_number === tp.group_number)
+    const gp = group?.players.find((p) => p.profileId === tp.profileId)
+    return {
+      id: tp.profileId ?? '',
+      group: tp.group_number,
+      name: gp?.name ?? 'J',
+      handicap: gp?.handicap_index ?? 0,
+      round_id: group?.roundId ?? null,
+      course_handicap: gp?.course_handicap ?? Math.round(gp?.handicap_index ?? 0),
+    }
+  })
 
   // Scores aggregated by player — owned by the single tournaments.get subscription.
-  const scores: Record<string, Score[]> = useMemo(() => {
+  const scores: Record<string, Score[]> = (() => {
     const byPlayer: Record<string, Score[]> = {}
     if (!data) return byPlayer
     for (const roundScores of Object.values(data.scoresByRound)) {
@@ -215,29 +211,27 @@ export default function TorneoPage() {
       }
     }
     return byPlayer
-  }, [data])
+  })()
 
   // Until the user picks a group explicitly, follow my own group.
   const activeGroup = chosenGroup ?? (players.find(p => p.id === myId)?.group ?? 1)
 
-  // "hace Xs" live indicator. `now` ticks every second; `lastUpdate` is the
+  // "hace Xs" live indicator. `now` ticks every second; `update.at` is the
   // baseline. secondsAgo is DERIVED in render (a plain const, not state), so no
   // effect syncs it. The baseline is re-based when fresh data arrives via the
   // sanctioned adjust-state-during-render pattern (compare against previous
   // state, not a ref — refs can't be read during render).
   const [now, setNow] = useState(() => Date.now())
-  const [lastUpdate, setLastUpdate] = useState(0)
-  const [seenData, setSeenData] = useState<typeof data>(undefined)
+  const [update, setUpdate] = useState<{ data: typeof data; at: number }>({ data: undefined, at: 0 })
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(t)
   }, [])
-  if (data && seenData !== data) {
-    setSeenData(data)
-    setLastUpdate(now)
+  if (data && update.data !== data) {
+    setUpdate({ data, at: now })
   }
-  const secondsAgo = now && lastUpdate ? Math.max(0, Math.floor((now - lastUpdate) / 1000)) : 0
-  const markUpdated = () => { const t = Date.now(); setNow(t); setLastUpdate(t) }
+  const secondsAgo = now && update.at ? Math.max(0, Math.floor((now - update.at) / 1000)) : 0
+  const markUpdated = () => { const t = Date.now(); setNow(t); setUpdate(u => ({ ...u, at: t })) }
 
   const loading = me === undefined || data === undefined
 
