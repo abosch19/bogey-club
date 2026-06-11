@@ -6,6 +6,7 @@ import { api } from '@convex/_generated/api'
 import { formatHandicap, formatDate, countingRounds } from '@/lib/golf'
 import { Avatar } from '@/components/ui/avatar'
 import { HeroCard } from '@/components/ui/hero-card'
+import { PushSettings } from '@/components/PushSettings'
 
 function Sparkline({ diffs }: { diffs: { diff: number }[] }) {
   if (diffs.length < 2) return null
@@ -327,6 +328,9 @@ export default function PerfilPage() {
 
         {/* ── ACCESOS ── */}
         <div className="space-y-2 mb-3">
+          {/* Notificaciones push */}
+          <PushSettings />
+
           {/* Jugadores registrados */}
           <Link
             to="/players"

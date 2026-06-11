@@ -32,6 +32,35 @@ self.addEventListener('activate', event => {
   )
 })
 
+// ── Web Push ─────────────────────────────────────────────────
+self.addEventListener('push', event => {
+  if (!event.data) return
+  const data = event.data.json()
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? 'Bogey Club', {
+      body: data.body ?? '',
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
+      data: { url: data.url ?? '/' },
+    }),
+  )
+})
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close()
+  const url = event.notification.data?.url ?? '/'
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      const client = list[0]
+      if (client) {
+        client.navigate(url)
+        return client.focus()
+      }
+      return clients.openWindow(url)
+    }),
+  )
+})
+
 self.addEventListener('fetch', event => {
   const { request } = event
   if (request.method !== 'GET') return

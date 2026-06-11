@@ -2,6 +2,7 @@ import { v } from 'convex/values'
 import { query, mutation, internalMutation } from './_generated/server'
 import { getMyProfile, requireProfile, resolvePlayer, indexForCourse } from './helpers'
 import { recalcProfile } from './whs'
+import { notifyProfiles } from './push'
 import { courseHandicap } from '../src/lib/golf'
 
 const today = () => new Date().toISOString().split('T')[0]
@@ -164,6 +165,17 @@ export const create = mutation({
         played_at: today(),
       })
     }
+
+    // Notify the other registered players that they were added to the round.
+    await notifyProfiles(
+      ctx,
+      profiles.filter(p => p._id !== me._id).map(p => p._id),
+      {
+        title: 'Nueva partida \u26f3',
+        body: `${me.name} te ha a\u00f1adido a una partida en ${course?.name ?? 'el campo'}`,
+        url: `/scorecard?round=${roundId}`,
+      },
+    )
 
     return { round_id: roundId }
   },

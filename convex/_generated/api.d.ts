@@ -18,6 +18,8 @@ import type * as leagues from "../leagues.js";
 import type * as migrate from "../migrate.js";
 import type * as players from "../players.js";
 import type * as profiles from "../profiles.js";
+import type * as push from "../push.js";
+import type * as pushNode from "../pushNode.js";
 import type * as roundPlayers from "../roundPlayers.js";
 import type * as rounds from "../rounds.js";
 import type * as scores from "../scores.js";
@@ -42,6 +44,8 @@ declare const fullApi: ApiFromModules<{
   migrate: typeof migrate;
   players: typeof players;
   profiles: typeof profiles;
+  push: typeof push;
+  pushNode: typeof pushNode;
   roundPlayers: typeof roundPlayers;
   rounds: typeof rounds;
   scores: typeof scores;

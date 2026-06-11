@@ -144,6 +144,16 @@ export default defineSchema({
     .index('by_profile', ['profileId'])
     .index('by_profile_and_round', ['profileId', 'roundId']),
 
+  /** Web Push subscriptions; a profile can have several (one per device). */
+  push_subscriptions: defineTable({
+    profileId: v.id('profiles'),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+  })
+    .index('by_profile', ['profileId'])
+    .index('by_endpoint', ['endpoint']),
+
   tournaments: defineTable({
     name: v.string(),
     courseId: v.id('courses'),
