@@ -1,11 +1,27 @@
-import { Link, useLocation } from 'react-router'
+import { useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Avatar } from '@/components/ui/avatar'
+import { dragIndexForClientX, shouldTreatAsTabDrag } from '@/lib/tab-drag'
+
+const TAB_WIDTH = 62
+
+type DragState = {
+  pointerId: number
+  startX: number
+  currentX: number
+  targetIndex: number
+  dragging: boolean
+}
 
 export function TabBar() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const profile = useQuery(api.profiles.me)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const suppressNextClickRef = useRef(false)
+  const [drag, setDrag] = useState<DragState | null>(null)
   const fullName = profile ? [profile.name, profile.last_name].filter(Boolean).join(' ') : '?'
 
   const active =
@@ -70,38 +86,108 @@ export function TabBar() {
         </svg>
       ),
     },
+    {
+      key: 'perfil',
+      href: '/profile',
+      label: 'Perfil',
+      icon: (a: boolean) => (
+        <Avatar
+          name={fullName}
+          src={profile?.avatar_url}
+          size={30}
+          className={a ? 'ring-2 ring-[#0e1a16] ring-offset-2 ring-offset-[#ececec]' : ''}
+        />
+      ),
+    },
   ]
+  const activeIndex = Math.max(
+    0,
+    tabs.findIndex(tab => tab.key === active),
+  )
+  const indicatorIndex = drag?.dragging ? drag.targetIndex : activeIndex
+
+  function indexForPointer(clientX: number) {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return activeIndex
+    return dragIndexForClientX({ left: rect.left, width: rect.width, tabCount: tabs.length }, clientX)
+  }
+
+  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+
+    event.currentTarget.setPointerCapture(event.pointerId)
+    const targetIndex = indexForPointer(event.clientX)
+    setDrag({
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      currentX: event.clientX,
+      targetIndex,
+      dragging: false,
+    })
+  }
+
+  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    setDrag(current => {
+      if (!current || current.pointerId !== event.pointerId) return current
+
+      const dragging = current.dragging || shouldTreatAsTabDrag(current.startX, event.clientX)
+      return {
+        ...current,
+        currentX: event.clientX,
+        targetIndex: indexForPointer(event.clientX),
+        dragging,
+      }
+    })
+  }
+
+  function handlePointerEnd(event: React.PointerEvent<HTMLDivElement>) {
+    const current = drag
+    setDrag(null)
+    if (!current || current.pointerId !== event.pointerId) return
+
+    const targetIndex = current.dragging ? current.targetIndex : indexForPointer(event.clientX)
+    suppressNextClickRef.current = true
+    const destination = tabs[targetIndex]
+    if (destination && destination.key !== active) navigate(destination.href)
+  }
 
   return (
     // Glass pill; globals.css drops the blur to solid white while html[data-nav]
     // is set, because view-transition snapshots render backdrop-filter as a square.
     <nav className="vt-tab-bar tabbar-float fixed left-1/2 -translate-x-1/2 z-50 bg-white/45 backdrop-blur-md backdrop-saturate-150 rounded-full shadow-[0_10px_34px_rgba(14,26,22,0.22),0_2px_8px_rgba(14,26,22,0.08)] px-2 py-1.5">
-      <div className="flex items-center">
+      <div
+        ref={containerRef}
+        className="relative flex items-center touch-none select-none"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+      >
+        <div
+          className="absolute left-0 top-0 h-[46px] w-[62px] rounded-full bg-[#ececec] transition-transform duration-150 ease-out"
+          style={{ transform: `translateX(${indicatorIndex * TAB_WIDTH}px)` }}
+        />
         {tabs.map(({ key, href, label, icon }) => {
           const isActive = key === active
           return (
-            <Link
+            <button
               key={key}
-              to={href}
+              type="button"
               aria-label={label}
-              className={`w-[62px] h-[46px] flex items-center justify-center rounded-full transition-colors ${isActive ? 'bg-[#ececec] text-[#0e1a16]' : 'text-[#44524b]'}`}
+              onClick={event => {
+                if (!suppressNextClickRef.current) {
+                  if (key !== active) navigate(href)
+                  return
+                }
+                suppressNextClickRef.current = false
+                event.preventDefault()
+              }}
+              className={`relative z-10 w-[62px] h-[46px] flex items-center justify-center rounded-full transition-colors ${isActive ? 'text-[#0e1a16]' : 'text-[#44524b]'}`}
             >
               {icon(isActive)}
-            </Link>
+            </button>
           )
         })}
-        <Link
-          to="/profile"
-          aria-label="Perfil"
-          className="w-[62px] h-[46px] flex items-center justify-center rounded-full"
-        >
-          <Avatar
-            name={fullName}
-            src={profile?.avatar_url}
-            size={30}
-            className={active === 'perfil' ? 'ring-2 ring-[#0e1a16] ring-offset-2 ring-offset-white' : ''}
-          />
-        </Link>
       </div>
     </nav>
   )
