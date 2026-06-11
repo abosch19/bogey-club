@@ -66,6 +66,49 @@ export const setHandicap = mutation({
   },
 })
 
+/** Update editable fields for the current user's profile. */
+export const updateMe = mutation({
+  args: {
+    name: v.string(),
+    last_name: v.optional(v.string()),
+  },
+  handler: async (ctx, { name, last_name }) => {
+    const me = await requireProfile(ctx)
+    const cleanName = name.trim()
+    const cleanLastName = last_name?.trim()
+
+    if (!cleanName) throw new Error('Introduce tu nombre.')
+
+    await ctx.db.patch(me._id, {
+      name: cleanName,
+      last_name: cleanLastName || undefined,
+    })
+
+    return { ok: true }
+  },
+})
+
+/** Upload target for the current user's avatar image. */
+export const generateAvatarUploadUrl = mutation({
+  args: {},
+  handler: async ctx => {
+    await requireProfile(ctx)
+    return await ctx.storage.generateUploadUrl()
+  },
+})
+
+/** Set the current user's avatar image after it has been uploaded to storage. */
+export const updateAvatar = mutation({
+  args: {
+    avatar_image: v.id('_storage'),
+  },
+  handler: async (ctx, { avatar_image }) => {
+    const me = await requireProfile(ctx)
+    await ctx.db.patch(me._id, { avatar_image })
+    return { ok: true }
+  },
+})
+
 /** Permanently delete the current user's profile and all of their own data. */
 export const deleteMe = mutation({
   args: {},

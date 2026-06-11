@@ -11,6 +11,7 @@ import LoginPage from '@/app/login/page'
 import RegisterPage from '@/app/register/page'
 import OnboardingPage from '@/app/onboarding/page'
 import ProfilePage from '@/app/profile/page'
+import EditProfilePage from '@/app/profile/edit/page'
 import StatsPage from '@/app/stats/page'
 import PlayersPage from '@/app/players/page'
 import PlayerPage from '@/app/player/[id]/page'
@@ -179,6 +180,7 @@ export function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/edit" element={<EditProfilePage />} />
           <Route path="/stats" element={<StatsPage />} />
           <Route path="/players" element={<PlayersPage />} />
           <Route path="/player/:id" element={<PlayerPage />} />

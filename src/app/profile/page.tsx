@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { useQuery, useMutation, type ReactMutation } from 'convex/react'
+import { useQuery, useMutation } from 'convex/react'
 import { useAuthActions } from '@convex-dev/auth/react'
 import type { FunctionReturnType } from 'convex/server'
 import { api } from '@convex/_generated/api'
@@ -231,60 +231,20 @@ function HandicapEvolution({ diffs, nCount, handicapIndex }: HandicapEvolutionPr
 }
 
 type HandicapActionsProps = {
-  profile: Profile
   recalculating: boolean
   onRecalculate: () => void
-  setHandicap: ReactMutation<typeof api.profiles.setHandicap>
 }
 
-function HandicapActions({ profile, recalculating, onRecalculate, setHandicap }: HandicapActionsProps) {
+function HandicapActions({ recalculating, onRecalculate }: HandicapActionsProps) {
   return (
-    <>
-      <button
-        type="button"
-        onClick={onRecalculate}
-        disabled={recalculating}
-        className="w-full py-3 rounded-[16px] text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60 mb-2"
-      >
-        {recalculating ? 'Calculando...' : 'Recalcular WHS'}
-      </button>
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <button
-          type="button"
-          onClick={() => {
-            const val = prompt(`Hándicap de golf (0–54):\nActual: ${profile.handicap_index?.toFixed(1) ?? '–'}`)
-            if (val === null) return
-            const num = parseFloat(val)
-            if (isNaN(num) || num < 0 || num > 54) {
-              alert('Valor inválido. Debe ser entre 0 y 54.')
-              return
-            }
-            setHandicap({ handicap_index: num })
-          }}
-          className="py-3 rounded-[16px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80"
-        >
-          Editar golf
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            const val = prompt(
-              `Hándicap de Pitch & Putt (0–54):\nActual: ${profile.handicap_index_pp?.toFixed(1) ?? '–'}`,
-            )
-            if (val === null) return
-            const num = parseFloat(val)
-            if (isNaN(num) || num < 0 || num > 54) {
-              alert('Valor inválido. Debe ser entre 0 y 54.')
-              return
-            }
-            setHandicap({ handicap_index_pp: num })
-          }}
-          className="py-3 rounded-[16px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80"
-        >
-          Editar P&P
-        </button>
-      </div>
-    </>
+    <button
+      type="button"
+      onClick={onRecalculate}
+      disabled={recalculating}
+      className="w-full py-3 rounded-[16px] text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60 mb-3"
+    >
+      {recalculating ? 'Calculando...' : 'Recalcular WHS'}
+    </button>
   )
 }
 
@@ -381,7 +341,6 @@ export default function PerfilPage() {
   const profile = useQuery(api.profiles.me)
   const rawDiffs = useQuery(api.profiles.myDifferentials)
   const recalc = useMutation(api.whs.recalc)
-  const setHandicap = useMutation(api.profiles.setHandicap)
   const deleteMe = useMutation(api.profiles.deleteMe)
   const { signOut } = useAuthActions()
   const navigate = useNavigate()
@@ -444,16 +403,29 @@ export default function PerfilPage() {
         {/* Member card */}
         <MemberCard profile={profile} fullName={fullName} email={email} roundsCount={diffs.length} />
 
+        <Link
+          to="/profile/edit"
+          state={{ from: '/profile' }}
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-[16px] text-[13px] font-semibold border border-[#1f8a5b] bg-[#d9eedd] text-[#1f8a5b] transition active:opacity-80 mb-3"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M4 20h4l10.5-10.5a2.8 2.8 0 0 0-4-4L4 16v4z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path d="M13.5 6.5l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          Editar perfil
+        </Link>
+
         {/* ── WHS HANDICAP ── */}
         <HandicapEvolution diffs={diffs} nCount={nCount} handicapIndex={profile.handicap_index} />
 
-        {/* Recalcular WHS + editar hándicaps (golf / P&P) */}
-        <HandicapActions
-          profile={profile}
-          recalculating={recalculating}
-          onRecalculate={recalculate}
-          setHandicap={setHandicap}
-        />
+        {/* Recalcular WHS */}
+        <HandicapActions recalculating={recalculating} onRecalculate={recalculate} />
 
         {/* ── ACCESOS ── */}
         <AccessLinks email={email} />
