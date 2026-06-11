@@ -33,6 +33,8 @@ export function ShareScorecardButton({
   const hasScores = players.some(p => groups.some(g => g.some(h => getScore(p.id, h.hole_number) != null)))
   if (!hasScores) return null
 
+  // No try/finally: the React Compiler bails on finalizers, so busy is reset
+  // on both paths explicitly.
   async function shareImage() {
     setBusy(true)
     try {
@@ -60,9 +62,8 @@ export function ShareScorecardButton({
       if (!(e instanceof DOMException && e.name === 'AbortError')) {
         alert('No se pudo generar la imagen de la tarjeta')
       }
-    } finally {
-      setBusy(false)
     }
+    setBusy(false)
   }
 
   async function shareLink() {

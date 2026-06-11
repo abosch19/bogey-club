@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { useQuery, useMutation } from 'convex/react'
+import { useQuery, useMutation, type ReactMutation } from 'convex/react'
 import { useAuthActions } from '@convex-dev/auth/react'
+import type { FunctionReturnType } from 'convex/server'
 import { api } from '@convex/_generated/api'
 import { formatHandicap, formatDate, countingRounds } from '@/lib/golf'
 import { Avatar } from '@/components/ui/avatar'
@@ -32,6 +33,347 @@ function Sparkline({ diffs }: { diffs: { diff: number }[] }) {
         strokeLinejoin="round"
       />
     </svg>
+  )
+}
+
+type Profile = NonNullable<FunctionReturnType<typeof api.profiles.me>>
+type Diff = { diff: number; played_at: string; counting: boolean }
+
+type MemberCardProps = { profile: Profile; fullName: string; email: string; roundsCount: number }
+
+function MemberCard({ profile, fullName, email, roundsCount }: MemberCardProps) {
+  return (
+    <HeroCard className="p-5 mb-3">
+      <div>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <svg width="22" height="22" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="30" fill="#9bc9a3" />
+              <path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16" />
+            </svg>
+            <span className="text-white text-[14px] font-bold">Bogey Club</span>
+          </div>
+          <span className="font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-[#e8b75a] bg-[#e8b75a]/10 border border-[#e8b75a]/30 px-2.5 py-1 rounded-full">
+            Socio
+          </span>
+        </div>
+        <div className="flex items-center gap-4 mb-5">
+          <Avatar
+            name={fullName}
+            src={profile.avatar_url}
+            size={56}
+            className="ring-2 ring-[#1f8a5b] ring-offset-2 ring-offset-[#0e1a16]"
+          />
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="text-white text-[21px] font-black tracking-tight leading-tight">{fullName}</p>
+              {profile.clubs_sponsor_url && (
+                /* Sponsor logos come dark on white — invert to read on the dark card. */
+                <img
+                  src={profile.clubs_sponsor_url}
+                  alt="Sponsor de palos"
+                  className="h-[13px] w-auto opacity-80"
+                  style={{ filter: 'brightness(0) invert(1)' }}
+                />
+              )}
+            </div>
+            <p className="text-white/45 text-[12px] mt-0.5">{email}</p>
+          </div>
+        </div>
+        <div className="flex items-end justify-between border-t border-white/10 pt-3.5">
+          <div>
+            <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Índice golf</p>
+            <p
+              className="text-[44px] font-black leading-none"
+              style={{
+                background: 'linear-gradient(180deg, #ffffff 25%, #9bc9a3)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              {formatHandicap(profile.handicap_index)}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">P&P</p>
+            <p className="text-white text-[28px] font-black leading-none">
+              {formatHandicap(profile.handicap_index_pp ?? null)}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="font-mono text-[9px] text-white/50 uppercase">Rondas</p>
+            <p className="text-white text-[20px] font-black">{roundsCount}</p>
+          </div>
+        </div>
+        {/* Embossed member strip */}
+        <p className="mt-4 font-mono text-[9px] tracking-[0.3em] text-white/25 uppercase">
+          BC-{profile._id.slice(-4).toUpperCase()} · Miembro desde {new Date(profile._creationTime).getFullYear()}
+        </p>
+      </div>
+    </HeroCard>
+  )
+}
+
+type HandicapEvolutionProps = { diffs: Diff[]; nCount: number; handicapIndex: Profile['handicap_index'] }
+
+function HandicapEvolution({ diffs, nCount, handicapIndex }: HandicapEvolutionProps) {
+  return (
+    <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4 mb-3">
+      <div className="flex items-baseline justify-between mb-2">
+        <h2 className="text-[16px] font-bold text-[#0e1a16]">Evolución hándicap</h2>
+        {diffs.length > 0 && (
+          <span className="font-mono text-[10px] text-[#6b7a72]">
+            {nCount} cuentan de {diffs.length}
+          </span>
+        )}
+      </div>
+
+      {diffs.length >= 2 ? (
+        <>
+          <Sparkline diffs={diffs} />
+          <div className="flex justify-between mt-1 mb-4">
+            <span className="font-mono text-[9px] text-[#6b7a72]">
+              {formatDate(diffs[diffs.length - 1]?.played_at)}
+            </span>
+            <span className="font-mono text-[10px] font-bold text-[#1f8a5b]">
+              Actual: {formatHandicap(handicapIndex)}
+            </span>
+            <span className="font-mono text-[9px] text-[#6b7a72]">{formatDate(diffs[0]?.played_at)}</span>
+          </div>
+        </>
+      ) : diffs.length === 0 ? (
+        <p className="text-[13px] text-[#6b7a72] py-3">Completa rondas para ver la evolución de tu hándicap.</p>
+      ) : null}
+
+      {/* Rounds detail */}
+      {diffs.length > 0 && (
+        <>
+          {/* WHS explanation card */}
+          <div className="bg-[#f4f1e9] rounded-[16px] px-4 py-3 mb-4">
+            <p className="font-bold text-[13px] text-[#0e1a16] mb-2">¿Qué es el índice WHS?</p>
+            <p className="text-[12px] text-[#6b7a72] leading-relaxed mb-2">
+              Es tu nivel de juego oficial. Se calcula con tus mejores {nCount || 8} diferenciales de las últimas{' '}
+              {diffs.length || 20} rondas. Cuanto más bajo, mejor juegas.
+            </p>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {[
+                { range: '0–5', label: 'Scratch', color: '#2a6fdb' },
+                { range: '6–18', label: 'Amateur', color: '#1f8a5b' },
+                { range: '19–54', label: 'Alto', color: '#9b6e1a' },
+              ].map(r => (
+                <div key={r.label} className="bg-white rounded-[10px] p-2 border border-[#e5e0d4]">
+                  <p className="font-mono text-[10px] font-bold" style={{ color: r.color }}>
+                    {r.range}
+                  </p>
+                  <p className="text-[10px] text-[#6b7a72] mt-0.5">{r.label}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-[#6b7a72] mt-2">
+              <strong className="text-[#0e1a16]">Diferencial</strong> = (113 / Slope) × (Golpes − CR del campo). Los{' '}
+              {nCount || 8} mejores de los últimos {diffs.length || 20} calculan tu índice.
+            </p>
+          </div>
+
+          <div className="flex items-baseline justify-between mb-2">
+            <p className="font-bold text-[13px] text-[#0e1a16]">Partidos del cálculo</p>
+          </div>
+          <div className="space-y-1">
+            {diffs.map((d, i) => (
+              <div
+                key={`${d.played_at}-${d.diff}`}
+                className="flex items-center gap-3 py-2 border-b border-[#efebe1] last:border-0"
+              >
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: d.counting ? '#1f8a5b' : '#f4f1e9' }}
+                >
+                  {d.counting ? (
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M5 13l4 4L19 7"
+                        stroke="white"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : (
+                    <span className="font-mono text-[9px] text-[#6b7a72]">{i + 1}</span>
+                  )}
+                </div>
+                <span className="text-[12px] text-[#6b7a72] flex-1">{formatDate(d.played_at)}</span>
+                <span
+                  className="font-mono text-[14px] font-black"
+                  style={{ color: d.counting ? '#1f8a5b' : '#0e1a16' }}
+                >
+                  {d.diff.toFixed(1)}
+                </span>
+                {d.counting && (
+                  <span className="font-mono text-[8px] bg-[#d9eedd] text-[#1f8a5b] px-1.5 py-0.5 rounded-full">
+                    cuenta
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+          {nCount > 0 && (
+            <p className="text-[11px] text-[#6b7a72] mt-3 bg-[#f4f1e9] rounded-[10px] px-3 py-2">
+              Media de los <strong className="text-[#0e1a16]">{nCount} diferenciales más bajos</strong> de las últimas{' '}
+              {diffs.length} rondas.
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+type HandicapActionsProps = {
+  profile: Profile
+  recalculating: boolean
+  onRecalculate: () => void
+  setHandicap: ReactMutation<typeof api.profiles.setHandicap>
+}
+
+function HandicapActions({ profile, recalculating, onRecalculate, setHandicap }: HandicapActionsProps) {
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onRecalculate}
+        disabled={recalculating}
+        className="w-full py-3 rounded-[16px] text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60 mb-2"
+      >
+        {recalculating ? 'Calculando...' : 'Recalcular WHS'}
+      </button>
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <button
+          type="button"
+          onClick={() => {
+            const val = prompt(`Hándicap de golf (0–54):\nActual: ${profile.handicap_index?.toFixed(1) ?? '–'}`)
+            if (val === null) return
+            const num = parseFloat(val)
+            if (isNaN(num) || num < 0 || num > 54) {
+              alert('Valor inválido. Debe ser entre 0 y 54.')
+              return
+            }
+            setHandicap({ handicap_index: num })
+          }}
+          className="py-3 rounded-[16px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80"
+        >
+          Editar golf
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const val = prompt(
+              `Hándicap de Pitch & Putt (0–54):\nActual: ${profile.handicap_index_pp?.toFixed(1) ?? '–'}`,
+            )
+            if (val === null) return
+            const num = parseFloat(val)
+            if (isNaN(num) || num < 0 || num > 54) {
+              alert('Valor inválido. Debe ser entre 0 y 54.')
+              return
+            }
+            setHandicap({ handicap_index_pp: num })
+          }}
+          className="py-3 rounded-[16px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80"
+        >
+          Editar P&P
+        </button>
+      </div>
+    </>
+  )
+}
+
+type AccessLinksProps = { email: string }
+
+function AccessLinks({ email }: AccessLinksProps) {
+  return (
+    <div className="space-y-2 mb-3">
+      {/* Notificaciones push */}
+      <PushSettings />
+
+      {/* Jugadores registrados */}
+      <Link
+        to="/players"
+        className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70"
+      >
+        <div className="w-9 h-9 rounded-full bg-[#d9eedd] flex items-center justify-center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
+              stroke="#1f8a5b"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+            <circle cx="9" cy="7" r="4" stroke="#1f8a5b" strokeWidth="1.8" />
+            <path
+              d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
+              stroke="#1f8a5b"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <p className="font-semibold text-[14px] text-[#0e1a16]">El club</p>
+          <p className="text-[11px] text-[#6b7a72]">Ver todos los jugadores registrados</p>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </Link>
+
+      {/* Editar campos */}
+      <Link
+        to="/round/course"
+        className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70"
+      >
+        <div className="w-9 h-9 rounded-full bg-[#dde7fb] flex items-center justify-center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M4 18 Q8 6 14 12 T20 8" stroke="#2a6fdb" strokeWidth="2" fill="none" strokeLinecap="round" />
+            <circle cx="20" cy="8" r="1.8" fill="#2a6fdb" />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <p className="font-semibold text-[14px] text-[#0e1a16]">Campos</p>
+          <p className="text-[11px] text-[#6b7a72]">Editar campos, hoyos y distancias</p>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </Link>
+
+      {/* Admin — solo para admin */}
+      {email === 's.vallve93@gmail.com' && (
+        <Link
+          to="/admin"
+          className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#fadcd6] active:opacity-70"
+        >
+          <div className="w-9 h-9 rounded-full bg-[#fadcd6] flex items-center justify-center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                stroke="#c6432d"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-[14px] text-[#c6432d]">Administración</p>
+            <p className="text-[11px] text-[#6b7a72]">Gestionar usuarios y ligas</p>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </Link>
+      )}
+    </div>
   )
 }
 
@@ -100,315 +442,21 @@ export default function PerfilPage() {
 
       <div className="px-[14px] pt-4 pb-4">
         {/* Member card */}
-        <HeroCard className="p-5 mb-3">
-          <div>
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <svg width="22" height="22" viewBox="0 0 64 64" fill="none">
-                  <circle cx="32" cy="32" r="30" fill="#9bc9a3" />
-                  <path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round" />
-                  <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16" />
-                </svg>
-                <span className="text-white text-[14px] font-bold">Bogey Club</span>
-              </div>
-              <span className="font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-[#e8b75a] bg-[#e8b75a]/10 border border-[#e8b75a]/30 px-2.5 py-1 rounded-full">
-                Socio
-              </span>
-            </div>
-            <div className="flex items-center gap-4 mb-5">
-              <Avatar
-                name={fullName}
-                src={profile.avatar_url}
-                size={56}
-                className="ring-2 ring-[#1f8a5b] ring-offset-2 ring-offset-[#0e1a16]"
-              />
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-white text-[21px] font-black tracking-tight leading-tight">{fullName}</p>
-                  {profile.clubs_sponsor_url && (
-                    /* Sponsor logos come dark on white — invert to read on the dark card. */
-                    <img
-                      src={profile.clubs_sponsor_url}
-                      alt="Sponsor de palos"
-                      className="h-[13px] w-auto opacity-80"
-                      style={{ filter: 'brightness(0) invert(1)' }}
-                    />
-                  )}
-                </div>
-                <p className="text-white/45 text-[12px] mt-0.5">{email}</p>
-              </div>
-            </div>
-            <div className="flex items-end justify-between border-t border-white/10 pt-3.5">
-              <div>
-                <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">Índice golf</p>
-                <p
-                  className="text-[44px] font-black leading-none"
-                  style={{
-                    background: 'linear-gradient(180deg, #ffffff 25%, #9bc9a3)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
-                >
-                  {formatHandicap(profile.handicap_index)}
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">P&P</p>
-                <p className="text-white text-[28px] font-black leading-none">
-                  {formatHandicap(profile.handicap_index_pp ?? null)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-mono text-[9px] text-white/50 uppercase">Rondas</p>
-                <p className="text-white text-[20px] font-black">{diffs.length}</p>
-              </div>
-            </div>
-            {/* Embossed member strip */}
-            <p className="mt-4 font-mono text-[9px] tracking-[0.3em] text-white/25 uppercase">
-              BC-{profile._id.slice(-4).toUpperCase()} · Miembro desde {new Date(profile._creationTime).getFullYear()}
-            </p>
-          </div>
-        </HeroCard>
+        <MemberCard profile={profile} fullName={fullName} email={email} roundsCount={diffs.length} />
 
         {/* ── WHS HANDICAP ── */}
-        <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4 mb-3">
-          <div className="flex items-baseline justify-between mb-2">
-            <h2 className="text-[16px] font-bold text-[#0e1a16]">Evolución hándicap</h2>
-            {diffs.length > 0 && (
-              <span className="font-mono text-[10px] text-[#6b7a72]">
-                {nCount} cuentan de {diffs.length}
-              </span>
-            )}
-          </div>
-
-          {diffs.length >= 2 ? (
-            <>
-              <Sparkline diffs={diffs} />
-              <div className="flex justify-between mt-1 mb-4">
-                <span className="font-mono text-[9px] text-[#6b7a72]">
-                  {formatDate(diffs[diffs.length - 1]?.played_at)}
-                </span>
-                <span className="font-mono text-[10px] font-bold text-[#1f8a5b]">
-                  Actual: {formatHandicap(profile.handicap_index)}
-                </span>
-                <span className="font-mono text-[9px] text-[#6b7a72]">{formatDate(diffs[0]?.played_at)}</span>
-              </div>
-            </>
-          ) : diffs.length === 0 ? (
-            <p className="text-[13px] text-[#6b7a72] py-3">Completa rondas para ver la evolución de tu hándicap.</p>
-          ) : null}
-
-          {/* Rounds detail */}
-          {diffs.length > 0 && (
-            <>
-              {/* WHS explanation card */}
-              <div className="bg-[#f4f1e9] rounded-[16px] px-4 py-3 mb-4">
-                <p className="font-bold text-[13px] text-[#0e1a16] mb-2">¿Qué es el índice WHS?</p>
-                <p className="text-[12px] text-[#6b7a72] leading-relaxed mb-2">
-                  Es tu nivel de juego oficial. Se calcula con tus mejores {nCount || 8} diferenciales de las últimas{' '}
-                  {diffs.length || 20} rondas. Cuanto más bajo, mejor juegas.
-                </p>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  {[
-                    { range: '0–5', label: 'Scratch', color: '#2a6fdb' },
-                    { range: '6–18', label: 'Amateur', color: '#1f8a5b' },
-                    { range: '19–54', label: 'Alto', color: '#9b6e1a' },
-                  ].map(r => (
-                    <div key={r.label} className="bg-white rounded-[10px] p-2 border border-[#e5e0d4]">
-                      <p className="font-mono text-[10px] font-bold" style={{ color: r.color }}>
-                        {r.range}
-                      </p>
-                      <p className="text-[10px] text-[#6b7a72] mt-0.5">{r.label}</p>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-[11px] text-[#6b7a72] mt-2">
-                  <strong className="text-[#0e1a16]">Diferencial</strong> = (113 / Slope) × (Golpes − CR del campo). Los{' '}
-                  {nCount || 8} mejores de los últimos {diffs.length || 20} calculan tu índice.
-                </p>
-              </div>
-
-              <div className="flex items-baseline justify-between mb-2">
-                <p className="font-bold text-[13px] text-[#0e1a16]">Partidos del cálculo</p>
-              </div>
-              <div className="space-y-1">
-                {diffs.map((d, i) => (
-                  <div
-                    key={`${d.played_at}-${d.diff}`}
-                    className="flex items-center gap-3 py-2 border-b border-[#efebe1] last:border-0"
-                  >
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: d.counting ? '#1f8a5b' : '#f4f1e9' }}
-                    >
-                      {d.counting ? (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M5 13l4 4L19 7"
-                            stroke="white"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      ) : (
-                        <span className="font-mono text-[9px] text-[#6b7a72]">{i + 1}</span>
-                      )}
-                    </div>
-                    <span className="text-[12px] text-[#6b7a72] flex-1">{formatDate(d.played_at)}</span>
-                    <span
-                      className="font-mono text-[14px] font-black"
-                      style={{ color: d.counting ? '#1f8a5b' : '#0e1a16' }}
-                    >
-                      {d.diff.toFixed(1)}
-                    </span>
-                    {d.counting && (
-                      <span className="font-mono text-[8px] bg-[#d9eedd] text-[#1f8a5b] px-1.5 py-0.5 rounded-full">
-                        cuenta
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {nCount > 0 && (
-                <p className="text-[11px] text-[#6b7a72] mt-3 bg-[#f4f1e9] rounded-[10px] px-3 py-2">
-                  Media de los <strong className="text-[#0e1a16]">{nCount} diferenciales más bajos</strong> de las
-                  últimas {diffs.length} rondas.
-                </p>
-              )}
-            </>
-          )}
-        </div>
+        <HandicapEvolution diffs={diffs} nCount={nCount} handicapIndex={profile.handicap_index} />
 
         {/* Recalcular WHS + editar hándicaps (golf / P&P) */}
-        <button
-          type="button"
-          onClick={recalculate}
-          disabled={recalculating}
-          className="w-full py-3 rounded-[16px] text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#0e1a16] transition active:opacity-80 disabled:opacity-60 mb-2"
-        >
-          {recalculating ? 'Calculando...' : 'Recalcular WHS'}
-        </button>
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <button
-            type="button"
-            onClick={() => {
-              const val = prompt(`Hándicap de golf (0–54):\nActual: ${profile.handicap_index?.toFixed(1) ?? '–'}`)
-              if (val === null) return
-              const num = parseFloat(val)
-              if (isNaN(num) || num < 0 || num > 54) {
-                alert('Valor inválido. Debe ser entre 0 y 54.')
-                return
-              }
-              setHandicap({ handicap_index: num })
-            }}
-            className="py-3 rounded-[16px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80"
-          >
-            Editar golf
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const val = prompt(
-                `Hándicap de Pitch & Putt (0–54):\nActual: ${profile.handicap_index_pp?.toFixed(1) ?? '–'}`,
-              )
-              if (val === null) return
-              const num = parseFloat(val)
-              if (isNaN(num) || num < 0 || num > 54) {
-                alert('Valor inválido. Debe ser entre 0 y 54.')
-                return
-              }
-              setHandicap({ handicap_index_pp: num })
-            }}
-            className="py-3 rounded-[16px] text-[12px] font-semibold border border-[#e8b75a] bg-white text-[#9b6e1a] transition active:opacity-80"
-          >
-            Editar P&P
-          </button>
-        </div>
+        <HandicapActions
+          profile={profile}
+          recalculating={recalculating}
+          onRecalculate={recalculate}
+          setHandicap={setHandicap}
+        />
 
         {/* ── ACCESOS ── */}
-        <div className="space-y-2 mb-3">
-          {/* Notificaciones push */}
-          <PushSettings />
-
-          {/* Jugadores registrados */}
-          <Link
-            to="/players"
-            className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70"
-          >
-            <div className="w-9 h-9 rounded-full bg-[#d9eedd] flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
-                  stroke="#1f8a5b"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
-                <circle cx="9" cy="7" r="4" stroke="#1f8a5b" strokeWidth="1.8" />
-                <path
-                  d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
-                  stroke="#1f8a5b"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-[14px] text-[#0e1a16]">El club</p>
-              <p className="text-[11px] text-[#6b7a72]">Ver todos los jugadores registrados</p>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </Link>
-
-          {/* Editar campos */}
-          <Link
-            to="/round/course"
-            className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] active:opacity-70"
-          >
-            <div className="w-9 h-9 rounded-full bg-[#dde7fb] flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M4 18 Q8 6 14 12 T20 8" stroke="#2a6fdb" strokeWidth="2" fill="none" strokeLinecap="round" />
-                <circle cx="20" cy="8" r="1.8" fill="#2a6fdb" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-[14px] text-[#0e1a16]">Campos</p>
-              <p className="text-[11px] text-[#6b7a72]">Editar campos, hoyos y distancias</p>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </Link>
-
-          {/* Admin — solo para admin */}
-          {email === 's.vallve93@gmail.com' && (
-            <Link
-              to="/admin"
-              className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#fadcd6] active:opacity-70"
-            >
-              <div className="w-9 h-9 rounded-full bg-[#fadcd6] flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                    stroke="#c6432d"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-[14px] text-[#c6432d]">Administración</p>
-                <p className="text-[11px] text-[#6b7a72]">Gestionar usuarios y ligas</p>
-              </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </Link>
-          )}
-        </div>
+        <AccessLinks email={email} />
 
         {/* Sign out */}
         <button

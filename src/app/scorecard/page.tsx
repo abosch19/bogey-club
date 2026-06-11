@@ -746,6 +746,72 @@ function PendingSyncBanner({ count }: { count: number }) {
   )
 }
 
+type CelebrationProps = {
+  holes: Hole[]
+  myId: string
+  getScore: (pid: string, h: number) => number | null
+  myTotal: number
+  deltaStr: string
+}
+
+// Deterministic pseudo-random per confetti piece (Math.random is off-limits with the compiler).
+const rnd = (i: number, salt: number) => {
+  const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453
+  return x - Math.floor(x)
+}
+
+/** Full-screen confetti overlay shown right after signing the round. */
+function Celebration({ holes, myId, getScore, myTotal, deltaStr }: CelebrationProps) {
+  const myDeltas = holes.flatMap(h => {
+    const s = getScore(myId, h.hole_number)
+    return s ? [s - h.par] : []
+  })
+  const eagles = myDeltas.filter(d => d <= -2).length
+  const birdies = myDeltas.filter(d => d === -1).length
+  const pars = myDeltas.filter(d => d === 0).length
+  const highlights = [
+    eagles > 0 && `🦅 ${eagles} eagle${eagles > 1 ? 's' : ''}`,
+    birdies > 0 && `🐦 ${birdies} birdie${birdies > 1 ? 's' : ''}`,
+    pars > 0 && `${pars} par${pars > 1 ? 'es' : ''}`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  const colors = ['#1f8a5b', '#e8b75a', '#2a6fdb', '#c6432d', '#9bc9a3', '#ffffff']
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0e1a16] overflow-hidden">
+      <style>{`
+        @keyframes summary-pop { from { transform: scale(0.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+        @keyframes confetti-fall {
+          from { transform: translateY(-6vh) rotate(0deg); opacity: 1 }
+          85%  { opacity: 1 }
+          to   { transform: translateY(108vh) rotate(660deg); opacity: 0 }
+        }
+      `}</style>
+      {Array.from({ length: 44 }, (_, i) => (
+        <div
+          key={i}
+          className="absolute top-0 rounded-[2px]"
+          style={{
+            left: `${rnd(i, 1) * 100}%`,
+            width: 5 + rnd(i, 2) * 5,
+            height: 9 + rnd(i, 3) * 7,
+            backgroundColor: colors[i % colors.length],
+            animation: `confetti-fall ${1.7 + rnd(i, 4) * 1.2}s ${rnd(i, 5) * 0.7}s cubic-bezier(0.25, 0.6, 0.45, 1) both`,
+          }}
+        />
+      ))}
+      <div className="text-[80px]" style={{ animation: 'summary-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both' }}>
+        &#9971;
+      </div>
+      <p className="text-white text-[28px] font-black mt-4">Ronda firmada!</p>
+      <p className="text-white/60 text-[14px] mt-2">
+        {myTotal} golpes · {deltaStr}
+      </p>
+      {highlights && <p className="text-white/80 text-[14px] font-semibold mt-3">{highlights}</p>}
+    </div>
+  )
+}
+
 function TarjetaPage() {
   const [searchParams] = useSearchParams()
   const roundId = searchParams.get('round') ?? ''
@@ -930,62 +996,9 @@ function TarjetaPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1e9] pb-32">
-      {celebrating &&
-        (() => {
-          const myDeltas = holes.flatMap(h => {
-            const s = getScore(myId, h.hole_number)
-            return s ? [s - h.par] : []
-          })
-          const eagles = myDeltas.filter(d => d <= -2).length
-          const birdies = myDeltas.filter(d => d === -1).length
-          const pars = myDeltas.filter(d => d === 0).length
-          const highlights = [
-            eagles > 0 && `🦅 ${eagles} eagle${eagles > 1 ? 's' : ''}`,
-            birdies > 0 && `🐦 ${birdies} birdie${birdies > 1 ? 's' : ''}`,
-            pars > 0 && `${pars} par${pars > 1 ? 'es' : ''}`,
-          ]
-            .filter(Boolean)
-            .join(' · ')
-          const colors = ['#1f8a5b', '#e8b75a', '#2a6fdb', '#c6432d', '#9bc9a3', '#ffffff']
-          // Deterministic pseudo-random per piece (Math.random is off-limits with the compiler).
-          const rnd = (i: number, salt: number) => {
-            const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453
-            return x - Math.floor(x)
-          }
-          return (
-            <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0e1a16] overflow-hidden">
-              <style>{`
-              @keyframes summary-pop { from { transform: scale(0.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-              @keyframes confetti-fall {
-                from { transform: translateY(-6vh) rotate(0deg); opacity: 1 }
-                85%  { opacity: 1 }
-                to   { transform: translateY(108vh) rotate(660deg); opacity: 0 }
-              }
-            `}</style>
-              {Array.from({ length: 44 }, (_, i) => (
-                <div
-                  key={i}
-                  className="absolute top-0 rounded-[2px]"
-                  style={{
-                    left: `${rnd(i, 1) * 100}%`,
-                    width: 5 + rnd(i, 2) * 5,
-                    height: 9 + rnd(i, 3) * 7,
-                    backgroundColor: colors[i % colors.length],
-                    animation: `confetti-fall ${1.7 + rnd(i, 4) * 1.2}s ${rnd(i, 5) * 0.7}s cubic-bezier(0.25, 0.6, 0.45, 1) both`,
-                  }}
-                />
-              ))}
-              <div className="text-[80px]" style={{ animation: 'summary-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both' }}>
-                &#9971;
-              </div>
-              <p className="text-white text-[28px] font-black mt-4">Ronda firmada!</p>
-              <p className="text-white/60 text-[14px] mt-2">
-                {myTotal} golpes · {celebrationDeltaStr}
-              </p>
-              {highlights && <p className="text-white/80 text-[14px] font-semibold mt-3">{highlights}</p>}
-            </div>
-          )
-        })()}
+      {celebrating && (
+        <Celebration holes={holes} myId={myId} getScore={getScore} myTotal={myTotal} deltaStr={celebrationDeltaStr} />
+      )}
 
       {/* Header */}
       <ScorecardHeader

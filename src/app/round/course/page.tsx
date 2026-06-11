@@ -18,6 +18,250 @@ type Course = {
 
 const isPP = (name: string) => name.startsWith('P&P')
 
+type HoleMode = 'all' | 'front' | 'back' | '9_once' | '9_twice'
+
+type HoleOptionButtonProps = {
+  active: boolean
+  label: string
+  sub: string
+  onClick: () => void
+}
+
+function HoleOptionButton({ active, label, sub, onClick }: HoleOptionButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center justify-between p-4 rounded-[16px] border transition"
+      style={{
+        backgroundColor: active ? '#0e1a16' : '#fff',
+        borderColor: active ? '#0e1a16' : '#e5e0d4',
+      }}
+    >
+      <div className="text-left">
+        <p className="font-bold text-[14px]" style={{ color: active ? '#fff' : '#0e1a16' }}>
+          {label}
+        </p>
+        <p className="text-[12px]" style={{ color: active ? 'rgba(255,255,255,0.6)' : '#6b7a72' }}>
+          {sub}
+        </p>
+      </div>
+      {active && (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M5 13l4 4L19 7" stroke="#1f8a5b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
+type CourseCardProps = {
+  course: Course
+  isSel: boolean
+  onSelect: () => void
+  onEdit: () => void
+}
+
+function CourseCard({ course, isSel, onSelect, onEdit }: CourseCardProps) {
+  return (
+    <div
+      className="relative w-full text-left rounded-[16px] p-4 border transition-all active:scale-[0.99]"
+      style={{
+        backgroundColor: isSel ? '#0e1a16' : '#ffffff',
+        borderColor: isSel ? '#0e1a16' : '#e5e0d4',
+      }}
+    >
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-label={`Seleccionar ${course.name}`}
+        className="absolute inset-0 rounded-[16px] cursor-pointer"
+      />
+      <div className="relative pointer-events-none flex items-center gap-3">
+        {/* Icon */}
+        <div
+          className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: isSel ? 'rgba(255,255,255,0.12)' : '#d9eedd' }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M4 18 Q8 6 14 12 T20 8"
+              stroke={isSel ? '#fff' : '#1f8a5b'}
+              strokeWidth="2.2"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <circle cx="20" cy="8" r="1.8" fill={isSel ? '#fff' : '#1f8a5b'} />
+          </svg>
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-bold text-[15px] leading-tight" style={{ color: isSel ? '#fff' : '#0e1a16' }}>
+              {course.name}
+            </p>
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation()
+                onEdit()
+              }}
+              className="pointer-events-auto relative font-mono text-[9px] px-2 py-0.5 rounded-full font-bold transition"
+              style={{
+                backgroundColor: isSel ? 'rgba(255,255,255,0.15)' : '#f4f1e9',
+                color: isSel ? '#fff' : '#6b7a72',
+              }}
+            >
+              Editar
+            </button>
+            <span
+              className="font-mono text-[9px] px-2 py-0.5 rounded-full font-bold"
+              style={{
+                backgroundColor: isSel ? 'rgba(255,255,255,0.18)' : '#f4f1e9',
+                color: isSel ? '#fff' : '#6b7a72',
+              }}
+            >
+              {course.holes_count} hoyos
+            </span>
+          </div>
+          <p
+            className="font-mono text-[10px] mt-0.5 uppercase tracking-wide"
+            style={{ color: isSel ? 'rgba(255,255,255,0.55)' : '#6b7a72' }}
+          >
+            Par {course.par}
+            {course.record_score ? ` · Récord ${course.record_score}` : ''}
+          </p>
+          {course.myScores?.length > 0 && (
+            <div className="flex gap-1 mt-1">
+              {course.myScores.slice(0, 3).map((s, i) => (
+                <span
+                  key={`${s}-${i}`}
+                  className="font-mono text-[9px] px-1.5 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: isSel ? 'rgba(255,255,255,0.18)' : '#d9eedd',
+                    color: isSel ? '#fff' : '#1f8a5b',
+                  }}
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Checkmark */}
+        <div
+          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{
+            backgroundColor: isSel ? '#1f8a5b' : 'transparent',
+            border: isSel ? 'none' : '1.5px solid #e5e0d4',
+          }}
+        >
+          {isSel && (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M5 13l4 4L19 7"
+                stroke="#0e1a16"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+type HoleModeSheetProps = {
+  open: boolean
+  selected: Course | null
+  holeMode: HoleMode
+  setHoleMode: (holeMode: HoleMode) => void
+  onDismiss: () => void
+  onNext: () => void
+}
+
+// Hole selection bottom sheet (Vaul)
+function HoleModeSheet({ open, selected, holeMode, setHoleMode, onDismiss, onNext }: HoleModeSheetProps) {
+  return (
+    <Drawer.Root
+      open={open}
+      onOpenChange={o => {
+        if (!o) onDismiss()
+      }}
+    >
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 z-50" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }} />
+        <Drawer.Content
+          aria-describedby={undefined}
+          className="fixed bottom-0 inset-x-0 z-50 mx-auto max-w-[430px] bg-white rounded-t-[28px] p-6 pb-10 outline-none"
+        >
+          <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-5" />
+          {selected && (
+            <>
+              <Drawer.Title className="text-[20px] font-black text-[#0e1a16] mb-1">{selected.name}</Drawer.Title>
+              <p className="text-[13px] text-[#6b7a72] mb-5">
+                {selected.holes_count === 9 ? '¿Cuántos hoyos vais a jugar?' : '¿Qué parte del campo jugáis?'}
+              </p>
+              <div className="space-y-2 mb-5">
+                {selected.holes_count === 9 ? (
+                  <>
+                    <HoleOptionButton
+                      active={holeMode === '9_once'}
+                      label="9 hoyos"
+                      sub="Una vuelta estándar"
+                      onClick={() => setHoleMode('9_once')}
+                    />
+                    <HoleOptionButton
+                      active={holeMode === '9_twice'}
+                      label="18 hoyos (vuelta completa)"
+                      sub="Los 9 hoyos jugados dos veces"
+                      onClick={() => setHoleMode('9_twice')}
+                    />
+                  </>
+                ) : (
+                  [
+                    { key: 'all', label: '18 hoyos completos', sub: 'Todos los hoyos (1-18)' },
+                    { key: 'front', label: 'Primera vuelta', sub: 'Solo los hoyos 1-9' },
+                    { key: 'back', label: 'Segunda vuelta', sub: 'Solo los hoyos 10-18' },
+                  ].map(opt => (
+                    <HoleOptionButton
+                      key={opt.key}
+                      active={holeMode === opt.key}
+                      label={opt.label}
+                      sub={opt.sub}
+                      onClick={() => setHoleMode(opt.key as HoleMode)}
+                    />
+                  ))
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={onDismiss}
+                  className="flex-1 py-3.5 rounded-full border border-[#e5e0d4] font-semibold text-[14px] text-[#6b7a72]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={onNext}
+                  className="flex-1 py-3.5 rounded-full font-bold text-[14px] text-[#0e1a16]"
+                  style={{ backgroundColor: '#1f8a5b' }}
+                >
+                  Siguiente →
+                </button>
+              </div>
+            </>
+          )}
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
+  )
+}
+
 function SeleccionarCampoPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -28,7 +272,6 @@ function SeleccionarCampoPage() {
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState<'golf' | 'pp'>('golf')
   // Hole-selection modal state grouped into one object
-  type HoleMode = 'all' | 'front' | 'back' | '9_once' | '9_twice'
   const [modal, setModal] = useState<{ selected: Course | null; show: boolean; holeMode: HoleMode }>({
     selected: null,
     show: false,
@@ -142,295 +385,34 @@ function SeleccionarCampoPage() {
         ) : filtered.length === 0 ? (
           <p className="text-center text-[#6b7a72] text-[14px] pt-10">No hay campos con ese nombre</p>
         ) : (
-          filtered.map(course => {
-            const isSel = selected?._id === course._id
-            return (
-              <div
-                key={course._id}
-                className="relative w-full text-left rounded-[16px] p-4 border transition-all active:scale-[0.99]"
-                style={{
-                  backgroundColor: isSel ? '#0e1a16' : '#ffffff',
-                  borderColor: isSel ? '#0e1a16' : '#e5e0d4',
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => handleCourseSelect(course)}
-                  aria-label={`Seleccionar ${course.name}`}
-                  className="absolute inset-0 rounded-[16px] cursor-pointer"
-                />
-                <div className="relative pointer-events-none flex items-center gap-3">
-                  {/* Icon */}
-                  <div
-                    className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: isSel ? 'rgba(255,255,255,0.12)' : '#d9eedd' }}
-                  >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M4 18 Q8 6 14 12 T20 8"
-                        stroke={isSel ? '#fff' : '#1f8a5b'}
-                        strokeWidth="2.2"
-                        fill="none"
-                        strokeLinecap="round"
-                      />
-                      <circle cx="20" cy="8" r="1.8" fill={isSel ? '#fff' : '#1f8a5b'} />
-                    </svg>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-bold text-[15px] leading-tight" style={{ color: isSel ? '#fff' : '#0e1a16' }}>
-                        {course.name}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={e => {
-                          e.stopPropagation()
-                          navigate(`/course/${course._id}`)
-                        }}
-                        className="pointer-events-auto relative font-mono text-[9px] px-2 py-0.5 rounded-full font-bold transition"
-                        style={{
-                          backgroundColor: isSel ? 'rgba(255,255,255,0.15)' : '#f4f1e9',
-                          color: isSel ? '#fff' : '#6b7a72',
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <span
-                        className="font-mono text-[9px] px-2 py-0.5 rounded-full font-bold"
-                        style={{
-                          backgroundColor: isSel ? 'rgba(255,255,255,0.18)' : '#f4f1e9',
-                          color: isSel ? '#fff' : '#6b7a72',
-                        }}
-                      >
-                        {course.holes_count} hoyos
-                      </span>
-                    </div>
-                    <p
-                      className="font-mono text-[10px] mt-0.5 uppercase tracking-wide"
-                      style={{ color: isSel ? 'rgba(255,255,255,0.55)' : '#6b7a72' }}
-                    >
-                      Par {course.par}
-                      {course.record_score ? ` · Récord ${course.record_score}` : ''}
-                    </p>
-                    {course.myScores?.length > 0 && (
-                      <div className="flex gap-1 mt-1">
-                        {course.myScores.slice(0, 3).map((s, i) => (
-                          <span
-                            key={`${s}-${i}`}
-                            className="font-mono text-[9px] px-1.5 py-0.5 rounded-full"
-                            style={{
-                              backgroundColor: isSel ? 'rgba(255,255,255,0.18)' : '#d9eedd',
-                              color: isSel ? '#fff' : '#1f8a5b',
-                            }}
-                          >
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Checkmark */}
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{
-                      backgroundColor: isSel ? '#1f8a5b' : 'transparent',
-                      border: isSel ? 'none' : '1.5px solid #e5e0d4',
-                    }}
-                  >
-                    {isSel && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M5 13l4 4L19 7"
-                          stroke="#0e1a16"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          })
+          filtered.map(course => (
+            <CourseCard
+              key={course._id}
+              course={course}
+              isSel={selected?._id === course._id}
+              onSelect={() => handleCourseSelect(course)}
+              onEdit={() => navigate(`/course/${course._id}`)}
+            />
+          ))
         )}
       </div>
 
       {/* CTA fixed bottom */}
       {/* Hole selection bottom sheet (Vaul) */}
-      <Drawer.Root
+      <HoleModeSheet
         open={showHoleModal}
-        onOpenChange={o => {
-          if (!o) {
-            setShowHoleModal(false)
-            setSelected(null)
-          }
+        selected={selected}
+        holeMode={holeMode}
+        setHoleMode={setHoleMode}
+        onDismiss={() => {
+          setShowHoleModal(false)
+          setSelected(null)
         }}
-      >
-        <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 z-50" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }} />
-          <Drawer.Content
-            aria-describedby={undefined}
-            className="fixed bottom-0 inset-x-0 z-50 mx-auto max-w-[430px] bg-white rounded-t-[28px] p-6 pb-10 outline-none"
-          >
-            <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-5" />
-            {selected && (
-              <>
-                <Drawer.Title className="text-[20px] font-black text-[#0e1a16] mb-1">{selected.name}</Drawer.Title>
-                <p className="text-[13px] text-[#6b7a72] mb-5">
-                  {selected.holes_count === 9 ? '¿Cuántos hoyos vais a jugar?' : '¿Qué parte del campo jugáis?'}
-                </p>
-                <div className="space-y-2 mb-5">
-                  {selected.holes_count === 9 ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setHoleMode('9_once')}
-                        className="w-full flex items-center justify-between p-4 rounded-[16px] border transition"
-                        style={{
-                          backgroundColor: holeMode === '9_once' ? '#0e1a16' : '#fff',
-                          borderColor: holeMode === '9_once' ? '#0e1a16' : '#e5e0d4',
-                        }}
-                      >
-                        <div className="text-left">
-                          <p
-                            className="font-bold text-[14px]"
-                            style={{ color: holeMode === '9_once' ? '#fff' : '#0e1a16' }}
-                          >
-                            9 hoyos
-                          </p>
-                          <p
-                            className="text-[12px]"
-                            style={{ color: holeMode === '9_once' ? 'rgba(255,255,255,0.6)' : '#6b7a72' }}
-                          >
-                            Una vuelta estándar
-                          </p>
-                        </div>
-                        {holeMode === '9_once' && (
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                            <path
-                              d="M5 13l4 4L19 7"
-                              stroke="#1f8a5b"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setHoleMode('9_twice')}
-                        className="w-full flex items-center justify-between p-4 rounded-[16px] border transition"
-                        style={{
-                          backgroundColor: holeMode === '9_twice' ? '#0e1a16' : '#fff',
-                          borderColor: holeMode === '9_twice' ? '#0e1a16' : '#e5e0d4',
-                        }}
-                      >
-                        <div className="text-left">
-                          <p
-                            className="font-bold text-[14px]"
-                            style={{ color: holeMode === '9_twice' ? '#fff' : '#0e1a16' }}
-                          >
-                            18 hoyos (vuelta completa)
-                          </p>
-                          <p
-                            className="text-[12px]"
-                            style={{ color: holeMode === '9_twice' ? 'rgba(255,255,255,0.6)' : '#6b7a72' }}
-                          >
-                            Los 9 hoyos jugados dos veces
-                          </p>
-                        </div>
-                        {holeMode === '9_twice' && (
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                            <path
-                              d="M5 13l4 4L19 7"
-                              stroke="#1f8a5b"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {[
-                        { key: 'all', label: '18 hoyos completos', sub: 'Todos los hoyos (1-18)' },
-                        { key: 'front', label: 'Primera vuelta', sub: 'Solo los hoyos 1-9' },
-                        { key: 'back', label: 'Segunda vuelta', sub: 'Solo los hoyos 10-18' },
-                      ].map(opt => (
-                        <button
-                          type="button"
-                          key={opt.key}
-                          onClick={() => setHoleMode(opt.key as any)}
-                          className="w-full flex items-center justify-between p-4 rounded-[16px] border transition"
-                          style={{
-                            backgroundColor: holeMode === opt.key ? '#0e1a16' : '#fff',
-                            borderColor: holeMode === opt.key ? '#0e1a16' : '#e5e0d4',
-                          }}
-                        >
-                          <div className="text-left">
-                            <p
-                              className="font-bold text-[14px]"
-                              style={{ color: holeMode === opt.key ? '#fff' : '#0e1a16' }}
-                            >
-                              {opt.label}
-                            </p>
-                            <p
-                              className="text-[12px]"
-                              style={{ color: holeMode === opt.key ? 'rgba(255,255,255,0.6)' : '#6b7a72' }}
-                            >
-                              {opt.sub}
-                            </p>
-                          </div>
-                          {holeMode === opt.key && (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                              <path
-                                d="M5 13l4 4L19 7"
-                                stroke="#1f8a5b"
-                                strokeWidth="2.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          )}
-                        </button>
-                      ))}
-                    </>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowHoleModal(false)
-                      setSelected(null)
-                    }}
-                    className="flex-1 py-3.5 rounded-full border border-[#e5e0d4] font-semibold text-[14px] text-[#6b7a72]"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowHoleModal(false)
-                      handleNext()
-                    }}
-                    className="flex-1 py-3.5 rounded-full font-bold text-[14px] text-[#0e1a16]"
-                    style={{ backgroundColor: '#1f8a5b' }}
-                  >
-                    Siguiente →
-                  </button>
-                </div>
-              </>
-            )}
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
+        onNext={() => {
+          setShowHoleModal(false)
+          handleNext()
+        }}
+      />
 
       {selected && !showHoleModal && (
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">

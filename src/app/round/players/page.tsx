@@ -1,10 +1,147 @@
-import { useState, Suspense } from 'react'
+import { useState, Suspense, type Dispatch, type SetStateAction } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Avatar } from '@/components/ui/avatar'
 
 type Player = { _id: string; name: string; handicap_index: number; isGuest?: boolean }
+
+type GuestState = { show: boolean; name: string; hcp: string }
+
+type GuestFormProps = {
+  guestName: string
+  guestHcp: string
+  setGuest: Dispatch<SetStateAction<GuestState>>
+  onAdd: () => void
+}
+
+function GuestForm({ guestName, guestHcp, setGuest, onAdd }: GuestFormProps) {
+  return (
+    <div className="bg-white rounded-[16px] p-4 border border-[#1f8a5b]">
+      <p className="text-[13px] font-bold text-[#0e1a16] mb-3">Datos del invitado</p>
+      <input
+        value={guestName}
+        onChange={e => setGuest(g => ({ ...g, name: e.target.value }))}
+        placeholder="Nombre"
+        aria-label="Nombre del invitado"
+        className="w-full border border-[#e5e0d4] rounded-[12px] px-4 py-2.5 text-[14px] outline-none focus:border-[#1f8a5b] mb-2"
+      />
+      <input
+        value={guestHcp}
+        onChange={e => setGuest(g => ({ ...g, hcp: e.target.value }))}
+        placeholder="Hándicap"
+        type="number"
+        min="0"
+        max="54"
+        aria-label="Hándicap del invitado"
+        className="w-full border border-[#e5e0d4] rounded-[12px] px-4 py-2.5 text-[14px] outline-none focus:border-[#1f8a5b] mb-3"
+      />
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setGuest(g => ({ ...g, show: false }))}
+          className="flex-1 py-2.5 rounded-full border border-[#e5e0d4] text-[13px] font-semibold text-[#6b7a72]"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="flex-1 py-2.5 rounded-full text-[13px] font-bold text-[#0e1a16]"
+          style={{ backgroundColor: '#1f8a5b' }}
+        >
+          Añadir
+        </button>
+      </div>
+    </div>
+  )
+}
+
+type PlayerRowProps = {
+  player: Player
+  isSel: boolean
+  onToggle: (p: Player) => void
+}
+
+function PlayerRow({ player: p, isSel, onToggle }: PlayerRowProps) {
+  const isDisabled = false // sin límite
+  return (
+    <button
+      type="button"
+      onClick={() => !isDisabled && onToggle(p)}
+      className={`w-full flex items-center gap-3 rounded-[16px] p-4 border transition-all ${isDisabled ? 'opacity-40' : 'active:scale-[0.99]'}`}
+      style={{ backgroundColor: isSel ? '#0e1a16' : '#ffffff', borderColor: isSel ? '#0e1a16' : '#e5e0d4' }}
+    >
+      <Avatar name={p.name} size={44} />
+      <div className="flex-1 text-left min-w-0">
+        <p className="font-bold text-[14px]" style={{ color: isSel ? '#fff' : '#0e1a16' }}>
+          {p.name}
+        </p>
+        <p className="font-mono text-[10px] mt-0.5" style={{ color: isSel ? 'rgba(255,255,255,0.55)' : '#6b7a72' }}>
+          HCP {p.handicap_index?.toFixed(1)}
+        </p>
+      </div>
+      <div
+        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{
+          backgroundColor: isSel ? '#1f8a5b' : 'transparent',
+          border: isSel ? 'none' : '1.5px solid #e5e0d4',
+        }}
+      >
+        {isSel && (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <path d="M5 13l4 4L19 7" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </div>
+    </button>
+  )
+}
+
+type FooterCtaProps = {
+  count: number
+  onNext: () => void
+}
+
+function FooterCta({ count, onNext }: FooterCtaProps) {
+  return (
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
+      {/* Torneo info — no toggle, just info */}
+      {count >= 5 && (
+        <div className="flex items-center gap-2 bg-[#dde7fb] rounded-[10px] px-3 py-2 mb-2">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z"
+              stroke="#2a6fdb"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+          <p className="font-mono text-[10px] font-bold text-[#2a6fdb] uppercase tracking-wide">
+            Modo torneo — {Math.ceil(count / 4)} grupos automáticos
+          </p>
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={onNext}
+        disabled={count === 0}
+        className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-40"
+        style={{
+          backgroundColor: count >= 5 ? '#2a6fdb' : '#1f8a5b',
+          color: count >= 5 ? '#fff' : '#0e1a16',
+        }}
+      >
+        <span>
+          {count} jugador{count !== 1 ? 'es' : ''}
+        </span>
+        <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
+          {count >= 5 ? 'CREAR TORNEO →' : 'SIGUIENTE →'}
+        </span>
+      </button>
+    </div>
+  )
+}
 
 function SeleccionarJugadoresPage() {
   const navigate = useNavigate()
@@ -189,45 +326,7 @@ function SeleccionarJugadoresPage() {
         )}
 
         {/* Guest form */}
-        {showGuestForm && (
-          <div className="bg-white rounded-[16px] p-4 border border-[#1f8a5b]">
-            <p className="text-[13px] font-bold text-[#0e1a16] mb-3">Datos del invitado</p>
-            <input
-              value={guestName}
-              onChange={e => setGuest(g => ({ ...g, name: e.target.value }))}
-              placeholder="Nombre"
-              aria-label="Nombre del invitado"
-              className="w-full border border-[#e5e0d4] rounded-[12px] px-4 py-2.5 text-[14px] outline-none focus:border-[#1f8a5b] mb-2"
-            />
-            <input
-              value={guestHcp}
-              onChange={e => setGuest(g => ({ ...g, hcp: e.target.value }))}
-              placeholder="Hándicap"
-              type="number"
-              min="0"
-              max="54"
-              aria-label="Hándicap del invitado"
-              className="w-full border border-[#e5e0d4] rounded-[12px] px-4 py-2.5 text-[14px] outline-none focus:border-[#1f8a5b] mb-3"
-            />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setGuest(g => ({ ...g, show: false }))}
-                className="flex-1 py-2.5 rounded-full border border-[#e5e0d4] text-[13px] font-semibold text-[#6b7a72]"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={addGuest}
-                className="flex-1 py-2.5 rounded-full text-[13px] font-bold text-[#0e1a16]"
-                style={{ backgroundColor: '#1f8a5b' }}
-              >
-                Añadir
-              </button>
-            </div>
-          </div>
-        )}
+        {showGuestForm && <GuestForm guestName={guestName} guestHcp={guestHcp} setGuest={setGuest} onAdd={addGuest} />}
 
         {/* Players list */}
         {loading ? (
@@ -235,90 +334,14 @@ function SeleccionarJugadoresPage() {
             <div className="w-6 h-6 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
           </div>
         ) : (
-          filtered.map(p => {
-            const isSel = !!selected.find(s => s._id === p._id)
-            const isDisabled = false // sin límite
-            return (
-              <button
-                type="button"
-                key={p._id}
-                onClick={() => !isDisabled && togglePlayer(p)}
-                className={`w-full flex items-center gap-3 rounded-[16px] p-4 border transition-all ${isDisabled ? 'opacity-40' : 'active:scale-[0.99]'}`}
-                style={{ backgroundColor: isSel ? '#0e1a16' : '#ffffff', borderColor: isSel ? '#0e1a16' : '#e5e0d4' }}
-              >
-                <Avatar name={p.name} size={44} />
-                <div className="flex-1 text-left min-w-0">
-                  <p className="font-bold text-[14px]" style={{ color: isSel ? '#fff' : '#0e1a16' }}>
-                    {p.name}
-                  </p>
-                  <p
-                    className="font-mono text-[10px] mt-0.5"
-                    style={{ color: isSel ? 'rgba(255,255,255,0.55)' : '#6b7a72' }}
-                  >
-                    HCP {p.handicap_index?.toFixed(1)}
-                  </p>
-                </div>
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{
-                    backgroundColor: isSel ? '#1f8a5b' : 'transparent',
-                    border: isSel ? 'none' : '1.5px solid #e5e0d4',
-                  }}
-                >
-                  {isSel && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M5 13l4 4L19 7"
-                        stroke="#0e1a16"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </div>
-              </button>
-            )
-          })
+          filtered.map(p => (
+            <PlayerRow key={p._id} player={p} isSel={!!selected.find(s => s._id === p._id)} onToggle={togglePlayer} />
+          ))
         )}
       </div>
 
       {/* CTA */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
-        {/* Torneo info — no toggle, just info */}
-        {selected.length >= 5 && (
-          <div className="flex items-center gap-2 bg-[#dde7fb] rounded-[10px] px-3 py-2 mb-2">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z"
-                stroke="#2a6fdb"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-            <p className="font-mono text-[10px] font-bold text-[#2a6fdb] uppercase tracking-wide">
-              Modo torneo — {Math.ceil(selected.length / 4)} grupos automáticos
-            </p>
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={handleNext}
-          disabled={selected.length === 0}
-          className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-40"
-          style={{
-            backgroundColor: selected.length >= 5 ? '#2a6fdb' : '#1f8a5b',
-            color: selected.length >= 5 ? '#fff' : '#0e1a16',
-          }}
-        >
-          <span>
-            {selected.length} jugador{selected.length !== 1 ? 'es' : ''}
-          </span>
-          <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
-            {selected.length >= 5 ? 'CREAR TORNEO →' : 'SIGUIENTE →'}
-          </span>
-        </button>
-      </div>
+      <FooterCta count={selected.length} onNext={handleNext} />
     </div>
   )
 }

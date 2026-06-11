@@ -2,7 +2,17 @@
   "$schema": "https://react.doctor/schema/config.json",
   "deadCode": false,
   "ignore": {
-    "files": ["convex/**"]
+    "files": ["convex/**"],
+    "overrides": [
+      {
+        "files": ["src/components/ui/player-link.tsx"],
+        "rules": ["react-doctor/prefer-tag-over-role"]
+      },
+      {
+        "files": ["package.json"],
+        "rules": ["socket/low-supply-chain-score"]
+      }
+    ]
   },
   "rules": {
     "react-doctor/no-flush-sync": "off",

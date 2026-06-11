@@ -6,6 +6,220 @@ import { Id } from '@convex/_generated/dataModel'
 import { GAME_MODES, type GameMode } from '@/lib/types'
 import { lastRound$ } from '@/lib/store'
 
+// Stroke Play — hidden when Scramble is active
+function StrokePlayCard() {
+  return (
+    <div className="rounded-[16px] p-4 border-2" style={{ backgroundColor: '#0e1a16', borderColor: '#0e1a16' }}>
+      <div className="flex items-center gap-3">
+        <div
+          className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: '#1f8a5b' }}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 3v18" />
+            <path d="M5 4h11l-2 3 2 3H5" />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-white font-bold text-[15px]">Stroke Play</span>
+            <span className="font-mono text-[8px] bg-white/20 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">
+              Siempre activo
+            </span>
+          </div>
+          <p className="text-white/60 text-[12px] mt-0.5">Suma de golpes. Gana quien menos haga.</p>
+        </div>
+        <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: '#1f8a5b' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <path d="M5 13l4 4L19 7" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+type ModeOptionCardProps = {
+  mode: (typeof GAME_MODES)[number]
+  compatible: boolean
+  isSelected: boolean
+  isDisabled: boolean
+  expanded: boolean
+  onActivate: () => void
+  onToggleInfo: () => void
+}
+
+function ModeOptionCard({
+  mode,
+  compatible,
+  isSelected,
+  isDisabled,
+  expanded,
+  onActivate,
+  onToggleInfo,
+}: ModeOptionCardProps) {
+  return (
+    <div
+      className="relative w-full text-left rounded-[16px] p-4 border transition-all active:scale-[0.99]"
+      style={{
+        backgroundColor: isSelected ? '#0e1a16' : '#ffffff',
+        borderColor: isSelected ? '#0e1a16' : '#e5e0d4',
+        opacity: isDisabled ? 0.35 : 1,
+      }}
+    >
+      <button
+        type="button"
+        onClick={onActivate}
+        disabled={isDisabled}
+        aria-label={mode.name}
+        className="absolute inset-0 rounded-[16px]"
+        style={{ cursor: isDisabled ? 'default' : 'pointer' }}
+      />
+      <div className="relative pointer-events-none flex items-center gap-3">
+        <div
+          className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.12)' : mode.color + '22' }}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={isSelected ? '#fff' : mode.color}
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {mode.icon === 'swords' && (
+              <>
+                <path d="M4 4l8 8M3 7l3-3 2 2M20 4l-8 8M21 7l-3-3-2 2M14 14l6 6M10 18l-4 4" />
+              </>
+            )}
+            {mode.icon === 'star' && <path d="M12 3l2.6 5.6L20 9.3l-4 4 1 6-5-2.9L7 19.3l1-6-4-4 5.4-.7z" />}
+            {mode.icon === 'wolf' && (
+              <>
+                <path d="M4 5l3 4M20 5l-3 4M5 8c0 7 3 11 7 11s7-4 7-11" />
+                <path d="M9 11h.01M15 11h.01" />
+              </>
+            )}
+            {mode.icon === 'target' && (
+              <>
+                <circle cx="12" cy="12" r="8" />
+                <circle cx="12" cy="12" r="4" />
+              </>
+            )}
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-[14px]" style={{ color: isSelected ? '#fff' : '#0e1a16' }}>
+              {mode.name}
+            </span>
+            {!compatible && (
+              <span className="font-mono text-[8px] bg-[#f6e6c4] text-[#9b6e1a] px-2 py-0.5 rounded-full uppercase">
+                {mode.players} jug.
+              </span>
+            )}
+          </div>
+          <p className="text-[12px] mt-0.5" style={{ color: isSelected ? 'rgba(255,255,255,0.55)' : '#6b7a72' }}>
+            {mode.desc}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isSelected && (mode.id === 'wolf' || mode.id === 'bbb') && (
+            <button
+              type="button"
+              aria-label="Cómo funciona esta modalidad"
+              onClick={e => {
+                e.stopPropagation()
+                onToggleInfo()
+              }}
+              className="pointer-events-auto relative w-6 h-6 rounded-full flex items-center justify-center text-white/70 font-bold text-[12px]"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+            >
+              ?
+            </button>
+          )}
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{
+              backgroundColor: isSelected ? '#1f8a5b' : 'transparent',
+              border: isSelected ? 'none' : '1.5px solid #e5e0d4',
+            }}
+          >
+            {isSelected && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M5 13l4 4L19 7"
+                  stroke="#0e1a16"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </div>
+        </div>
+      </div>
+      {isSelected && expanded && (
+        <div className="mt-2 p-3 rounded-[10px] bg-[#f4f1e9]">
+          {mode.id === 'wolf' && (
+            <p className="text-[11px] text-[#6b7a72]">
+              Cada hoyo, un jugador es el "lobo". Antes de empezar el hoyo decide: elegir pareja (y competir juntos) o
+              ir solo (si gana, dobles puntos). Rota entre todos los jugadores.
+            </p>
+          )}
+          {mode.id === 'bbb' && (
+            <p className="text-[11px] text-[#6b7a72]">
+              3 puntos por hoyo: Bingo (1º en llegar al green), Bango (más cerca del hoyo cuando todos están en green),
+              Bongo (1º en embocar). Al anotar cada hoyo se reparten los 3 puntos.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+type FooterCtaProps = {
+  extras: GameMode[]
+  isScrambleSelected: boolean
+  loading: boolean
+  onStart: () => void
+}
+
+function FooterCta({ extras, isScrambleSelected, loading, onStart }: FooterCtaProps) {
+  return (
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
+      <button
+        type="button"
+        onClick={onStart}
+        disabled={loading}
+        className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-60"
+        style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}
+      >
+        <span>
+          {isScrambleSelected
+            ? 'Scramble'
+            : `Stroke${extras.length > 0 ? ` + ${extras.map(e => GAME_MODES.find(m => m.id === e)?.name.split(' ')[0]).join(' + ')}` : ' Play'}`}
+        </span>
+        <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
+          {loading ? '…' : 'EMPEZAR →'}
+        </span>
+      </button>
+    </div>
+  )
+}
+
 function SeleccionarModalidadPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -139,189 +353,27 @@ function SeleccionarModalidadPage() {
       </div>
 
       <div className="flex-1 px-[14px] pb-32 space-y-2 overflow-y-auto">
-        {/* Stroke Play — hidden when Scramble is active */}
-        {!isScrambleSelected && (
-          <div className="rounded-[16px] p-4 border-2" style={{ backgroundColor: '#0e1a16', borderColor: '#0e1a16' }}>
-            <div className="flex items-center gap-3">
-              <div
-                className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: '#1f8a5b' }}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="1.9"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M5 3v18" />
-                  <path d="M5 4h11l-2 3 2 3H5" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-bold text-[15px]">Stroke Play</span>
-                  <span className="font-mono text-[8px] bg-white/20 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">
-                    Siempre activo
-                  </span>
-                </div>
-                <p className="text-white/60 text-[12px] mt-0.5">Suma de golpes. Gana quien menos haga.</p>
-              </div>
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: '#1f8a5b' }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M5 13l4 4L19 7"
-                    stroke="#0e1a16"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-        )}
+        {!isScrambleSelected && <StrokePlayCard />}
 
         {/* Other modes */}
         {modesByCompat.map(mode => {
           const compatible = isCompatible(mode.id)
           const isSelected = extras.includes(mode.id)
           const isMaxed = extras.length >= 2 && !isSelected
-
           const isDisabled = !compatible || isMaxed
-          const activate = () => {
-            if (!isDisabled) toggleExtra(mode.id)
-          }
           return (
-            <div
+            <ModeOptionCard
               key={mode.id}
-              className="relative w-full text-left rounded-[16px] p-4 border transition-all active:scale-[0.99]"
-              style={{
-                backgroundColor: isSelected ? '#0e1a16' : '#ffffff',
-                borderColor: isSelected ? '#0e1a16' : '#e5e0d4',
-                opacity: isDisabled ? 0.35 : 1,
+              mode={mode}
+              compatible={compatible}
+              isSelected={isSelected}
+              isDisabled={isDisabled}
+              expanded={expandedMode === mode.id}
+              onActivate={() => {
+                if (!isDisabled) toggleExtra(mode.id)
               }}
-            >
-              <button
-                type="button"
-                onClick={activate}
-                disabled={isDisabled}
-                aria-label={mode.name}
-                className="absolute inset-0 rounded-[16px]"
-                style={{ cursor: isDisabled ? 'default' : 'pointer' }}
-              />
-              <div className="relative pointer-events-none flex items-center gap-3">
-                <div
-                  className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.12)' : mode.color + '22' }}
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={isSelected ? '#fff' : mode.color}
-                    strokeWidth="1.9"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    {mode.icon === 'swords' && (
-                      <>
-                        <path d="M4 4l8 8M3 7l3-3 2 2M20 4l-8 8M21 7l-3-3-2 2M14 14l6 6M10 18l-4 4" />
-                      </>
-                    )}
-                    {mode.icon === 'star' && <path d="M12 3l2.6 5.6L20 9.3l-4 4 1 6-5-2.9L7 19.3l1-6-4-4 5.4-.7z" />}
-                    {mode.icon === 'wolf' && (
-                      <>
-                        <path d="M4 5l3 4M20 5l-3 4M5 8c0 7 3 11 7 11s7-4 7-11" />
-                        <path d="M9 11h.01M15 11h.01" />
-                      </>
-                    )}
-                    {mode.icon === 'target' && (
-                      <>
-                        <circle cx="12" cy="12" r="8" />
-                        <circle cx="12" cy="12" r="4" />
-                      </>
-                    )}
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-[14px]" style={{ color: isSelected ? '#fff' : '#0e1a16' }}>
-                      {mode.name}
-                    </span>
-                    {!compatible && (
-                      <span className="font-mono text-[8px] bg-[#f6e6c4] text-[#9b6e1a] px-2 py-0.5 rounded-full uppercase">
-                        {mode.players} jug.
-                      </span>
-                    )}
-                  </div>
-                  <p
-                    className="text-[12px] mt-0.5"
-                    style={{ color: isSelected ? 'rgba(255,255,255,0.55)' : '#6b7a72' }}
-                  >
-                    {mode.desc}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {isSelected && (mode.id === 'wolf' || mode.id === 'bbb') && (
-                    <button
-                      type="button"
-                      aria-label="Cómo funciona esta modalidad"
-                      onClick={e => {
-                        e.stopPropagation()
-                        setExpandedMode(expandedMode === mode.id ? null : mode.id)
-                      }}
-                      className="pointer-events-auto relative w-6 h-6 rounded-full flex items-center justify-center text-white/70 font-bold text-[12px]"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
-                    >
-                      ?
-                    </button>
-                  )}
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{
-                      backgroundColor: isSelected ? '#1f8a5b' : 'transparent',
-                      border: isSelected ? 'none' : '1.5px solid #e5e0d4',
-                    }}
-                  >
-                    {isSelected && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M5 13l4 4L19 7"
-                          stroke="#0e1a16"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {isSelected && expandedMode === mode.id && (
-                <div className="mt-2 p-3 rounded-[10px] bg-[#f4f1e9]">
-                  {mode.id === 'wolf' && (
-                    <p className="text-[11px] text-[#6b7a72]">
-                      Cada hoyo, un jugador es el "lobo". Antes de empezar el hoyo decide: elegir pareja (y competir
-                      juntos) o ir solo (si gana, dobles puntos). Rota entre todos los jugadores.
-                    </p>
-                  )}
-                  {mode.id === 'bbb' && (
-                    <p className="text-[11px] text-[#6b7a72]">
-                      3 puntos por hoyo: Bingo (1º en llegar al green), Bango (más cerca del hoyo cuando todos están en
-                      green), Bongo (1º en embocar). Al anotar cada hoyo se reparten los 3 puntos.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+              onToggleInfo={() => setExpandedMode(expandedMode === mode.id ? null : mode.id)}
+            />
           )
         })}
         {/* Hint: añade Stableford si solo tienes Stroke */}
@@ -352,24 +404,7 @@ function SeleccionarModalidadPage() {
       </div>
 
       {/* CTA */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
-        <button
-          type="button"
-          onClick={handleStart}
-          disabled={loading}
-          className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] transition active:scale-[0.98] disabled:opacity-60"
-          style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}
-        >
-          <span>
-            {isScrambleSelected
-              ? 'Scramble'
-              : `Stroke${extras.length > 0 ? ` + ${extras.map(e => GAME_MODES.find(m => m.id === e)?.name.split(' ')[0]).join(' + ')}` : ' Play'}`}
-          </span>
-          <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
-            {loading ? '…' : 'EMPEZAR →'}
-          </span>
-        </button>
-      </div>
+      <FooterCta extras={extras} isScrambleSelected={isScrambleSelected} loading={loading} onStart={handleStart} />
     </div>
   )
 }

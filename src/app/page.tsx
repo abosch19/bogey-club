@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useQuery } from 'convex/react'
+import type { FunctionReturnType } from 'convex/server'
 import { api } from '@convex/_generated/api'
 import { ScoreMark } from '@/components/ui/score-mark'
 import { Avatar } from '@/components/ui/avatar'
@@ -159,6 +160,231 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
 // Picked once per app load — the quote only rotates daily anyway.
 const DAILY_QUOTE = GOLF_QUOTES[new Date().getDate() % GOLF_QUOTES.length]
 
+type Dashboard = NonNullable<FunctionReturnType<typeof api.home.dashboard>>
+
+type HomeHeroProps = { firstName: string }
+
+/** Hero oscuro con la frase del día y el CTA de empezar ronda. */
+function HomeHero({ firstName }: HomeHeroProps) {
+  return (
+    <HeroCard
+      className="p-5"
+      orbSize={200}
+      decor={
+        <>
+          <div className="absolute right-[52px] top-[-8px] w-[1.5px] h-[60px] bg-white opacity-85" />
+          <svg className="absolute right-[34px] top-[-6px]" width="24" height="14" viewBox="0 0 24 14">
+            <path d="M0 0 L20 4 L0 10 Z" fill="white" />
+          </svg>
+          <div
+            className="absolute right-[44px] top-[52px] w-[18px] h-[18px] rounded-full bg-white"
+            style={{ boxShadow: 'inset -2px -2px 0 rgba(0,0,0,0.08)' }}
+          />
+        </>
+      }
+    >
+      <div
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-4"
+        style={{ backgroundColor: 'rgba(255,255,255,0.14)' }}
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-[#1f8a5b]" />
+        <span className="text-white text-[11px] font-semibold">Listo para jugar</span>
+      </div>
+      <h1 className="text-white text-[28px] font-black tracking-tight leading-tight mb-3">
+        Buenas, {firstName}.<br />
+        Toca <span style={{ color: '#1f8a5b' }}>perder bolas.</span>
+      </h1>
+
+      {/* Frase del día — entre el texto y los botones */}
+      <div className="rounded-[12px] px-3 py-2.5 mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+        <p className="text-white/70 text-[12px] italic leading-snug">"{DAILY_QUOTE.text}"</p>
+        <p className="font-mono text-[9px] text-white/35 mt-1">— {DAILY_QUOTE.author}</p>
+      </div>
+
+      <Link
+        to="/round/course"
+        className="btn-glow flex items-center justify-center py-3.5 rounded-full font-bold text-[15px] text-white transition active:scale-[0.98]"
+      >
+        Empezar ronda
+      </Link>
+    </HeroCard>
+  )
+}
+
+type ActiveRoundCardProps = { activeRound: NonNullable<Dashboard['activeRound']> }
+
+/** Tarjeta de la ronda en curso con las barras de color por hoyo. */
+function ActiveRoundCard({ activeRound }: ActiveRoundCardProps) {
+  return (
+    <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] font-bold text-[#1f8a5b] bg-[#d9eedd] px-2.5 py-1 rounded-full">
+          ● En curso · {activeRound.course_name}
+        </span>
+        <span className="font-mono text-[11px] text-[#6b7a72]">
+          {activeRound.holes_played} / {activeRound.total_holes}
+        </span>
+      </div>
+
+      <div className="flex items-end gap-4 mb-3">
+        <div>
+          <p className="text-[11px] text-[#6b7a72] mb-0.5">Vas</p>
+          <p className="text-[38px] font-black text-[#0e1a16] leading-none">
+            {activeRound.score_delta > 0
+              ? `+${activeRound.score_delta}`
+              : activeRound.score_delta === 0
+                ? 'E'
+                : activeRound.score_delta}
+          </p>
+        </div>
+        {/* Colored hole bars */}
+        <div className="flex-1 pb-1">
+          <div className="flex gap-[3px]">
+            {Array.from({ length: activeRound.total_holes }, (_, i) => i + 1).map(holeNum => {
+              const hs = activeRound.hole_scores.find(s => s.hole_number === holeNum)
+              const delta = hs ? hs.strokes - hs.par : null
+              return (
+                <div
+                  key={holeNum}
+                  className="flex-1 h-[26px] rounded-[4px]"
+                  style={{ backgroundColor: holeBarColor(delta) }}
+                />
+              )
+            })}
+          </div>
+          <div className="flex justify-between mt-1 font-mono text-[9px] text-[#6b7a72]">
+            <span>H1</span>
+            <span>H{activeRound.holes_played} ↓</span>
+            <span>H{activeRound.total_holes}</span>
+          </div>
+        </div>
+      </div>
+
+      <Link
+        to={`/scorecard?round=${activeRound.id}`}
+        onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
+        className="flex items-center justify-between w-full py-3 px-4 rounded-[16px] font-bold text-[14px] text-white transition active:scale-[0.98]"
+        style={{ backgroundColor: '#0e1a16' }}
+      >
+        <span>
+          Continuar · hoyo {activeRound.next_hole} par {activeRound.next_par}
+        </span>
+        <span
+          className="px-2.5 py-1 rounded-full text-[11px] font-black text-[#0e1a16]"
+          style={{ backgroundColor: '#1f8a5b' }}
+        >
+          →
+        </span>
+      </Link>
+    </div>
+  )
+}
+
+type ClubFeedProps = { feed: Dashboard['feed'] }
+
+/** Sección "El club" — feed de actividad reciente de los socios. */
+function ClubFeed({ feed }: ClubFeedProps) {
+  return (
+    <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4">
+      <div className="flex items-baseline justify-between mb-3">
+        <h3 className="text-[17px] font-bold text-[#0e1a16]">El club</h3>
+        <span className="text-[11px] text-[#2a6fdb] font-semibold">Ver feed →</span>
+      </div>
+      <div className="space-y-0">
+        {feed.map((item, i) => (
+          <Link
+            key={item.id}
+            to={`/scorecard?round=${item.round_id}`}
+            className={`flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}
+          >
+            <PlayerLink profileId={item.profile_id}>
+              <Avatar name={item.name} src={item.avatar_url} size={36} />
+            </PlayerLink>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-[13px] text-[#0e1a16] leading-tight">
+                  <PlayerLink profileId={item.profile_id} className="font-bold">
+                    {item.name}
+                  </PlayerLink>{' '}
+                  {item.action}
+                </p>
+                {item.badge === 'PB' && (
+                  <span
+                    className="font-mono text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: '#e8b75a', color: '#0e1a16' }}
+                  >
+                    PB
+                  </span>
+                )}
+                {item.badge === '🐦' && <span className="text-[14px] flex-shrink-0">🐦</span>}
+                {item.badge === '🦅' && <span className="text-[14px] flex-shrink-0">🦅</span>}
+              </div>
+              <p className="text-[11px] text-[#6b7a72] mt-0.5">{item.detail}</p>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+type RecentRoundsListProps = { rounds: FunctionReturnType<typeof api.home.recentRounds> }
+
+/** Últimas partidas de todos — tarjeta por partida con mini scorecard. */
+function RecentRoundsList({ rounds }: RecentRoundsListProps) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-2 px-1">
+        <h3 className="text-[17px] font-bold text-[#0e1a16]">Últimas partidas</h3>
+        <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-wide">Todos</span>
+      </div>
+      <div className="space-y-2">
+        {rounds.map(r => (
+          <Link
+            key={r.id}
+            to={`/scorecard?round=${r.id}`}
+            onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
+            className="block bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden active:scale-[0.99] transition"
+          >
+            {/* Cabecera de la partida */}
+            <div className="flex items-center justify-between px-3 pt-2.5 pb-2">
+              <p className="text-[13px] font-bold text-[#0e1a16] truncate">
+                {r.course_name}
+                {r.is_practice && <span className="text-[#6b7a72] font-normal"> · práctica</span>}
+              </p>
+              <span className="font-mono text-[10px] text-[#6b7a72] flex-shrink-0 ml-2">{fmtRoundDate(r.date)}</span>
+            </div>
+            {/* Mini scorecard — 2 filas: OUT (1-9) / IN (10-18) */}
+            {r.holes.length > 0 ? (
+              (() => {
+                const front = r.holes.filter(h => h.hole_number <= 9)
+                const back = r.holes.filter(h => h.hole_number >= 10)
+                return (
+                  <div>
+                    <div className="overflow-x-auto">
+                      <ScoreNine holes={front} players={r.players} label={back.length ? 'OUT' : 'TOT'} />
+                    </div>
+                    {back.length > 0 && (
+                      <div className="overflow-x-auto border-t-2 border-[#efebe1]">
+                        <ScoreNine holes={back} players={r.players} label="IN" />
+                      </div>
+                    )}
+                  </div>
+                )
+              })()
+            ) : (
+              <p className="px-3 pb-3 text-[11px] text-[#6b7a72]">Sin golpes anotados</p>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function HomePage() {
   const data = useQuery(api.home.dashboard)
   const recentRounds = useQuery(api.home.recentRounds) ?? []
@@ -209,47 +435,7 @@ export default function HomePage() {
       <div>
         <div className="px-[14px] space-y-3 mt-2">
           {/* Hero dark card */}
-          <HeroCard
-            className="p-5"
-            orbSize={200}
-            decor={
-              <>
-                <div className="absolute right-[52px] top-[-8px] w-[1.5px] h-[60px] bg-white opacity-85" />
-                <svg className="absolute right-[34px] top-[-6px]" width="24" height="14" viewBox="0 0 24 14">
-                  <path d="M0 0 L20 4 L0 10 Z" fill="white" />
-                </svg>
-                <div
-                  className="absolute right-[44px] top-[52px] w-[18px] h-[18px] rounded-full bg-white"
-                  style={{ boxShadow: 'inset -2px -2px 0 rgba(0,0,0,0.08)' }}
-                />
-              </>
-            }
-          >
-            <div
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-4"
-              style={{ backgroundColor: 'rgba(255,255,255,0.14)' }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#1f8a5b]" />
-              <span className="text-white text-[11px] font-semibold">Listo para jugar</span>
-            </div>
-            <h1 className="text-white text-[28px] font-black tracking-tight leading-tight mb-3">
-              Buenas, {firstName}.<br />
-              Toca <span style={{ color: '#1f8a5b' }}>perder bolas.</span>
-            </h1>
-
-            {/* Frase del día — entre el texto y los botones */}
-            <div className="rounded-[12px] px-3 py-2.5 mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-              <p className="text-white/70 text-[12px] italic leading-snug">"{DAILY_QUOTE.text}"</p>
-              <p className="font-mono text-[9px] text-white/35 mt-1">— {DAILY_QUOTE.author}</p>
-            </div>
-
-            <Link
-              to="/round/course"
-              className="btn-glow flex items-center justify-center py-3.5 rounded-full font-bold text-[15px] text-white transition active:scale-[0.98]"
-            >
-              Empezar ronda
-            </Link>
-          </HeroCard>
+          <HomeHero firstName={firstName} />
 
           {/* Onboarding card — only when 0 completed rounds and no active round */}
           {completedRoundsCount === 0 && !activeRound && (
@@ -280,69 +466,7 @@ export default function HomePage() {
           )}
 
           {/* Active round card */}
-          {activeRound && (
-            <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold text-[#1f8a5b] bg-[#d9eedd] px-2.5 py-1 rounded-full">
-                  ● En curso · {activeRound.course_name}
-                </span>
-                <span className="font-mono text-[11px] text-[#6b7a72]">
-                  {activeRound.holes_played} / {activeRound.total_holes}
-                </span>
-              </div>
-
-              <div className="flex items-end gap-4 mb-3">
-                <div>
-                  <p className="text-[11px] text-[#6b7a72] mb-0.5">Vas</p>
-                  <p className="text-[38px] font-black text-[#0e1a16] leading-none">
-                    {activeRound.score_delta > 0
-                      ? `+${activeRound.score_delta}`
-                      : activeRound.score_delta === 0
-                        ? 'E'
-                        : activeRound.score_delta}
-                  </p>
-                </div>
-                {/* Colored hole bars */}
-                <div className="flex-1 pb-1">
-                  <div className="flex gap-[3px]">
-                    {Array.from({ length: activeRound.total_holes }, (_, i) => i + 1).map(holeNum => {
-                      const hs = activeRound.hole_scores.find(s => s.hole_number === holeNum)
-                      const delta = hs ? hs.strokes - hs.par : null
-                      return (
-                        <div
-                          key={holeNum}
-                          className="flex-1 h-[26px] rounded-[4px]"
-                          style={{ backgroundColor: holeBarColor(delta) }}
-                        />
-                      )
-                    })}
-                  </div>
-                  <div className="flex justify-between mt-1 font-mono text-[9px] text-[#6b7a72]">
-                    <span>H1</span>
-                    <span>H{activeRound.holes_played} ↓</span>
-                    <span>H{activeRound.total_holes}</span>
-                  </div>
-                </div>
-              </div>
-
-              <Link
-                to={`/scorecard?round=${activeRound.id}`}
-                onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
-                className="flex items-center justify-between w-full py-3 px-4 rounded-[16px] font-bold text-[14px] text-white transition active:scale-[0.98]"
-                style={{ backgroundColor: '#0e1a16' }}
-              >
-                <span>
-                  Continuar · hoyo {activeRound.next_hole} par {activeRound.next_par}
-                </span>
-                <span
-                  className="px-2.5 py-1 rounded-full text-[11px] font-black text-[#0e1a16]"
-                  style={{ backgroundColor: '#1f8a5b' }}
-                >
-                  →
-                </span>
-              </Link>
-            </div>
-          )}
+          {activeRound && <ActiveRoundCard activeRound={activeRound} />}
 
           {/* Liga card */}
           {activeLeague ? (
@@ -402,103 +526,10 @@ export default function HomePage() {
           )}
 
           {/* El club feed */}
-          {feed.length > 0 && (
-            <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4">
-              <div className="flex items-baseline justify-between mb-3">
-                <h3 className="text-[17px] font-bold text-[#0e1a16]">El club</h3>
-                <span className="text-[11px] text-[#2a6fdb] font-semibold">Ver feed →</span>
-              </div>
-              <div className="space-y-0">
-                {feed.map((item, i) => (
-                  <Link
-                    key={item.id}
-                    to={`/scorecard?round=${item.round_id}`}
-                    className={`flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}
-                  >
-                    <PlayerLink profileId={item.profile_id}>
-                      <Avatar name={item.name} src={item.avatar_url} size={36} />
-                    </PlayerLink>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-[13px] text-[#0e1a16] leading-tight">
-                          <PlayerLink profileId={item.profile_id} className="font-bold">
-                            {item.name}
-                          </PlayerLink>{' '}
-                          {item.action}
-                        </p>
-                        {item.badge === 'PB' && (
-                          <span
-                            className="font-mono text-[8px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: '#e8b75a', color: '#0e1a16' }}
-                          >
-                            PB
-                          </span>
-                        )}
-                        {item.badge === '🐦' && <span className="text-[14px] flex-shrink-0">🐦</span>}
-                        {item.badge === '🦅' && <span className="text-[14px] flex-shrink-0">🦅</span>}
-                      </div>
-                      <p className="text-[11px] text-[#6b7a72] mt-0.5">{item.detail}</p>
-                    </div>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+          {feed.length > 0 && <ClubFeed feed={feed} />}
 
           {/* Últimas partidas de todos — tarjeta por partida, ordenadas por fecha */}
-          {recentRounds.length > 0 && (
-            <div>
-              <div className="flex items-baseline justify-between mb-2 px-1">
-                <h3 className="text-[17px] font-bold text-[#0e1a16]">Últimas partidas</h3>
-                <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-wide">Todos</span>
-              </div>
-              <div className="space-y-2">
-                {recentRounds.map(r => (
-                  <Link
-                    key={r.id}
-                    to={`/scorecard?round=${r.id}`}
-                    onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
-                    className="block bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden active:scale-[0.99] transition"
-                  >
-                    {/* Cabecera de la partida */}
-                    <div className="flex items-center justify-between px-3 pt-2.5 pb-2">
-                      <p className="text-[13px] font-bold text-[#0e1a16] truncate">
-                        {r.course_name}
-                        {r.is_practice && <span className="text-[#6b7a72] font-normal"> · práctica</span>}
-                      </p>
-                      <span className="font-mono text-[10px] text-[#6b7a72] flex-shrink-0 ml-2">
-                        {fmtRoundDate(r.date)}
-                      </span>
-                    </div>
-                    {/* Mini scorecard — 2 filas: OUT (1-9) / IN (10-18) */}
-                    {r.holes.length > 0 ? (
-                      (() => {
-                        const front = r.holes.filter(h => h.hole_number <= 9)
-                        const back = r.holes.filter(h => h.hole_number >= 10)
-                        return (
-                          <div>
-                            <div className="overflow-x-auto">
-                              <ScoreNine holes={front} players={r.players} label={back.length ? 'OUT' : 'TOT'} />
-                            </div>
-                            {back.length > 0 && (
-                              <div className="overflow-x-auto border-t-2 border-[#efebe1]">
-                                <ScoreNine holes={back} players={r.players} label="IN" />
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })()
-                    ) : (
-                      <p className="px-3 pb-3 text-[11px] text-[#6b7a72]">Sin golpes anotados</p>
-                    )}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+          {recentRounds.length > 0 && <RecentRoundsList rounds={recentRounds} />}
         </div>
       </div>
     </div>

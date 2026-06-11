@@ -743,28 +743,110 @@ function HoyosSection({
 }
 
 // ── SOCIAL ───────────────────────────────────────────────────
-function SocialSection({
-  rounds,
-  statScores,
-  n,
-  totalWins,
-  companions,
-  nemesis,
-  winPhrase,
-  lossPhrase,
-}: {
-  rounds: RoundStat[]
-  statScores: StatScore[]
-  n: number
-  totalWins: number
+type SocialWinSummaryProps = {
+  comparePlayerId: string | null
   companions: Companion[]
-  nemesis: Companion | null
+  totalWins: number
+  n: number
   winPhrase: string
   lossPhrase: string
-}) {
-  const [comparePlayerId, setComparePlayerId] = useState<string | null>(null)
-  const [socialPeriod, setSocialPeriod] = useState<'all' | '10' | '5' | '3'>('all')
+}
 
+function SocialWinSummary({ comparePlayerId, companions, totalWins, n, winPhrase, lossPhrase }: SocialWinSummaryProps) {
+  const selPlayer = comparePlayerId ? companions.find(c => c.id === comparePlayerId) : null
+  const wins = selPlayer ? selPlayer.wins : totalWins
+  const losses = selPlayer ? selPlayer.losses : n - totalWins
+  const total = selPlayer ? selPlayer.rounds : n
+  const rate = total > 0 ? Math.round((wins / total) * 100) : 0
+  const phrase = selPlayer ? playerPhrase(wins, losses) : rate >= 50 ? winPhrase : lossPhrase
+  return (
+    <HeroCard className="p-4" orbSize={110} orbColor={rate >= 50 ? '#1f8a5b' : '#c6432d'}>
+      <div>
+        <div className="flex items-center gap-6 mb-3">
+          <div>
+            <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">
+              {selPlayer ? `VS ${selPlayer.name.split(' ')[0].toUpperCase()}` : 'VICTORIAS TOTALES'}
+            </p>
+            <p className="text-[52px] font-black text-white leading-none">{wins}</p>
+            <p className="text-[12px] text-white/60 mt-1">
+              de {total} rondas{selPlayer ? ' juntos' : ''}
+            </p>
+          </div>
+          {total > 0 && (
+            <div>
+              <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">WIN RATE</p>
+              <p className="text-[28px] font-black leading-none" style={{ color: rate >= 50 ? '#1f8a5b' : '#e8b75a' }}>
+                {rate}%
+              </p>
+              {selPlayer && (
+                <div className="mt-1">
+                  <p className="font-mono text-[9px] text-white/50 uppercase">DERROTAS</p>
+                  <p className="text-[20px] font-black text-[#fadcd6] leading-none">{losses}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="bg-white/10 rounded-[12px] px-3 py-2">
+          <p className="text-white text-[13px] font-semibold">{phrase}</p>
+        </div>
+      </div>
+    </HeroCard>
+  )
+}
+
+type SocialPeriodSelectorProps = {
+  socialPeriod: 'all' | '10' | '5' | '3'
+  setSocialPeriod: (period: 'all' | '10' | '5' | '3') => void
+}
+
+function SocialPeriodSelector({ socialPeriod, setSocialPeriod }: SocialPeriodSelectorProps) {
+  return (
+    <div className="flex gap-2">
+      <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] flex-1">
+        {(
+          [
+            ['all', 'Todas'],
+            ['10', 'Últ. 10'],
+            ['5', 'Últ. 5'],
+            ['3', 'Últ. 3'],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            type="button"
+            key={key}
+            onClick={() => setSocialPeriod(key)}
+            className="flex-1 py-1.5 rounded-full text-[10px] font-bold transition"
+            style={{
+              backgroundColor: socialPeriod === key ? '#0e1a16' : 'transparent',
+              color: socialPeriod === key ? '#fff' : '#6b7a72',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+type SocialMetricsCardProps = {
+  rounds: RoundStat[]
+  statScores: StatScore[]
+  companions: Companion[]
+  comparePlayerId: string | null
+  setComparePlayerId: (id: string | null) => void
+  socialPeriod: 'all' | '10' | '5' | '3'
+}
+
+function SocialMetricsCard({
+  rounds,
+  statScores,
+  companions,
+  comparePlayerId,
+  setComparePlayerId,
+  socialPeriod,
+}: SocialMetricsCardProps) {
   // Social filtered rounds
   const socialRounds = socialPeriod === 'all' ? rounds : rounds.slice(0, parseInt(socialPeriod))
   const sAvgScore = socialRounds.length
@@ -795,272 +877,245 @@ function SocialSection({
     : null
 
   return (
-    <div className="space-y-3">
-      {/* Win summary — changes based on selected player */}
-      {(() => {
-        const selPlayer = comparePlayerId ? companions.find(c => c.id === comparePlayerId) : null
-        const wins = selPlayer ? selPlayer.wins : totalWins
-        const losses = selPlayer ? selPlayer.losses : n - totalWins
-        const total = selPlayer ? selPlayer.rounds : n
-        const rate = total > 0 ? Math.round((wins / total) * 100) : 0
-        const phrase = selPlayer ? playerPhrase(wins, losses) : rate >= 50 ? winPhrase : lossPhrase
-        return (
-          <HeroCard className="p-4" orbSize={110} orbColor={rate >= 50 ? '#1f8a5b' : '#c6432d'}>
-            <div>
-              <div className="flex items-center gap-6 mb-3">
-                <div>
-                  <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">
-                    {selPlayer ? `VS ${selPlayer.name.split(' ')[0].toUpperCase()}` : 'VICTORIAS TOTALES'}
-                  </p>
-                  <p className="text-[52px] font-black text-white leading-none">{wins}</p>
-                  <p className="text-[12px] text-white/60 mt-1">
-                    de {total} rondas{selPlayer ? ' juntos' : ''}
-                  </p>
-                </div>
-                {total > 0 && (
-                  <div>
-                    <p className="font-mono text-[9px] text-white/50 uppercase tracking-wide">WIN RATE</p>
-                    <p
-                      className="text-[28px] font-black leading-none"
-                      style={{ color: rate >= 50 ? '#1f8a5b' : '#e8b75a' }}
-                    >
-                      {rate}%
-                    </p>
-                    {selPlayer && (
-                      <div className="mt-1">
-                        <p className="font-mono text-[9px] text-white/50 uppercase">DERROTAS</p>
-                        <p className="text-[20px] font-black text-[#fadcd6] leading-none">{losses}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+    <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+      {/* Header con selector */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-[#efebe1]">
+        <p className="font-bold text-[14px] text-[#0e1a16] flex-1">Métricas</p>
+        <select
+          value={comparePlayerId ?? ''}
+          onChange={e => setComparePlayerId(e.target.value || null)}
+          className="text-[12px] font-semibold text-[#0e1a16] bg-[#f4f1e9] border border-[#e5e0d4] rounded-full px-3 py-1.5 outline-none max-w-[140px]"
+        >
+          <option value="">Solo yo</option>
+          {companions.map(c => (
+            <option key={c.id} value={c.id}>
+              {c.name.split(' ')[0]}
+            </option>
+          ))}
+        </select>
+      </div>
+      {/* Column headers if comparing */}
+      {comparePlayerId &&
+        (() => {
+          const other = companions.find(c => c.id === comparePlayerId)
+          return other ? (
+            <div className="grid grid-cols-3 border-b border-[#efebe1] bg-[#f4f1e9]">
+              <div className="py-2 px-4" />
+              <div className="py-2 px-2 text-center">
+                <p className="font-mono text-[9px] text-[#1f8a5b] font-bold uppercase">Tú</p>
               </div>
-              <div className="bg-white/10 rounded-[12px] px-3 py-2">
-                <p className="text-white text-[13px] font-semibold">{phrase}</p>
+              <div className="py-2 px-2 text-center">
+                <p
+                  className="font-mono text-[9px] font-bold uppercase truncate"
+                  style={{ color: avatarColor(other.name) }}
+                >
+                  {other.name.split(' ')[0]}
+                </p>
               </div>
             </div>
-          </HeroCard>
+          ) : null
+        })()}
+      {/* Rows */}
+      {(() => {
+        const other = comparePlayerId ? companions.find(c => c.id === comparePlayerId) : null
+        const otherRounds = other ? rounds.filter(r => r.players.includes(other.id)) : []
+        const oSocialR = socialPeriod === 'all' ? otherRounds : otherRounds.slice(0, parseInt(socialPeriod))
+        // The other player's per-round stats come from their own scores — RoundStat only holds mine
+        const oStats = other
+          ? oSocialR.flatMap(r => {
+              const oS = statScores.filter(s => s.round_id === r.id && s.profile_id === other.id)
+              const total = oS.reduce((a, s) => a + (s.strokes ?? 0), 0)
+              if (total <= 0) return []
+              return [
+                {
+                  total,
+                  putts: oS.reduce((a, s) => a + (s.putts ?? 0), 0),
+                  gir: oS.filter(s => s.gir).length,
+                  gir_total: oS.length,
+                  fairways: oS.filter(s => s.fairway === true).length,
+                  fairways_total: oS.filter(s => s.fairway !== null).length,
+                  penalties: oS.reduce((a, s) => a + (s.penalties ?? 0), 0),
+                  bunkers: oS.filter(s => s.in_bunker).length,
+                },
+              ]
+            })
+          : []
+        const oAvg = oStats.length ? Math.round(oStats.reduce((a, r) => a + r.total, 0) / oStats.length) : null
+        const oGir = oStats.length
+          ? Math.round(
+              oStats.reduce((a, r) => a + (r.gir_total > 0 ? (r.gir / r.gir_total) * 100 : 0), 0) / oStats.length,
+            )
+          : null
+        const oFw = oStats.length
+          ? Math.round(
+              oStats.reduce((a, r) => a + (r.fairways_total > 0 ? (r.fairways / r.fairways_total) * 100 : 0), 0) /
+                oStats.length,
+            )
+          : null
+        const oPutt = oStats.length
+          ? parseFloat((oStats.reduce((a, r) => a + r.putts, 0) / oStats.length).toFixed(1))
+          : null
+        const oPen = oStats.length
+          ? parseFloat((oStats.reduce((a, r) => a + r.penalties, 0) / oStats.length).toFixed(1))
+          : null
+        const oBunk = oStats.length
+          ? parseFloat((oStats.reduce((a, r) => a + r.bunkers, 0) / oStats.length).toFixed(1))
+          : null
+
+        const rows = [
+          {
+            label: 'Media golpes',
+            mine: sAvgScore ? `${sAvgScore} (${sAvgDelta != null && sAvgDelta > 0 ? '+' : ''}${sAvgDelta})` : '–',
+            theirs: oAvg ? `${oAvg}` : '–',
+            mineN: sAvgScore,
+            theirN: oAvg,
+            lower: true,
+          },
+          {
+            label: 'GIR %',
+            mine: sGirPct != null ? `${sGirPct}%` : '–',
+            theirs: oGir != null ? `${oGir}%` : '–',
+            mineN: sGirPct,
+            theirN: oGir,
+            lower: false,
+          },
+          {
+            label: 'Calles %',
+            mine: sFwPct != null ? `${sFwPct}%` : '–',
+            theirs: oFw != null ? `${oFw}%` : '–',
+            mineN: sFwPct,
+            theirN: oFw,
+            lower: false,
+          },
+          {
+            label: 'Putts/ronda',
+            mine: sPutts ?? '–',
+            theirs: oPutt ?? '–',
+            mineN: sPutts ? parseFloat(String(sPutts)) : null,
+            theirN: oPutt,
+            lower: true,
+          },
+          {
+            label: 'Penalizaciones',
+            mine: sPen ?? '–',
+            theirs: oPen ?? '–',
+            mineN: sPen ? parseFloat(String(sPen)) : null,
+            theirN: oPen,
+            lower: true,
+          },
+          {
+            label: 'Búnkers',
+            mine: sBunkers ?? '–',
+            theirs: oBunk ?? '–',
+            mineN: sBunkers ? parseFloat(String(sBunkers)) : null,
+            theirN: oBunk,
+            lower: true,
+          },
+        ]
+
+        return (
+          <div className="divide-y divide-[#efebe1]">
+            {rows.map(row => {
+              const mineWins =
+                other &&
+                row.mineN != null &&
+                row.theirN != null &&
+                (row.lower ? row.mineN < row.theirN : row.mineN > row.theirN)
+              const theirWins =
+                other &&
+                row.mineN != null &&
+                row.theirN != null &&
+                (row.lower ? row.theirN < row.mineN : row.theirN > row.mineN)
+              return (
+                <div
+                  key={row.label}
+                  className={`${other ? 'grid grid-cols-3' : 'flex items-center justify-between'} px-4 py-2.5`}
+                >
+                  <p className="text-[12px] text-[#6b7a72] py-0.5">{row.label}</p>
+                  {other ? (
+                    <>
+                      <div
+                        className="text-center py-0.5 rounded-[6px] mx-1"
+                        style={{ backgroundColor: mineWins ? '#d9eedd' : 'transparent' }}
+                      >
+                        <p
+                          className="font-mono text-[14px] font-black"
+                          style={{ color: mineWins ? '#1f8a5b' : '#0e1a16' }}
+                        >
+                          {row.mine}
+                        </p>
+                      </div>
+                      <div
+                        className="text-center py-0.5 rounded-[6px] mx-1"
+                        style={{ backgroundColor: theirWins ? '#fadcd6' : 'transparent' }}
+                      >
+                        <p
+                          className="font-mono text-[14px] font-black"
+                          style={{ color: theirWins ? '#a83a25' : '#0e1a16' }}
+                        >
+                          {row.theirs}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="font-mono text-[14px] font-black text-[#0e1a16]">{row.mine}</p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         )
       })()}
+    </div>
+  )
+}
+
+function SocialSection({
+  rounds,
+  statScores,
+  n,
+  totalWins,
+  companions,
+  nemesis,
+  winPhrase,
+  lossPhrase,
+}: {
+  rounds: RoundStat[]
+  statScores: StatScore[]
+  n: number
+  totalWins: number
+  companions: Companion[]
+  nemesis: Companion | null
+  winPhrase: string
+  lossPhrase: string
+}) {
+  const [comparePlayerId, setComparePlayerId] = useState<string | null>(null)
+  const [socialPeriod, setSocialPeriod] = useState<'all' | '10' | '5' | '3'>('all')
+
+  return (
+    <div className="space-y-3">
+      {/* Win summary — changes based on selected player */}
+      <SocialWinSummary
+        comparePlayerId={comparePlayerId}
+        companions={companions}
+        totalWins={totalWins}
+        n={n}
+        winPhrase={winPhrase}
+        lossPhrase={lossPhrase}
+      />
 
       {/* Period + player selector */}
-      <div className="flex gap-2">
-        <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] flex-1">
-          {(
-            [
-              ['all', 'Todas'],
-              ['10', 'Últ. 10'],
-              ['5', 'Últ. 5'],
-              ['3', 'Últ. 3'],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              type="button"
-              key={key}
-              onClick={() => setSocialPeriod(key)}
-              className="flex-1 py-1.5 rounded-full text-[10px] font-bold transition"
-              style={{
-                backgroundColor: socialPeriod === key ? '#0e1a16' : 'transparent',
-                color: socialPeriod === key ? '#fff' : '#6b7a72',
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <SocialPeriodSelector socialPeriod={socialPeriod} setSocialPeriod={setSocialPeriod} />
 
       {/* Métricas con selector de jugador integrado */}
-      <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
-        {/* Header con selector */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#efebe1]">
-          <p className="font-bold text-[14px] text-[#0e1a16] flex-1">Métricas</p>
-          <select
-            value={comparePlayerId ?? ''}
-            onChange={e => setComparePlayerId(e.target.value || null)}
-            className="text-[12px] font-semibold text-[#0e1a16] bg-[#f4f1e9] border border-[#e5e0d4] rounded-full px-3 py-1.5 outline-none max-w-[140px]"
-          >
-            <option value="">Solo yo</option>
-            {companions.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.name.split(' ')[0]}
-              </option>
-            ))}
-          </select>
-        </div>
-        {/* Column headers if comparing */}
-        {comparePlayerId &&
-          (() => {
-            const other = companions.find(c => c.id === comparePlayerId)
-            return other ? (
-              <div className="grid grid-cols-3 border-b border-[#efebe1] bg-[#f4f1e9]">
-                <div className="py-2 px-4" />
-                <div className="py-2 px-2 text-center">
-                  <p className="font-mono text-[9px] text-[#1f8a5b] font-bold uppercase">Tú</p>
-                </div>
-                <div className="py-2 px-2 text-center">
-                  <p
-                    className="font-mono text-[9px] font-bold uppercase truncate"
-                    style={{ color: avatarColor(other.name) }}
-                  >
-                    {other.name.split(' ')[0]}
-                  </p>
-                </div>
-              </div>
-            ) : null
-          })()}
-        {/* Rows */}
-        {(() => {
-          const other = comparePlayerId ? companions.find(c => c.id === comparePlayerId) : null
-          const otherRounds = other ? rounds.filter(r => r.players.includes(other.id)) : []
-          const oSocialR = socialPeriod === 'all' ? otherRounds : otherRounds.slice(0, parseInt(socialPeriod))
-          // The other player's per-round stats come from their own scores — RoundStat only holds mine
-          const oStats = other
-            ? oSocialR.flatMap(r => {
-                const oS = statScores.filter(s => s.round_id === r.id && s.profile_id === other.id)
-                const total = oS.reduce((a, s) => a + (s.strokes ?? 0), 0)
-                if (total <= 0) return []
-                return [
-                  {
-                    total,
-                    putts: oS.reduce((a, s) => a + (s.putts ?? 0), 0),
-                    gir: oS.filter(s => s.gir).length,
-                    gir_total: oS.length,
-                    fairways: oS.filter(s => s.fairway === true).length,
-                    fairways_total: oS.filter(s => s.fairway !== null).length,
-                    penalties: oS.reduce((a, s) => a + (s.penalties ?? 0), 0),
-                    bunkers: oS.filter(s => s.in_bunker).length,
-                  },
-                ]
-              })
-            : []
-          const oAvg = oStats.length ? Math.round(oStats.reduce((a, r) => a + r.total, 0) / oStats.length) : null
-          const oGir = oStats.length
-            ? Math.round(
-                oStats.reduce((a, r) => a + (r.gir_total > 0 ? (r.gir / r.gir_total) * 100 : 0), 0) / oStats.length,
-              )
-            : null
-          const oFw = oStats.length
-            ? Math.round(
-                oStats.reduce((a, r) => a + (r.fairways_total > 0 ? (r.fairways / r.fairways_total) * 100 : 0), 0) /
-                  oStats.length,
-              )
-            : null
-          const oPutt = oStats.length
-            ? parseFloat((oStats.reduce((a, r) => a + r.putts, 0) / oStats.length).toFixed(1))
-            : null
-          const oPen = oStats.length
-            ? parseFloat((oStats.reduce((a, r) => a + r.penalties, 0) / oStats.length).toFixed(1))
-            : null
-          const oBunk = oStats.length
-            ? parseFloat((oStats.reduce((a, r) => a + r.bunkers, 0) / oStats.length).toFixed(1))
-            : null
-
-          const rows = [
-            {
-              label: 'Media golpes',
-              mine: sAvgScore ? `${sAvgScore} (${sAvgDelta != null && sAvgDelta > 0 ? '+' : ''}${sAvgDelta})` : '–',
-              theirs: oAvg ? `${oAvg}` : '–',
-              mineN: sAvgScore,
-              theirN: oAvg,
-              lower: true,
-            },
-            {
-              label: 'GIR %',
-              mine: sGirPct != null ? `${sGirPct}%` : '–',
-              theirs: oGir != null ? `${oGir}%` : '–',
-              mineN: sGirPct,
-              theirN: oGir,
-              lower: false,
-            },
-            {
-              label: 'Calles %',
-              mine: sFwPct != null ? `${sFwPct}%` : '–',
-              theirs: oFw != null ? `${oFw}%` : '–',
-              mineN: sFwPct,
-              theirN: oFw,
-              lower: false,
-            },
-            {
-              label: 'Putts/ronda',
-              mine: sPutts ?? '–',
-              theirs: oPutt ?? '–',
-              mineN: sPutts ? parseFloat(String(sPutts)) : null,
-              theirN: oPutt,
-              lower: true,
-            },
-            {
-              label: 'Penalizaciones',
-              mine: sPen ?? '–',
-              theirs: oPen ?? '–',
-              mineN: sPen ? parseFloat(String(sPen)) : null,
-              theirN: oPen,
-              lower: true,
-            },
-            {
-              label: 'Búnkers',
-              mine: sBunkers ?? '–',
-              theirs: oBunk ?? '–',
-              mineN: sBunkers ? parseFloat(String(sBunkers)) : null,
-              theirN: oBunk,
-              lower: true,
-            },
-          ]
-
-          return (
-            <div className="divide-y divide-[#efebe1]">
-              {rows.map(row => {
-                const mineWins =
-                  other &&
-                  row.mineN != null &&
-                  row.theirN != null &&
-                  (row.lower ? row.mineN < row.theirN : row.mineN > row.theirN)
-                const theirWins =
-                  other &&
-                  row.mineN != null &&
-                  row.theirN != null &&
-                  (row.lower ? row.theirN < row.mineN : row.theirN > row.mineN)
-                return (
-                  <div
-                    key={row.label}
-                    className={`${other ? 'grid grid-cols-3' : 'flex items-center justify-between'} px-4 py-2.5`}
-                  >
-                    <p className="text-[12px] text-[#6b7a72] py-0.5">{row.label}</p>
-                    {other ? (
-                      <>
-                        <div
-                          className="text-center py-0.5 rounded-[6px] mx-1"
-                          style={{ backgroundColor: mineWins ? '#d9eedd' : 'transparent' }}
-                        >
-                          <p
-                            className="font-mono text-[14px] font-black"
-                            style={{ color: mineWins ? '#1f8a5b' : '#0e1a16' }}
-                          >
-                            {row.mine}
-                          </p>
-                        </div>
-                        <div
-                          className="text-center py-0.5 rounded-[6px] mx-1"
-                          style={{ backgroundColor: theirWins ? '#fadcd6' : 'transparent' }}
-                        >
-                          <p
-                            className="font-mono text-[14px] font-black"
-                            style={{ color: theirWins ? '#a83a25' : '#0e1a16' }}
-                          >
-                            {row.theirs}
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <p className="font-mono text-[14px] font-black text-[#0e1a16]">{row.mine}</p>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )
-        })()}
-      </div>
+      <SocialMetricsCard
+        rounds={rounds}
+        statScores={statScores}
+        companions={companions}
+        comparePlayerId={comparePlayerId}
+        setComparePlayerId={setComparePlayerId}
+        socialPeriod={socialPeriod}
+      />
 
       {/* Nemesis — solo si te han ganado alguna vez */}
       <SocialNemesis nemesis={nemesis} />
