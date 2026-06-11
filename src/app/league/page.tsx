@@ -43,10 +43,9 @@ export default function LigaPage() {
           <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16]">Liga</h1>
           <Link
             to="/league/new"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full font-semibold text-[13px] text-white"
-            style={{ backgroundColor: '#1f8a5b' }}
+            className="btn-glow flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-[13px] text-white transition active:scale-[0.97]"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
               <path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
             Nueva
