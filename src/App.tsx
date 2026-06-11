@@ -4,6 +4,7 @@ import { Navigate, Route, Routes, useLocation, useNavigationType, useSearchParam
 import { useConvexAuth, useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { TabBar } from '@/components/ui/tab-bar'
+import { OfflineSync } from '@/components/OfflineSync'
 
 import HomePage from '@/app/page'
 import LoginPage from '@/app/login/page'
@@ -166,6 +167,7 @@ export function App() {
   return (
     <div className="mx-auto max-w-[430px] min-h-screen relative">
       <KeepWarm />
+      <OfflineSync />
       <AuthGuard>
         <TransitionRoutes>
           <Route path="/" element={<HomePage />} />

@@ -1,9 +1,11 @@
 import { useSearchParams, useNavigate } from 'react-router'
 import { useState, Suspense } from 'react'
 import { useQuery, useMutation } from 'convex/react'
+import { useSelector } from '@legendapp/state/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { stablefordPts, strokesReceived } from '@/lib/golf'
+import { pendingHoles$, pendingForRound, PendingHole } from '@/lib/offline-scores'
 import { ScoreMark } from '@/components/ui/score-mark'
 import { Drawer } from 'vaul'
 import { HoleSheet } from '@/components/HoleSheet'
@@ -695,6 +697,41 @@ function BottomCTA({ allDone, nextHole, completed, signed, saving, customBet, pl
   )
 }
 
+/** Server scores with the offline-pending holes layered on top, so the card
+ *  reflects everything the user entered, with or without coverage. */
+function mergePendingScores(serverScores: Score[], pendingRound: PendingHole[]): Score[] {
+  if (pendingRound.length === 0) return serverScores
+  const byKey = new Map(serverScores.map((s, i) => [`${s.profile_id}:${s.hole_number}`, i]))
+  const merged = [...serverScores]
+  for (const p of pendingRound) {
+    for (const e of p.scores) {
+      const row: Score = { profile_id: e.profileId, hole_number: p.hole_number, strokes: e.strokes, putts: e.putts, gir: e.gir, fairway: e.fairway, penalties: e.penalties, in_bunker: e.in_bunker }
+      const i = byKey.get(`${row.profile_id}:${row.hole_number}`)
+      if (i != null) merged[i] = row
+      else merged.push(row)
+    }
+  }
+  return merged
+}
+
+/** Amber notice shown while some holes are saved only on this device. */
+function PendingSyncBanner({ count }: { count: number }) {
+  if (count === 0) return null
+  return (
+    <div className="flex items-center gap-2.5 rounded-[12px] bg-[#f6e6c4] px-4 py-2.5">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="flex-shrink-0">
+        <path d="M21 12a9 9 0 1 1-2.64-6.36" stroke="#9b6e1a" strokeWidth="2.2" strokeLinecap="round"/>
+        <path d="M21 3v6h-6" stroke="#9b6e1a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+      <p className="text-[12px] font-semibold text-[#9b6e1a]">
+        {count === 1
+          ? '1 hoyo guardado sin conexión — se sincronizará automáticamente'
+          : `${count} hoyos guardados sin conexión — se sincronizarán automáticamente`}
+      </p>
+    </div>
+  )
+}
+
 function TarjetaPage() {
   const [searchParams] = useSearchParams()
   const roundId      = searchParams.get('round') ?? ''
@@ -723,7 +760,12 @@ function TarjetaPage() {
   const totalHoles  = holeMode === '9_twice' ? 18 : holeMode === 'front' || holeMode === 'back' ? 9 : base
   const allHoles: Hole[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
   const players: Player[] = (data?.players ?? []).map(p => ({ id: p.profileId ?? '', name: p.name ?? 'Inv', course_handicap: p.course_handicap ?? 0, is_guest: p.is_guest, avatar_url: p.avatar_url ?? null }))
-  const scores: Score[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null, putts: s.putts ?? null, gir: s.gir ?? null, fairway: s.fairway ?? null, penalties: s.penalties ?? null, in_bunker: s.in_bunker ?? null }))
+  // Holes saved offline (pending sync) overlay the server scores so the card
+  // reflects everything the user entered, with or without coverage.
+  const pendingMap = useSelector(pendingHoles$)
+  const pendingRound = pendingForRound(pendingMap ?? {}, roundId)
+  const serverScores: Score[] = (data?.scores ?? []).map(s => ({ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes ?? null, putts: s.putts ?? null, gir: s.gir ?? null, fairway: s.fairway ?? null, penalties: s.penalties ?? null, in_bunker: s.in_bunker ?? null }))
+  const scores = mergePendingScores(serverScores, pendingRound)
   const modes = (data?.modes ?? []).length ? (data?.modes ?? []) : ['stroke']
 
   // Bet input value: derived from notes (the live-edited value lives inside BetControl)
@@ -779,6 +821,12 @@ function TarjetaPage() {
   const ranking = players.toSorted((a, b) => (getTotal(a.id) || 999) - (getTotal(b.id) || 999))
 
   async function handleSign() {
+    // Signing computes totals and WHS differentials server-side — every hole
+    // must have reached Convex first, or the round would close incomplete.
+    if (pendingRound.length > 0 || !navigator.onLine) {
+      alert('Hay hoyos guardados sin conexión todavía por sincronizar. Conéctate a internet y vuelve a intentarlo.')
+      return
+    }
     setSignFlow(f => ({ ...f, saving: true }))
     await finalizeMut({ round_id: roundId as Id<'rounds'> })
     setSignFlow(f => ({ ...f, saving: false, celebrating: true }))
@@ -925,6 +973,7 @@ function TarjetaPage() {
 
       {/* Scorecard */}
       <div className="px-[14px] space-y-2">
+        <PendingSyncBanner count={pendingRound.length} />
         {viewMode === 'clasificacion' ? (
           <Clasificacion ranking={ranking} getTotal={getTotal} realPar={realPar} />
         ) : (

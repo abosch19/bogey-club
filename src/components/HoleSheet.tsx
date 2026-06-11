@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
+import { useSelector } from '@legendapp/state/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { strokesReceived, stablefordPts } from '@/lib/golf'
+import { pendingHoles$, enqueuePendingHole, clearPendingHole, withTimeout } from '@/lib/offline-scores'
 import { Drawer } from 'vaul'
 import { Avatar } from '@/components/ui/avatar'
 
@@ -306,15 +308,28 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
     return init
   })()
 
+  // Scores saved offline for this hole, still waiting to reach the server.
+  const pendingEntry = useSelector(pendingHoles$[`${roundId}:${holeNum}`])
+  const pendingScores = (() => {
+    const init: Record<string, PlayerScore> = {}
+    for (const s of pendingEntry?.scores ?? []) {
+      init[s.profileId] = { strokes: s.strokes, putts: s.putts, fairway: s.fairway, gir: s.gir, in_bunker: s.in_bunker, penalties: s.penalties }
+    }
+    return init
+  })()
+
+  // What the user last saved, whether it reached the server or not.
+  const savedScores: Record<string, PlayerScore> = { ...serverScores, ...pendingScores }
+
   // What the UI shows: saved scores with the user's pending edits layered on top.
-  const scores: Record<string, PlayerScore> = { ...serverScores, ...edits }
+  const scores: Record<string, PlayerScore> = { ...savedScores, ...edits }
 
   function get(pid: string): PlayerScore {
     return scores[pid] ?? { strokes: null, putts: null, fairway: null, gir: false, in_bunker: false, penalties: 0 }
   }
 
   // Can only save when something changed AND at least one stroke was entered.
-  const hasChanges = !sameScores(scores, serverScores)
+  const hasChanges = !sameScores(scores, savedScores)
   const hasStrokes = Object.values(scores).some(s => s.strokes != null)
   const canSave = hasChanges && hasStrokes
 
@@ -330,18 +345,38 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
   }
 
   async function handleSave() {
+    const scoresArray = Object.entries(scores).flatMap(([profileId, sc]) =>
+      profileId.startsWith('guest_') ? [] : [{ profileId: profileId as Id<'profiles'>, ...sc }]
+    )
+    const advance = () => {
+      const isLast = holeNum >= totalHoles
+      if (isLast) onFinish()
+      else onChangeHole(holeNum + 1)
+    }
+    // No connection: keep the hole locally (OfflineSync pushes it later) and
+    // keep playing — on a golf course this is the normal case, not the error.
+    if (!navigator.onLine) {
+      enqueuePendingHole(roundId, holeNum, scoresArray)
+      advance()
+      return
+    }
     setSaving(true)
     try {
-      const scoresArray = Object.entries(scores).flatMap(([profileId, sc]) =>
-        profileId.startsWith('guest_') ? [] : [{ profileId: profileId as Id<'profiles'>, ...sc }]
-      )
-      await saveHoleMut({ roundId: roundId as Id<'rounds'>, hole_number: holeNum, scores: scoresArray })
-    } catch {
+      await withTimeout(saveHoleMut({ roundId: roundId as Id<'rounds'>, hole_number: holeNum, scores: scoresArray }), 5000)
+      clearPendingHole(roundId, holeNum)
+    } catch (err) {
+      // A timeout means the connection is down even though navigator.onLine
+      // said otherwise (flaky coverage) — fall back to the offline queue.
+      // A rejection means the server answered with a real error.
+      if (err instanceof Error && err.message === 'timeout') {
+        enqueuePendingHole(roundId, holeNum, scoresArray)
+        setSaving(false)
+        advance()
+        return
+      }
       setSaving(false); alert('Error guardando'); return
     }
-    const isLast = holeNum >= totalHoles
-    if (isLast) onFinish()
-    else onChangeHole(holeNum + 1)
+    advance()
   }
 
   if (!hole) return <div className="py-16 flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
