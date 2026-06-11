@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -17,17 +17,61 @@
     <!-- Launch screens iOS: sin ellas la PWA arranca en blanco (iOS ignora el
          background_color del manifest). Generadas con `bun run generate:splash`;
          las media queries deben casar con DEVICES en scripts/generate-apple-splash.mjs. -->
-    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/apple-splash-750x1334.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1242x2208.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1125x2436.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/apple-splash-828x1792.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1242x2688.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1170x2532.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1179x2556.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1206x2622.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1284x2778.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1290x2796.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1320x2868.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+      href="/apple-splash-750x1334.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="/apple-splash-1242x2208.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="/apple-splash-1125x2436.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+      href="/apple-splash-828x1792.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="/apple-splash-1242x2688.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="/apple-splash-1170x2532.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="/apple-splash-1179x2556.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="/apple-splash-1206x2622.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="/apple-splash-1284x2778.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="/apple-splash-1290x2796.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+      href="/apple-splash-1320x2868.png"
+    />
     <meta name="theme-color" content="#0e1a16" />
     <meta name="mobile-web-app-capable" content="yes" />
     <style>
@@ -40,7 +84,13 @@
         align-items: center;
         justify-content: center;
         background: #f4f1e9;
-        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
       }
       #splash .wordmark {
         margin-top: 12px;
@@ -58,12 +108,12 @@
     <div id="root">
       <div id="splash">
         <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-          <circle cx="32" cy="32" r="30" fill="#9bc9a3"/>
-          <path d="M24 16 L24 50" stroke="#0e1a16" stroke-width="2.2" stroke-linecap="round"/>
-          <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16"/>
-          <circle cx="24" cy="50" r="2.6" fill="#0e1a16"/>
+          <circle cx="32" cy="32" r="30" fill="#9bc9a3" />
+          <path d="M24 16 L24 50" stroke="#0e1a16" stroke-width="2.2" stroke-linecap="round" />
+          <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16" />
+          <circle cx="24" cy="50" r="2.6" fill="#0e1a16" />
         </svg>
-        <div class="wordmark">Bogey <span style="color:#1f8a5b">Club</span></div>
+        <div class="wordmark">Bogey <span style="color: #1f8a5b">Club</span></div>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>

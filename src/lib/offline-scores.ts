@@ -44,7 +44,7 @@ export function clearPendingHole(roundId: string, hole_number: number) {
 }
 
 export function pendingForRound(pending: Record<string, PendingHole>, roundId: string): PendingHole[] {
-  return Object.values(pending ?? {}).filter((p) => p && p.roundId === roundId)
+  return Object.values(pending ?? {}).filter(p => p && p.roundId === roundId)
 }
 
 /** Rejects after `ms` with Error('timeout'). A Convex mutation issued while
@@ -56,8 +56,14 @@ export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
     const t = setTimeout(() => reject(new Error('timeout')), ms)
     promise.then(
-      (v) => { clearTimeout(t); resolve(v) },
-      (e) => { clearTimeout(t); reject(e) },
+      v => {
+        clearTimeout(t)
+        resolve(v)
+      },
+      e => {
+        clearTimeout(t)
+        reject(e)
+      },
     )
   })
 }

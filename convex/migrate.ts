@@ -9,7 +9,7 @@ export const setProfileName = internalMutation({
   handler: async (ctx, { email, name, last_name }) => {
     const profile = await ctx.db
       .query('profiles')
-      .withIndex('by_email', (q) => q.eq('email', email))
+      .withIndex('by_email', q => q.eq('email', email))
       .first()
     if (!profile) throw new Error(`No existe perfil con email ${email}`)
     await ctx.db.patch(profile._id, { name, last_name })

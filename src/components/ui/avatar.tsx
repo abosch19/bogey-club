@@ -50,7 +50,13 @@ export function Avatar({ name, src, size = 32, className = '', style }: AvatarPr
   return (
     <div
       className={`rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 ${className}`}
-      style={{ width: size, height: size, fontSize: Math.max(9, Math.round(size * 0.36)), backgroundColor: avatarColor(name), ...style }}
+      style={{
+        width: size,
+        height: size,
+        fontSize: Math.max(9, Math.round(size * 0.36)),
+        backgroundColor: avatarColor(name),
+        ...style,
+      }}
     >
       {avatarInitials(name)}
     </div>

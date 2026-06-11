@@ -8,20 +8,26 @@ import { formatHandicap } from '@/lib/golf'
 import { Avatar } from '@/components/ui/avatar'
 
 export default function AdminPage() {
-  const [tab, setTab]         = useState<'usuarios'|'ligas'|'campos'>('usuarios')
-  const [msg, setMsg]         = useState('')
+  const [tab, setTab] = useState<'usuarios' | 'ligas' | 'campos'>('usuarios')
+  const [msg, setMsg] = useState('')
 
-  const me       = useQuery(api.profiles.me)
+  const me = useQuery(api.profiles.me)
   const overview = useQuery(api.admin.overview)
-  const removeLeague  = useMutation(api.leagues.remove)
-  const setHandicap   = useMutation(api.profiles.setHandicap)
+  const removeLeague = useMutation(api.leagues.remove)
+  const setHandicap = useMutation(api.profiles.setHandicap)
   const navigate = useNavigate()
 
   // Auth + admin gate
   useEffect(() => {
     if (me === undefined) return
-    if (me === null) { navigate('/login', { replace: true }); return }
-    if (!me.is_admin) { navigate('/', { replace: true }); return }
+    if (me === null) {
+      navigate('/login', { replace: true })
+      return
+    }
+    if (!me.is_admin) {
+      navigate('/', { replace: true })
+      return
+    }
   }, [me, navigate])
 
   async function deleteLeague(id: Id<'leagues'>) {
@@ -36,9 +42,14 @@ export default function AdminPage() {
     await setHandicap({ handicap_index: hcp, profileId })
   }
 
-  if (me === undefined || overview === undefined || !me?.is_admin) return <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center"><div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
+  if (me === undefined || overview === undefined || !me?.is_admin)
+    return (
+      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+      </div>
+    )
 
-  const users   = overview?.users ?? []
+  const users = overview?.users ?? []
   const leagues = overview?.leagues ?? []
   const courses = overview?.courses ?? []
   const myEmail = me?.email ?? ''
@@ -48,7 +59,15 @@ export default function AdminPage() {
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center gap-3 mb-4">
           <Link to="/profile" className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="#0e1a16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M19 12H5M5 12l7-7M5 12l7 7"
+                stroke="#0e1a16"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             Perfil
           </Link>
         </div>
@@ -65,10 +84,15 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4] mb-4">
           {(['usuarios', 'ligas', 'campos'] as const).map(t => (
-            <button type="button" key={t} onClick={() => setTab(t)}
+            <button
+              type="button"
+              key={t}
+              onClick={() => setTab(t)}
               className="flex-1 py-1.5 rounded-full text-[12px] font-bold capitalize transition"
-              style={{ backgroundColor: tab === t ? '#0e1a16' : 'transparent', color: tab === t ? '#fff' : '#6b7a72' }}>
-              {t} {t === 'usuarios' ? `(${users.length})` : t === 'ligas' ? `(${leagues.length})` : `(${courses.length})`}
+              style={{ backgroundColor: tab === t ? '#0e1a16' : 'transparent', color: tab === t ? '#fff' : '#6b7a72' }}
+            >
+              {t}{' '}
+              {t === 'usuarios' ? `(${users.length})` : t === 'ligas' ? `(${leagues.length})` : `(${courses.length})`}
             </button>
           ))}
         </div>
@@ -81,16 +105,23 @@ export default function AdminPage() {
                 <div className="flex items-center gap-3 mb-2">
                   <Avatar name={[u.name, u.last_name].filter(Boolean).join(' ')} size={40} />
                   <div className="flex-1">
-                    <p className="font-bold text-[14px] text-[#0e1a16]">{[u.name, u.last_name].filter(Boolean).join(' ')}</p>
+                    <p className="font-bold text-[14px] text-[#0e1a16]">
+                      {[u.name, u.last_name].filter(Boolean).join(' ')}
+                    </p>
                     <p className="text-[11px] text-[#6b7a72]">HCP {formatHandicap(u.handicap_index)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label htmlFor={`hcp-${u._id}`} className="text-[11px] text-[#6b7a72] font-medium">Editar HCP:</label>
+                  <label htmlFor={`hcp-${u._id}`} className="text-[11px] text-[#6b7a72] font-medium">
+                    Editar HCP:
+                  </label>
                   <input
                     id={`hcp-${u._id}`}
                     aria-label={`Editar handicap de ${u.name}`}
-                    type="number" step="0.1" min="0" max="54"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="54"
                     defaultValue={u.handicap_index.toFixed(1)}
                     onBlur={e => updateHandicap(u._id, e.target.value)}
                     className="flex-1 border border-[#e5e0d4] rounded-[8px] px-3 py-1.5 text-[13px] font-mono text-[#0e1a16] outline-none focus:border-[#1f8a5b]"
@@ -113,13 +144,26 @@ export default function AdminPage() {
                     <p className="text-[11px] text-[#6b7a72] mt-0.5">
                       {l.mode} · {l.total_rounds} jornadas · por {l.creator_name}
                     </p>
-                    <span className={`inline-block mt-1 font-mono text-[9px] px-2 py-0.5 rounded-full uppercase ${l.active ? 'bg-[#d9eedd] text-[#1f8a5b]' : 'bg-[#f4f1e9] text-[#6b7a72]'}`}>
+                    <span
+                      className={`inline-block mt-1 font-mono text-[9px] px-2 py-0.5 rounded-full uppercase ${l.active ? 'bg-[#d9eedd] text-[#1f8a5b]' : 'bg-[#f4f1e9] text-[#6b7a72]'}`}
+                    >
                       {l.active ? 'Activa' : 'Inactiva'}
                     </span>
                   </div>
-                  <button type="button" onClick={() => deleteLeague(l._id)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#c6432d] border border-[#c6432d] hover:bg-[#fadcd6] transition">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#c6432d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <button
+                    type="button"
+                    onClick={() => deleteLeague(l._id)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#c6432d] border border-[#c6432d] hover:bg-[#fadcd6] transition"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"
+                        stroke="#c6432d"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                     Borrar
                   </button>
                 </div>
@@ -132,8 +176,11 @@ export default function AdminPage() {
         {tab === 'campos' && (
           <div className="space-y-2">
             {courses.map(c => (
-              <Link key={c._id} to={`/admin/course/${c._id}`}
-                className="bg-white rounded-[16px] p-4 border border-[#e5e0d4] flex items-center gap-3 block active:opacity-80">
+              <Link
+                key={c._id}
+                to={`/admin/course/${c._id}`}
+                className="bg-white rounded-[16px] p-4 border border-[#e5e0d4] flex items-center gap-3 block active:opacity-80"
+              >
                 <div className="flex-1">
                   <p className="font-bold text-[14px] text-[#0e1a16]">{c.name}</p>
                   <p className="text-[11px] text-[#6b7a72] mt-0.5">
@@ -141,7 +188,9 @@ export default function AdminPage() {
                   </p>
                   {c.record_score && <p className="text-[11px] text-[#e8b75a] mt-0.5">Récord: {c.record_score}</p>}
                 </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" />
+                </svg>
               </Link>
             ))}
           </div>

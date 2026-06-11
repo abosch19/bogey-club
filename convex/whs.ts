@@ -12,7 +12,7 @@ import { scoreDifferential, countingRounds, calcHandicapIndex, isPitchAndPutt } 
 export async function recalcProfile(ctx: MutationCtx, profileId: Id<'profiles'>): Promise<number> {
   const rps = await ctx.db
     .query('round_players')
-    .withIndex('by_profile', (q) => q.eq('profileId', profileId))
+    .withIndex('by_profile', q => q.eq('profileId', profileId))
     .collect()
 
   let processed = 0
@@ -25,19 +25,15 @@ export async function recalcProfile(ctx: MutationCtx, profileId: Id<'profiles'>)
 
     const scores = await ctx.db
       .query('scores')
-      .withIndex('by_round', (q) => q.eq('roundId', round._id))
+      .withIndex('by_round', q => q.eq('roundId', round._id))
       .collect()
-    const total = scores
-      .filter((s) => s.profileId === profileId)
-      .reduce((a, s) => a + (s.strokes ?? 0), 0)
+    const total = scores.filter(s => s.profileId === profileId).reduce((a, s) => a + (s.strokes ?? 0), 0)
     if (total === 0) continue
 
     const diff = scoreDifferential(total, course.course_rating, course.slope)
     const existing = await ctx.db
       .query('whs_differentials')
-      .withIndex('by_profile_and_round', (q) =>
-        q.eq('profileId', profileId).eq('roundId', round._id),
-      )
+      .withIndex('by_profile_and_round', q => q.eq('profileId', profileId).eq('roundId', round._id))
       .unique()
     const data = {
       profileId,
@@ -59,31 +55,34 @@ export async function recalcProfile(ctx: MutationCtx, profileId: Id<'profiles'>)
   // (golf vs Pitch & Putt → independent indices).
   const everyDiff = await ctx.db
     .query('whs_differentials')
-    .withIndex('by_profile', (q) => q.eq('profileId', profileId))
+    .withIndex('by_profile', q => q.eq('profileId', profileId))
     .collect()
 
   // Process one pool (best N of its last 20) and patch the given index field.
-  const processPool = async (
-    pool: typeof everyDiff,
-    field: 'handicap_index' | 'handicap_index_pp',
-  ) => {
+  const processPool = async (pool: typeof everyDiff, field: 'handicap_index' | 'handicap_index_pp') => {
     const last20 = pool.toSorted((a, b) => (a.played_at < b.played_at ? 1 : -1)).slice(0, 20)
     if (last20.length === 0) return
     const nCount = countingRounds(last20.length)
     const sorted = last20.toSorted((a, b) => a.differential - b.differential)
-    const countingIds = new Set(sorted.slice(0, nCount).map((d) => d._id))
+    const countingIds = new Set(sorted.slice(0, nCount).map(d => d._id))
     await Promise.all(
-      last20.map(async (d) => {
+      last20.map(async d => {
         const counting = countingIds.has(d._id)
         if (d.is_counting !== counting) await ctx.db.patch(d._id, { is_counting: counting })
       }),
     )
-    const newIndex = calcHandicapIndex(last20.map((d) => d.differential))
+    const newIndex = calcHandicapIndex(last20.map(d => d.differential))
     if (newIndex !== null) await ctx.db.patch(profileId, { [field]: newIndex })
   }
 
-  await processPool(everyDiff.filter((d) => !d.is_pp), 'handicap_index')
-  await processPool(everyDiff.filter((d) => d.is_pp), 'handicap_index_pp')
+  await processPool(
+    everyDiff.filter(d => !d.is_pp),
+    'handicap_index',
+  )
+  await processPool(
+    everyDiff.filter(d => d.is_pp),
+    'handicap_index_pp',
+  )
 
   return processed
 }
@@ -91,7 +90,7 @@ export async function recalcProfile(ctx: MutationCtx, profileId: Id<'profiles'>)
 /** Recalculate WHS for the current user (perfil → "Recalcular WHS"). */
 export const recalc = mutation({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const me = await requireProfile(ctx)
     const processed = await recalcProfile(ctx, me._id)
     return { ok: true, rounds_processed: processed }

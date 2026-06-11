@@ -45,17 +45,30 @@ const BLOCK_PAD = 16
 const MARK = 26
 
 function loadAvatar(url: string): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const img = new Image()
     img.crossOrigin = 'anonymous'
     const timer = setTimeout(() => resolve(null), 1500)
-    img.onload = () => { clearTimeout(timer); resolve(img) }
-    img.onerror = () => { clearTimeout(timer); resolve(null) }
+    img.onload = () => {
+      clearTimeout(timer)
+      resolve(img)
+    }
+    img.onerror = () => {
+      clearTimeout(timer)
+      resolve(null)
+    }
     img.src = url
   })
 }
 
-function drawAvatar(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, name: string, img: HTMLImageElement | null) {
+function drawAvatar(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  name: string,
+  img: HTMLImageElement | null,
+) {
   const r = size / 2
   ctx.save()
   ctx.beginPath()
@@ -104,7 +117,7 @@ function drawMark(ctx: CanvasRenderingContext2D, cx: number, cy: number, strokes
 
 export async function renderScorecardImage(opts: ScorecardImageOptions): Promise<Blob> {
   const { courseName, dateLabel, holesLabel, groups, players, getScore } = opts
-  const cols = Math.max(...groups.map((g) => g.length))
+  const cols = Math.max(...groups.map(g => g.length))
   const cellsX = PAD + AVATAR_COL + 14
   const nineX = cellsX + cols * CELL
   const chipX = nineX + NINE_COL + CHIP_GAP
@@ -149,7 +162,7 @@ export async function renderScorecardImage(opts: ScorecardImageOptions): Promise
   ctx.lineTo(width - PAD, HEADER_H - 8.5)
   ctx.stroke()
 
-  const avatars = await Promise.all(players.map((p) => (p.avatar_url ? loadAvatar(p.avatar_url) : Promise.resolve(null))))
+  const avatars = await Promise.all(players.map(p => (p.avatar_url ? loadAvatar(p.avatar_url) : Promise.resolve(null))))
 
   players.forEach((p, pi) => {
     const top = HEADER_H + pi * blockH
@@ -239,6 +252,6 @@ export async function renderScorecardImage(opts: ScorecardImageOptions): Promise
   ctx.fillText('⛳ BOGGEY CLUB', width / 2, height - 14)
 
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/png')
+    canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/png')
   })
 }

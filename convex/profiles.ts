@@ -6,7 +6,7 @@ import { getMyProfile, requireProfile, isAdmin, ADMIN_EMAIL, avatarUrl } from '.
 /** Current user's profile (with email + admin flag), or null. */
 export const me = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const profile = await getMyProfile(ctx)
     if (!profile) return null
     let email = profile.email
@@ -30,17 +30,17 @@ export const me = query({
 /** WHS differentials for the current user, most recent first (max 20). */
 export const myDifferentials = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const me = await getMyProfile(ctx)
     if (!me) return []
     const diffs = await ctx.db
       .query('whs_differentials')
-      .withIndex('by_profile', (q) => q.eq('profileId', me._id))
+      .withIndex('by_profile', q => q.eq('profileId', me._id))
       .collect()
     return diffs
       .sort((a, b) => (a.played_at < b.played_at ? 1 : -1))
       .slice(0, 20)
-      .map((d) => ({ differential: d.differential, played_at: d.played_at, is_counting: d.is_counting }))
+      .map(d => ({ differential: d.differential, played_at: d.played_at, is_counting: d.is_counting }))
   },
 })
 
@@ -69,31 +69,29 @@ export const setHandicap = mutation({
 /** Permanently delete the current user's profile and all of their own data. */
 export const deleteMe = mutation({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const me = await requireProfile(ctx)
     const id = me._id
 
     // Owned rows reachable by a by_profile index.
     await Promise.all(
-      (['scores', 'round_players', 'whs_differentials', 'league_players'] as const).map(
-        async (table) => {
-          const rows = await ctx.db
-            .query(table)
-            .withIndex('by_profile', (q) => q.eq('profileId', id))
-            .collect()
-          await Promise.all(rows.map((r) => ctx.db.delete(r._id)))
-        },
-      ),
+      (['scores', 'round_players', 'whs_differentials', 'league_players'] as const).map(async table => {
+        const rows = await ctx.db
+          .query(table)
+          .withIndex('by_profile', q => q.eq('profileId', id))
+          .collect()
+        await Promise.all(rows.map(r => ctx.db.delete(r._id)))
+      }),
     )
 
     // Tables without a by_profile index — scan + filter.
     await Promise.all(
-      (['league_standings', 'tournament_players'] as const).map(async (table) => {
+      (['league_standings', 'tournament_players'] as const).map(async table => {
         const rows = await ctx.db
           .query(table)
-          .filter((q) => q.eq(q.field('profileId'), id))
+          .filter(q => q.eq(q.field('profileId'), id))
           .collect()
-        await Promise.all(rows.map((r) => ctx.db.delete(r._id)))
+        await Promise.all(rows.map(r => ctx.db.delete(r._id)))
       }),
     )
 
@@ -112,7 +110,7 @@ export const setImagesByName = internalMutation({
   handler: async (ctx, { name, avatar_image, clubs_sponsor_image }) => {
     const profiles = await ctx.db.query('profiles').collect()
     const target = profiles.find(
-      (p) => [p.name, p.last_name].filter(Boolean).join(' ').toLowerCase() === name.toLowerCase(),
+      p => [p.name, p.last_name].filter(Boolean).join(' ').toLowerCase() === name.toLowerCase(),
     )
     if (!target) throw new Error(`Profile not found: ${name}`)
     await ctx.db.patch(target._id, {
@@ -126,5 +124,5 @@ export const setImagesByName = internalMutation({
 /** One-off/admin helper: upload target for profile images (CLI: npx convex run). */
 export const generateUploadUrl = internalMutation({
   args: {},
-  handler: async (ctx) => ctx.storage.generateUploadUrl(),
+  handler: async ctx => ctx.storage.generateUploadUrl(),
 })

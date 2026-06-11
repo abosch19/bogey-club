@@ -5,20 +5,18 @@ import { getMyProfile, requireProfile } from './helpers'
 /** All active courses, ordered by name. */
 export const list = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const courses = await ctx.db.query('courses').collect()
-    return courses
-      .filter((c) => c.active)
-      .sort((a, b) => a.name.localeCompare(b.name))
+    return courses.filter(c => c.active).sort((a, b) => a.name.localeCompare(b.name))
   },
 })
 
 /** Active courses + the current user's last 3 totals on each (course selection). */
 export const listForNewRound = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const courses = (await ctx.db.query('courses').collect())
-      .filter((c) => c.active)
+      .filter(c => c.active)
       .sort((a, b) => a.name.localeCompare(b.name))
 
     const me = await getMyProfile(ctx)
@@ -26,17 +24,17 @@ export const listForNewRound = query({
     if (me) {
       const myRps = await ctx.db
         .query('round_players')
-        .withIndex('by_profile', (q) => q.eq('profileId', me._id))
+        .withIndex('by_profile', q => q.eq('profileId', me._id))
         .collect()
       for (const rp of myRps) {
         const round = await ctx.db.get(rp.roundId)
         if (!round || round.status !== 'completed') continue
         const rScores = await ctx.db
           .query('scores')
-          .withIndex('by_round', (q) => q.eq('roundId', round._id))
+          .withIndex('by_round', q => q.eq('roundId', round._id))
           .collect()
         const total = rScores
-          .filter((s) => s.profileId === me._id && s.strokes != null)
+          .filter(s => s.profileId === me._id && s.strokes != null)
           .reduce((a, s) => a + (s.strokes ?? 0), 0)
         if (total === 0) continue
         const key = round.courseId
@@ -45,7 +43,7 @@ export const listForNewRound = query({
       }
     }
 
-    return courses.map((c) => ({ ...c, myScores: scoresByCourse[c._id] ?? [] }))
+    return courses.map(c => ({ ...c, myScores: scoresByCourse[c._id] ?? [] }))
   },
 })
 
@@ -57,7 +55,7 @@ export const get = query({
     if (!course) return null
     const holes = await ctx.db
       .query('holes')
-      .withIndex('by_course', (q) => q.eq('courseId', courseId))
+      .withIndex('by_course', q => q.eq('courseId', courseId))
       .collect()
     holes.sort((a, b) => a.hole_number - b.hole_number)
     return { ...course, holes }
@@ -83,7 +81,7 @@ export const edit = mutation({
     const totalPar = holes.reduce((a, h) => a + (h.par ?? 0), 0)
     await ctx.db.patch(courseId, { name, par: totalPar })
     await Promise.all(
-      holes.map((h) =>
+      holes.map(h =>
         ctx.db.patch(h.holeId, {
           par: h.par,
           stroke_index: h.stroke_index,

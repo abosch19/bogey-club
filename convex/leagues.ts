@@ -7,10 +7,10 @@ import { requireProfile } from './helpers'
 async function standingsFor(ctx: QueryCtx, leagueId: Id<'leagues'>) {
   const rows = await ctx.db
     .query('league_standings')
-    .withIndex('by_league', (q) => q.eq('leagueId', leagueId))
+    .withIndex('by_league', q => q.eq('leagueId', leagueId))
     .collect()
   const withProfiles = await Promise.all(
-    rows.map(async (s) => {
+    rows.map(async s => {
       const p = await ctx.db.get(s.profileId)
       return {
         profile_id: s.profileId,
@@ -27,27 +27,27 @@ async function standingsFor(ctx: QueryCtx, leagueId: Id<'leagues'>) {
 /** Active leagues the current user belongs to, with standings + jornada count. */
 export const listForUser = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const me = await requireProfile(ctx)
     const memberships = await ctx.db
       .query('league_players')
-      .withIndex('by_profile', (q) => q.eq('profileId', me._id))
+      .withIndex('by_profile', q => q.eq('profileId', me._id))
       .collect()
     const out = await Promise.all(
-      memberships.map(async (m) => {
+      memberships.map(async m => {
         const league = await ctx.db.get(m.leagueId)
         if (!league || !league.active) return null
         const [standings, jornadaRows] = await Promise.all([
           standingsFor(ctx, league._id),
           ctx.db
             .query('league_rounds')
-            .withIndex('by_league', (q) => q.eq('leagueId', league._id))
+            .withIndex('by_league', q => q.eq('leagueId', league._id))
             .collect(),
         ])
         return { league, standings, jornadas: jornadaRows.length, is_admin: m.is_admin }
       }),
     )
-    return out.filter((x) => x !== null)
+    return out.filter(x => x !== null)
   },
 })
 
@@ -86,12 +86,12 @@ export const remove = mutation({
     if (!league || league.createdBy !== me._id) throw new Error('Sin permisos')
 
     await Promise.all(
-      (['league_standings', 'league_players', 'league_rounds'] as const).map(async (table) => {
+      (['league_standings', 'league_players', 'league_rounds'] as const).map(async table => {
         const rows = await ctx.db
           .query(table)
-          .withIndex('by_league', (q) => q.eq('leagueId', league_id))
+          .withIndex('by_league', q => q.eq('leagueId', league_id))
           .collect()
-        await Promise.all(rows.map((r) => ctx.db.delete(r._id)))
+        await Promise.all(rows.map(r => ctx.db.delete(r._id)))
       }),
     )
     await ctx.db.delete(league_id)

@@ -53,6 +53,8 @@ for (const { w, h, dpr } of DEVICES) {
   const pxW = w * dpr
   const pxH = h * dpr
   const file = `apple-splash-${pxW}x${pxH}.png`
-  await sharp(Buffer.from(splashSvg(pxW, pxH, dpr))).png().toFile(path.join(outDir, file))
+  await sharp(Buffer.from(splashSvg(pxW, pxH, dpr)))
+    .png()
+    .toFile(path.join(outDir, file))
   console.log(`${file} (${w}x${h}pt @${dpr}x)`)
 }

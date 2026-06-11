@@ -10,7 +10,14 @@ import { createHash } from 'node:crypto'
  *  shell (index.html embeds the asset hashes) — no manual version bumps.
  *  Identical rebuilds produce the same id, so unchanged deploys don't purge. */
 function swBuildId(): Plugin {
-  const SHELL = ['index.html', 'manifest.json', 'icon.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'apple-touch-icon-180x180.png']
+  const SHELL = [
+    'index.html',
+    'manifest.json',
+    'icon.svg',
+    'pwa-192x192.png',
+    'pwa-512x512.png',
+    'apple-touch-icon-180x180.png',
+  ]
   return {
     name: 'sw-build-id',
     apply: 'build',

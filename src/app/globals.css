@@ -34,19 +34,28 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-html, body {
+html,
+body {
   background-color: var(--c-bg);
   color: var(--c-ink);
   overscroll-behavior: none;
 }
 
 /* Hide scrollbars but keep scroll */
-::-webkit-scrollbar { display: none; }
-* { scrollbar-width: none; }
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  scrollbar-width: none;
+}
 
 /* Safe area */
-.safe-top { padding-top: max(54px, env(safe-area-inset-top)); }
-.safe-bottom { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+.safe-top {
+  padding-top: max(54px, env(safe-area-inset-top));
+}
+.safe-bottom {
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
 
 /* Primary action: green gradient with a soft glow. */
 .btn-glow {
@@ -55,23 +64,53 @@ html, body {
 }
 
 /* Floating tab bar: lifted off the bottom edge, higher when installed as a PWA. */
-.tabbar-float { bottom: 14px; }
+.tabbar-float {
+  bottom: 14px;
+}
 @media (display-mode: standalone) {
-  .tabbar-float { bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px)); }
+  .tabbar-float {
+    bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px));
+  }
 }
 
 /* ——— Page transitions (View Transitions API) ———
    TransitionRoutes in App.tsx sets data-nav on <html> for the duration of
    each navigation: push | pop | fade. Browsers without the API never run
    these — navigation is instant. */
-@keyframes vt-slide-in-right { from { transform: translateX(100%); } }
-@keyframes vt-slide-out-right { to { transform: translateX(100%); } }
-@keyframes vt-push-under { to { transform: translateX(-28%); } }
-@keyframes vt-pop-under { from { transform: translateX(-28%); } }
-@keyframes vt-fade-in { from { opacity: 0; } }
-@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes vt-slide-out-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes vt-push-under {
+  to {
+    transform: translateX(-28%);
+  }
+}
+@keyframes vt-pop-under {
+  from {
+    transform: translateX(-28%);
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
 
-html[data-nav]::view-transition { background: var(--c-bg); }
+html[data-nav]::view-transition {
+  background: var(--c-bg);
+}
 
 /* Push: the new screen slides in over the old one, iOS style. */
 html[data-nav='push']::view-transition-new(root) {
@@ -91,11 +130,17 @@ html[data-nav='pop']::view-transition-new(root) {
 }
 
 /* Fade: quick cross-fade between bottom tabs. */
-html[data-nav='fade']::view-transition-old(root) { animation: vt-fade-out 160ms ease; }
-html[data-nav='fade']::view-transition-new(root) { animation: vt-fade-in 160ms ease; }
+html[data-nav='fade']::view-transition-old(root) {
+  animation: vt-fade-out 160ms ease;
+}
+html[data-nav='fade']::view-transition-new(root) {
+  animation: vt-fade-in 160ms ease;
+}
 
 /* The tab bar transitions independently so it never slides with the page. */
-.vt-tab-bar { view-transition-name: tab-bar; }
+.vt-tab-bar {
+  view-transition-name: tab-bar;
+}
 /* Snapshots can't capture backdrop-filter (it renders as an opaque square),
    so while a transition runs (html[data-nav]) the pill goes solid white. */
 html[data-nav] .vt-tab-bar {
@@ -103,14 +148,26 @@ html[data-nav] .vt-tab-bar {
   -webkit-backdrop-filter: none;
   background-color: #fff;
 }
-html[data-nav]::view-transition-group(tab-bar) { z-index: 2; }
-html[data-nav='push']::view-transition-old(tab-bar) { animation: vt-fade-out 160ms ease both; }
-html[data-nav='pop']::view-transition-new(tab-bar) { animation: vt-fade-in 160ms ease both; }
+html[data-nav]::view-transition-group(tab-bar) {
+  z-index: 2;
+}
+html[data-nav='push']::view-transition-old(tab-bar) {
+  animation: vt-fade-out 160ms ease both;
+}
+html[data-nav='pop']::view-transition-new(tab-bar) {
+  animation: vt-fade-in 160ms ease both;
+}
 
 /* Round card → scorecard morph. Tapping a round card names it `round-card`
    (App pages set it onClick) so it morphs into the scorecard info bar.
    :only-child = the element has no counterpart on the other side — fade it
    instead of letting it linger while the root slides. */
-html[data-nav]::view-transition-group(round-card) { z-index: 1; }
-html[data-nav]::view-transition-old(round-card):only-child { animation: vt-fade-out 140ms ease both; }
-html[data-nav]::view-transition-new(round-card):only-child { animation: vt-fade-in 140ms ease both; }
+html[data-nav]::view-transition-group(round-card) {
+  z-index: 1;
+}
+html[data-nav]::view-transition-old(round-card):only-child {
+  animation: vt-fade-out 140ms ease both;
+}
+html[data-nav]::view-transition-new(round-card):only-child {
+  animation: vt-fade-in 140ms ease both;
+}

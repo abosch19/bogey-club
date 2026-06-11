@@ -88,7 +88,7 @@ function AuthGuard({ children }: { children: ReactNode }) {
 /** True when the browser already animated the navigation itself (iOS edge-swipe
  *  back/forward) — running our own view transition on top replays the slide. */
 let uaHandledTransition = false
-window.addEventListener('popstate', (e) => {
+window.addEventListener('popstate', e => {
   uaHandledTransition = (e as PopStateEvent & { hasUAVisualTransition?: boolean }).hasUAVisualTransition ?? false
 })
 
@@ -117,7 +117,7 @@ function TransitionRoutes({ children }: { children: ReactNode }) {
 
     const commit = () => {
       flushSync(() => setDisplayLocation(location))
-      const y = isPop ? scrollPositions.get(location.key) ?? 0 : 0
+      const y = isPop ? (scrollPositions.get(location.key) ?? 0) : 0
       window.scrollTo(0, y)
       document.scrollingElement?.scrollTo(0, y)
     }
@@ -130,8 +130,7 @@ function TransitionRoutes({ children }: { children: ReactNode }) {
       return
     }
 
-    const tabSwitch =
-      TAB_ROUTES.includes(displayLocation.pathname) && TAB_ROUTES.includes(location.pathname)
+    const tabSwitch = TAB_ROUTES.includes(displayLocation.pathname) && TAB_ROUTES.includes(location.pathname)
     document.documentElement.dataset.nav = tabSwitch ? 'fade' : isPop ? 'pop' : 'push'
     document.startViewTransition(commit).finished.finally(() => {
       delete document.documentElement.dataset.nav

@@ -14,25 +14,25 @@ const APP_SHELL = [
   '/apple-touch-icon-180x180.png',
 ]
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(APP_SHELL))
+      .then(cache => cache.addAll(APP_SHELL))
       .then(() => self.skipWaiting()),
   )
 })
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.flatMap((k) => (k !== CACHE ? [caches.delete(k)] : []))))
+      .then(keys => Promise.all(keys.flatMap(k => (k !== CACHE ? [caches.delete(k)] : []))))
       .then(() => self.clients.claim()),
   )
 })
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   const { request } = event
   if (request.method !== 'GET') return
 
@@ -44,15 +44,15 @@ self.addEventListener('fetch', (event) => {
   // (instant first paint when launching the PWA) and refresh it from the
   // network in the background — a new deploy shows up on the next launch.
   if (request.mode === 'navigate') {
-    const refresh = fetch(request).then((response) => {
+    const refresh = fetch(request).then(response => {
       const copy = response.clone()
       return caches
         .open(CACHE)
-        .then((cache) => cache.put('/index.html', copy))
+        .then(cache => cache.put('/index.html', copy))
         .then(() => response)
     })
     event.respondWith(
-      caches.match('/index.html').then((cached) => {
+      caches.match('/index.html').then(cached => {
         if (cached) {
           // Keep the SW alive until the background refresh settles.
           event.waitUntil(refresh.catch(() => {}))
@@ -66,12 +66,12 @@ self.addEventListener('fetch', (event) => {
 
   // Hashed static assets are immutable: cache-first, then network (and cache it).
   event.respondWith(
-    caches.match(request).then((cached) => {
+    caches.match(request).then(cached => {
       if (cached) return cached
-      return fetch(request).then((response) => {
+      return fetch(request).then(response => {
         if (response.ok && response.type === 'basic') {
           const copy = response.clone()
-          caches.open(CACHE).then((cache) => cache.put(request, copy))
+          caches.open(CACHE).then(cache => cache.put(request, copy))
         }
         return response
       })

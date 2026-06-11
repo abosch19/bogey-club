@@ -27,14 +27,14 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
 
       const linked = await ctx.db
         .query('profiles')
-        .withIndex('by_userId', (q) => q.eq('userId', userId))
+        .withIndex('by_userId', q => q.eq('userId', userId))
         .unique()
       if (linked) return
 
       if (email) {
         const migrated = await ctx.db
           .query('profiles')
-          .withIndex('by_email', (q) => q.eq('email', email))
+          .withIndex('by_email', q => q.eq('email', email))
           .first()
         if (migrated && !migrated.userId) {
           await ctx.db.patch(migrated._id, { userId, ...(last_name && !migrated.last_name ? { last_name } : {}) })

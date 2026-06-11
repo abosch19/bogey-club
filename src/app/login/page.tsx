@@ -6,10 +6,10 @@ function LogoPin() {
   return (
     <div className="flex flex-col items-center mb-10">
       <svg width="56" height="56" viewBox="0 0 64 64" fill="none" className="mb-3">
-        <circle cx="32" cy="32" r="30" fill="#9bc9a3"/>
-        <path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.2" strokeLinecap="round"/>
-        <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16"/>
-        <circle cx="24" cy="50" r="2.6" fill="#0e1a16"/>
+        <circle cx="32" cy="32" r="30" fill="#9bc9a3" />
+        <path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16" />
+        <circle cx="24" cy="50" r="2.6" fill="#0e1a16" />
       </svg>
       <div className="text-[22px] font-black tracking-tight text-[#0e1a16]">
         Bogey <span className="text-[#1f8a5b]">Club</span>
@@ -19,10 +19,10 @@ function LogoPin() {
 }
 
 export default function LoginPage() {
-  const [email, setEmail]       = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const { signIn } = useAuthActions()
   const navigate = useNavigate()
 
@@ -45,31 +45,43 @@ export default function LoginPage() {
         <LogoPin />
 
         <div className="bg-white rounded-[22px] border border-[#e5e0d4] px-6 py-7">
-          <h1 className="text-[20px] font-bold text-[#0e1a16] mb-6 text-center">
-            Bienvenido de nuevo
-          </h1>
+          <h1 className="text-[20px] font-bold text-[#0e1a16] mb-6 text-center">Bienvenido de nuevo</h1>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="login-email" className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="login-email"
+                className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide"
+              >
                 Email
               </label>
               <input
-                id="login-email" aria-label="Email"
-                type="email" value={email} onChange={e => setEmail(e.target.value)}
-                required placeholder="tu@email.com"
+                id="login-email"
+                aria-label="Email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                placeholder="tu@email.com"
                 className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
             </div>
 
             <div>
-              <label htmlFor="login-password" className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="login-password"
+                className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide"
+              >
                 Contraseña
               </label>
               <input
-                id="login-password" aria-label="Contraseña"
-                type="password" value={password} onChange={e => setPassword(e.target.value)}
-                required placeholder="••••••••"
+                id="login-password"
+                aria-label="Contraseña"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
                 className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
               />
             </div>
@@ -81,7 +93,8 @@ export default function LoginPage() {
             )}
 
             <button
-              type="submit" disabled={loading}
+              type="submit"
+              disabled={loading}
               className="w-full py-3.5 rounded-[16px] font-semibold text-[15px] text-white mt-2 transition active:scale-[0.98] disabled:opacity-60"
               style={{ backgroundColor: '#1f8a5b' }}
             >

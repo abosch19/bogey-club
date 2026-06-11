@@ -8,7 +8,7 @@ export const forRound = query({
   handler: async (ctx, { roundId }) => {
     return await ctx.db
       .query('scores')
-      .withIndex('by_round', (q) => q.eq('roundId', roundId))
+      .withIndex('by_round', q => q.eq('roundId', roundId))
       .collect()
   },
 })
@@ -21,12 +21,12 @@ export const myHoleHistory = query({
     if (!me) return []
     const rows = await ctx.db
       .query('scores')
-      .withIndex('by_profile', (q) => q.eq('profileId', me._id))
+      .withIndex('by_profile', q => q.eq('profileId', me._id))
       .collect()
     return rows
-      .filter((s) => s.hole_number === hole_number && s.strokes != null)
+      .filter(s => s.hole_number === hole_number && s.strokes != null)
       .slice(0, 10)
-      .map((s) => s.strokes as number)
+      .map(s => s.strokes as number)
   },
 })
 
@@ -52,7 +52,7 @@ export const saveHole = mutation({
     for (const sc of scores) {
       const existing = await ctx.db
         .query('scores')
-        .withIndex('by_round_profile_hole', (q) =>
+        .withIndex('by_round_profile_hole', q =>
           q.eq('roundId', roundId).eq('profileId', sc.profileId).eq('hole_number', hole_number),
         )
         .unique()

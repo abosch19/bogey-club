@@ -15,21 +15,21 @@ export const get = query({
       ctx.db.get(tournament.courseId),
       ctx.db
         .query('tournament_players')
-        .withIndex('by_tournament', (q) => q.eq('tournamentId', tournamentId))
+        .withIndex('by_tournament', q => q.eq('tournamentId', tournamentId))
         .collect(),
       ctx.db
         .query('tournament_groups')
-        .withIndex('by_tournament', (q) => q.eq('tournamentId', tournamentId))
+        .withIndex('by_tournament', q => q.eq('tournamentId', tournamentId))
         .collect(),
     ])
     const groupsDetail = await Promise.all(
-      groups.map(async (g) => {
+      groups.map(async g => {
         const rps = await ctx.db
           .query('round_players')
-          .withIndex('by_round', (q) => q.eq('roundId', g.roundId))
+          .withIndex('by_round', q => q.eq('roundId', g.roundId))
           .collect()
         const groupPlayers = await Promise.all(
-          rps.map(async (rp) => ({
+          rps.map(async rp => ({
             _id: rp._id,
             profileId: rp.profileId ?? null,
             course_handicap: rp.course_handicap,
@@ -43,15 +43,15 @@ export const get = query({
     // Live scores for every group's round + the shared course layout, aggregated
     // server-side so the client owns the data through this single subscription
     // (no per-group score loaders syncing data up via effects).
-    const roundIds = groups.map((g) => g.roundId)
+    const roundIds = groups.map(g => g.roundId)
     const [scoresByRoundEntries, holeRows] = await Promise.all([
       Promise.all(
-        roundIds.map(async (roundId) => {
+        roundIds.map(async roundId => {
           const rows = await ctx.db
             .query('scores')
-            .withIndex('by_round', (q) => q.eq('roundId', roundId))
+            .withIndex('by_round', q => q.eq('roundId', roundId))
             .collect()
-          const scores = rows.flatMap((s) =>
+          const scores = rows.flatMap(s =>
             s.strokes != null && s.profileId != null
               ? [{ profile_id: s.profileId, hole_number: s.hole_number, strokes: s.strokes }]
               : [],
@@ -61,11 +61,11 @@ export const get = query({
       ),
       ctx.db
         .query('holes')
-        .withIndex('by_course', (q) => q.eq('courseId', tournament.courseId))
+        .withIndex('by_course', q => q.eq('courseId', tournament.courseId))
         .collect(),
     ])
     const scoresByRound = Object.fromEntries(scoresByRoundEntries)
-    const holes = holeRows.map((h) => ({
+    const holes = holeRows.map(h => ({
       hole_number: h.hole_number,
       par: h.par,
       stroke_index: h.stroke_index,
@@ -100,7 +100,7 @@ export const create = mutation({
     })
 
     await Promise.all(
-      players.map((p) =>
+      players.map(p =>
         ctx.db.insert('tournament_players', {
           tournamentId,
           profileId: p.id,
@@ -110,11 +110,11 @@ export const create = mutation({
     )
 
     const course = await ctx.db.get(course_id)
-    const nGroups = Math.max(...players.map((p) => p.group))
+    const nGroups = Math.max(...players.map(p => p.group))
     const groupNumbers = Array.from({ length: nGroups }, (_, i) => i + 1)
     await Promise.all(
-      groupNumbers.map(async (g) => {
-        const groupPlayers = players.filter((p) => p.group === g)
+      groupNumbers.map(async g => {
+        const groupPlayers = players.filter(p => p.group === g)
         if (!groupPlayers.length) return
         const roundId = await ctx.db.insert('rounds', {
           courseId: course_id,
@@ -125,9 +125,9 @@ export const create = mutation({
           notes: 'all',
         })
         await Promise.all([
-          ...groupPlayers.map(async (p) => {
+          ...groupPlayers.map(async p => {
             const prof = await ctx.db.get(p.id)
-            const idx = prof ? indexForCourse(prof, course?.name ?? '') : p.handicap_index ?? 0
+            const idx = prof ? indexForCourse(prof, course?.name ?? '') : (p.handicap_index ?? 0)
             await ctx.db.insert('round_players', {
               roundId,
               profileId: p.id,

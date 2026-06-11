@@ -13,7 +13,9 @@ export function OfflineSync() {
 
   useEffect(() => {
     if (!hasPending || !isAuthenticated) return
-    const flush = () => { if (navigator.onLine) flushPendingHoles(convex) }
+    const flush = () => {
+      if (navigator.onLine) flushPendingHoles(convex)
+    }
     flush()
     window.addEventListener('online', flush)
     document.addEventListener('visibilitychange', flush)

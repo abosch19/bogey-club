@@ -8,57 +8,53 @@ import { getMyProfile } from './helpers'
  */
 export const forUser = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const me = await getMyProfile(ctx)
     if (!me) return null
 
     const whsHistory = (
       await ctx.db
         .query('whs_differentials')
-        .withIndex('by_profile', (q) => q.eq('profileId', me._id))
+        .withIndex('by_profile', q => q.eq('profileId', me._id))
         .collect()
     )
       .sort((a, b) => (a.played_at < b.played_at ? 1 : -1))
       .slice(0, 20)
       .reverse()
-      .map((d) => ({ differential: d.differential, played_at: d.played_at, is_pp: d.is_pp ?? false }))
+      .map(d => ({ differential: d.differential, played_at: d.played_at, is_pp: d.is_pp ?? false }))
 
-    const otherPlayers = (await ctx.db.query('profiles').collect()).flatMap((p) =>
-      p._id !== me._id
-        ? [{ id: p._id, name: [p.name, p.last_name].filter(Boolean).join(' ') }]
-        : [],
+    const otherPlayers = (await ctx.db.query('profiles').collect()).flatMap(p =>
+      p._id !== me._id ? [{ id: p._id, name: [p.name, p.last_name].filter(Boolean).join(' ') }] : [],
     )
 
     const myRps = await ctx.db
       .query('round_players')
-      .withIndex('by_profile', (q) => q.eq('profileId', me._id))
+      .withIndex('by_profile', q => q.eq('profileId', me._id))
       .collect()
-    const myRoundIds = myRps.map((rp) => rp.roundId)
+    const myRoundIds = myRps.map(rp => rp.roundId)
 
-    const rounds = (
-      await Promise.all(myRoundIds.map((id) => ctx.db.get(id)))
-    )
+    const rounds = (await Promise.all(myRoundIds.map(id => ctx.db.get(id))))
       .filter((r): r is NonNullable<typeof r> => r !== null && r.status === 'completed')
       .sort((a, b) => (a.date < b.date ? 1 : -1))
       .slice(0, 30)
 
-    const courseIds = Array.from(new Set(rounds.map((r) => r.courseId)))
+    const courseIds = Array.from(new Set(rounds.map(r => r.courseId)))
 
-    const courses = (await Promise.all(courseIds.map((id) => ctx.db.get(id)))).filter(
+    const courses = (await Promise.all(courseIds.map(id => ctx.db.get(id)))).filter(
       (c): c is NonNullable<typeof c> => c !== null,
     )
-    const courseById = new Map(courses.map((c) => [c._id, c]))
+    const courseById = new Map(courses.map(c => [c._id, c]))
 
     const perRound = await Promise.all(
-      rounds.map(async (r) => {
+      rounds.map(async r => {
         const [rScores, rPlayers] = await Promise.all([
           ctx.db
             .query('scores')
-            .withIndex('by_round', (q) => q.eq('roundId', r._id))
+            .withIndex('by_round', q => q.eq('roundId', r._id))
             .collect(),
           ctx.db
             .query('round_players')
-            .withIndex('by_round', (q) => q.eq('roundId', r._id))
+            .withIndex('by_round', q => q.eq('roundId', r._id))
             .collect(),
         ])
         return { r, rScores, rPlayers }
@@ -89,10 +85,10 @@ export const forUser = query({
     }
 
     const perCourse = await Promise.all(
-      courseIds.map((cid) =>
+      courseIds.map(cid =>
         ctx.db
           .query('holes')
-          .withIndex('by_course', (q) => q.eq('courseId', cid))
+          .withIndex('by_course', q => q.eq('courseId', cid))
           .collect(),
       ),
     )
@@ -113,7 +109,7 @@ export const forUser = query({
       myHandicap: me.handicap_index,
       whsHistory,
       otherPlayers,
-      rounds: rounds.map((r) => ({
+      rounds: rounds.map(r => ({
         id: r._id,
         date: r.date,
         course_id: r.courseId,
@@ -125,7 +121,7 @@ export const forUser = query({
       scores,
       roundPlayers,
       holes,
-      courses: courses.map((c) => ({ id: c._id, par: c.par, record_score: c.record_score ?? null })),
+      courses: courses.map(c => ({ id: c._id, par: c.par, record_score: c.record_score ?? null })),
     }
   },
 })

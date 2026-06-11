@@ -31,9 +31,7 @@ export const add = mutation({
 
     const existing = await ctx.db
       .query('round_players')
-      .withIndex('by_round_and_profile', (q) =>
-        q.eq('roundId', roundId).eq('profileId', profileId),
-      )
+      .withIndex('by_round_and_profile', q => q.eq('roundId', roundId).eq('profileId', profileId))
       .unique()
     if (existing) {
       await ctx.db.patch(existing._id, { course_handicap: hcp ?? 0 })
@@ -57,18 +55,14 @@ export const remove = mutation({
     await requireProfile(ctx)
     const scores = await ctx.db
       .query('scores')
-      .withIndex('by_round', (q) => q.eq('roundId', roundId))
+      .withIndex('by_round', q => q.eq('roundId', roundId))
       .collect()
-    await Promise.all(
-      scores.flatMap((s) => (s.profileId === profileId ? [ctx.db.delete(s._id)] : [])),
-    )
+    await Promise.all(scores.flatMap(s => (s.profileId === profileId ? [ctx.db.delete(s._id)] : [])))
     const rps = await ctx.db
       .query('round_players')
-      .withIndex('by_round_and_profile', (q) =>
-        q.eq('roundId', roundId).eq('profileId', profileId),
-      )
+      .withIndex('by_round_and_profile', q => q.eq('roundId', roundId).eq('profileId', profileId))
       .collect()
-    await Promise.all(rps.map((rp) => ctx.db.delete(rp._id)))
+    await Promise.all(rps.map(rp => ctx.db.delete(rp._id)))
     return { ok: true }
   },
 })

@@ -8,10 +8,10 @@ type HoleScore = { hole_number: number; strokes: number; par: number }
 async function buildActiveRound(ctx: QueryCtx, me: Doc<'profiles'>) {
   const myRps = await ctx.db
     .query('round_players')
-    .withIndex('by_profile', (q) => q.eq('profileId', me._id))
+    .withIndex('by_profile', q => q.eq('profileId', me._id))
     .collect()
-  const myRounds = await Promise.all(myRps.map((rp) => ctx.db.get(rp.roundId)))
-  const active = myRounds.find((r) => r && r.status === 'active') ?? null
+  const myRounds = await Promise.all(myRps.map(rp => ctx.db.get(rp.roundId)))
+  const active = myRounds.find(r => r && r.status === 'active') ?? null
   if (!active) return null
 
   const course = await ctx.db.get(active.courseId)
@@ -19,30 +19,29 @@ async function buildActiveRound(ctx: QueryCtx, me: Doc<'profiles'>) {
   const holes = course
     ? await ctx.db
         .query('holes')
-        .withIndex('by_course', (q) => q.eq('courseId', active!.courseId))
+        .withIndex('by_course', q => q.eq('courseId', active!.courseId))
         .collect()
     : []
   const scores = (
     await ctx.db
       .query('scores')
-      .withIndex('by_round', (q) => q.eq('roundId', active!._id))
+      .withIndex('by_round', q => q.eq('roundId', active!._id))
       .collect()
-  ).filter((s) => s.profileId === me._id)
+  ).filter(s => s.profileId === me._id)
 
   const holeScores: HoleScore[] = scores
-    .filter((s) => s.strokes != null)
-    .map((s) => ({
+    .filter(s => s.strokes != null)
+    .map(s => ({
       hole_number: s.hole_number,
       strokes: s.strokes as number,
-      par: holes.find((h) => h.hole_number === s.hole_number)?.par ?? 4,
+      par: holes.find(h => h.hole_number === s.hole_number)?.par ?? 4,
     }))
 
   const totalStrokes = holeScores.reduce((a, s) => a + s.strokes, 0)
   const totalPar = holeScores.reduce((a, s) => a + s.par, 0)
-  const played = holeScores.map((s) => s.hole_number)
-  const nextHole =
-    Array.from({ length: totalHoles }, (_, i) => i + 1).find((h) => !played.includes(h)) ?? 1
-  const nextPar = holes.find((h) => h.hole_number === nextHole)?.par ?? 4
+  const played = holeScores.map(s => s.hole_number)
+  const nextHole = Array.from({ length: totalHoles }, (_, i) => i + 1).find(h => !played.includes(h)) ?? 1
+  const nextPar = holes.find(h => h.hole_number === nextHole)?.par ?? 4
 
   return {
     id: active._id,
@@ -59,20 +58,20 @@ async function buildActiveRound(ctx: QueryCtx, me: Doc<'profiles'>) {
 async function buildActiveLeague(ctx: QueryCtx, me: Doc<'profiles'>) {
   const memberships = await ctx.db
     .query('league_players')
-    .withIndex('by_profile', (q) => q.eq('profileId', me._id))
+    .withIndex('by_profile', q => q.eq('profileId', me._id))
     .collect()
-  const myLeagues = await Promise.all(memberships.map((m) => ctx.db.get(m.leagueId)))
-  const league = myLeagues.find((l) => l && l.active) ?? null
+  const myLeagues = await Promise.all(memberships.map(m => ctx.db.get(m.leagueId)))
+  const league = myLeagues.find(l => l && l.active) ?? null
   if (!league) return null
 
   const standings = (
     await ctx.db
       .query('league_standings')
-      .withIndex('by_league', (q) => q.eq('leagueId', league!._id))
+      .withIndex('by_league', q => q.eq('leagueId', league!._id))
       .collect()
   ).sort((a, b) => b.total_points - a.total_points)
   const st = await Promise.all(
-    standings.slice(0, 5).map(async (s) => {
+    standings.slice(0, 5).map(async s => {
       const p = await ctx.db.get(s.profileId)
       return {
         profile_id: s.profileId,
@@ -85,10 +84,10 @@ async function buildActiveLeague(ctx: QueryCtx, me: Doc<'profiles'>) {
   const jornadas = (
     await ctx.db
       .query('league_rounds')
-      .withIndex('by_league', (q) => q.eq('leagueId', league!._id))
+      .withIndex('by_league', q => q.eq('leagueId', league!._id))
       .collect()
   ).length
-  const myPos = st.findIndex((s) => s.profile_id === me._id) + 1
+  const myPos = st.findIndex(s => s.profile_id === me._id) + 1
 
   return {
     id: league._id,
@@ -96,16 +95,14 @@ async function buildActiveLeague(ctx: QueryCtx, me: Doc<'profiles'>) {
     round_played: jornadas,
     total_rounds: league.total_rounds,
     my_position: myPos || 1,
-    my_points: st.find((s) => s.profile_id === me._id)?.total_points ?? 0,
+    my_points: st.find(s => s.profile_id === me._id)?.total_points ?? 0,
     top3: st.slice(0, 3),
   }
 }
 
 async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
   const allHoles = await ctx.db.query('holes').collect()
-  const holeByCourseAndNumber = new Map(
-    allHoles.map((h) => [`${h.courseId}:${h.hole_number}`, h]),
-  )
+  const holeByCourseAndNumber = new Map(allHoles.map(h => [`${h.courseId}:${h.hole_number}`, h]))
   type FeedItem = {
     id: string
     round_id: Id<'rounds'>
@@ -126,10 +123,10 @@ async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
         ctx.db.get(r.courseId),
         ctx.db
           .query('round_players')
-          .withIndex('by_round', (q) => q.eq('roundId', r._id))
+          .withIndex('by_round', q => q.eq('roundId', r._id))
           .collect(),
       ])
-      const rp = rps.find((x) => x.profileId)
+      const rp = rps.find(x => x.profileId)
       if (!rp || !rp.profileId) return null
       const p = await ctx.db.get(rp.profileId)
       const pid = rp.profileId
@@ -140,9 +137,9 @@ async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
       const playerScores = (
         await ctx.db
           .query('scores')
-          .withIndex('by_round', (q) => q.eq('roundId', r._id))
+          .withIndex('by_round', q => q.eq('roundId', r._id))
           .collect()
-      ).filter((s) => s.profileId === pid)
+      ).filter(s => s.profileId === pid)
       const total = playerScores.reduce((a, s) => a + (s.strokes ?? 0), 0)
 
       let birdieHole: number | null = null
@@ -166,7 +163,7 @@ async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
       } else if (total > 0) {
         const allScores = await ctx.db
           .query('scores')
-          .withIndex('by_profile', (q) => q.eq('profileId', pid))
+          .withIndex('by_profile', q => q.eq('profileId', pid))
           .collect()
         const roundTotals: Record<string, number> = {}
         for (const s of allScores) {
@@ -203,14 +200,14 @@ async function buildFeed(ctx: QueryCtx, recent: Doc<'rounds'>[]) {
 /** Everything the home screen renders, in one reactive query. */
 export const dashboard = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const me = await getMyProfile(ctx)
     if (!me) return null
 
     const completedRounds = (
       await ctx.db
         .query('rounds')
-        .withIndex('by_status', (q) => q.eq('status', 'completed'))
+        .withIndex('by_status', q => q.eq('status', 'completed'))
         .collect()
     ).sort((a, b) => b._creationTime - a._creationTime)
 
@@ -218,10 +215,10 @@ export const dashboard = query({
 
     const myRps = await ctx.db
       .query('round_players')
-      .withIndex('by_profile', (q) => q.eq('profileId', me._id))
+      .withIndex('by_profile', q => q.eq('profileId', me._id))
       .collect()
-    const myRoundIds = new Set(myRps.map((rp) => rp.roundId))
-    const completedRoundsCount = completedRounds.filter((r) => myRoundIds.has(r._id)).length
+    const myRoundIds = new Set(myRps.map(rp => rp.roundId))
+    const completedRoundsCount = completedRounds.filter(r => myRoundIds.has(r._id)).length
 
     const [activeRound, activeLeague, feed] = [
       await buildActiveRound(ctx, me),
@@ -246,62 +243,55 @@ export const dashboard = query({
 /** The 10 most recent completed rounds across all players, newest first. */
 export const recentRounds = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const me = await getMyProfile(ctx)
     if (!me) return []
 
     const completed = (
       await ctx.db
         .query('rounds')
-        .withIndex('by_status', (q) => q.eq('status', 'completed'))
+        .withIndex('by_status', q => q.eq('status', 'completed'))
         .collect()
     )
-      .sort((a, b) =>
-        a.date === b.date ? b._creationTime - a._creationTime : b.date.localeCompare(a.date),
-      )
+      .sort((a, b) => (a.date === b.date ? b._creationTime - a._creationTime : b.date.localeCompare(a.date)))
       .slice(0, 10)
 
     return await Promise.all(
-      completed.map(async (r) => {
+      completed.map(async r => {
         const [course, courseHoles] = await Promise.all([
           ctx.db.get(r.courseId),
           ctx.db
             .query('holes')
-            .withIndex('by_course', (q) => q.eq('courseId', r.courseId))
+            .withIndex('by_course', q => q.eq('courseId', r.courseId))
             .collect(),
         ])
-        const parOf = (hole: number) => courseHoles.find((h) => h.hole_number === hole)?.par ?? 4
+        const parOf = (hole: number) => courseHoles.find(h => h.hole_number === hole)?.par ?? 4
 
         const rps = await ctx.db
           .query('round_players')
-          .withIndex('by_round', (q) => q.eq('roundId', r._id))
+          .withIndex('by_round', q => q.eq('roundId', r._id))
           .collect()
 
         const allScores = (
           await ctx.db
             .query('scores')
-            .withIndex('by_round', (q) => q.eq('roundId', r._id))
+            .withIndex('by_round', q => q.eq('roundId', r._id))
             .collect()
-        ).filter((s) => s.strokes != null)
+        ).filter(s => s.strokes != null)
 
         // Holes that actually have scores, in order — the columns of the card.
-        const holeNumbers = [...new Set(allScores.map((s) => s.hole_number))].sort((a, b) => a - b)
-        const holes = holeNumbers.map((hn) => ({ hole_number: hn, par: parOf(hn) }))
+        const holeNumbers = [...new Set(allScores.map(s => s.hole_number))].sort((a, b) => a - b)
+        const holes = holeNumbers.map(hn => ({ hole_number: hn, par: parOf(hn) }))
 
         const players = await Promise.all(
-          rps.map(async (rp) => {
+          rps.map(async rp => {
             const info = await resolvePlayer(ctx, rp)
-            const ps =
-              !rp.is_guest && rp.profileId
-                ? allScores.filter((s) => s.profileId === rp.profileId)
-                : []
-            const holeScores = ps.map((s) => ({
+            const ps = !rp.is_guest && rp.profileId ? allScores.filter(s => s.profileId === rp.profileId) : []
+            const holeScores = ps.map(s => ({
               hole_number: s.hole_number,
               strokes: s.strokes as number,
             }))
-            const total = holeScores.length
-              ? holeScores.reduce((a, s) => a + s.strokes, 0)
-              : null
+            const total = holeScores.length ? holeScores.reduce((a, s) => a + s.strokes, 0) : null
             const delta = holeScores.length
               ? holeScores.reduce((a, s) => a + (s.strokes - parOf(s.hole_number)), 0)
               : null

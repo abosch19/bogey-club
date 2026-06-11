@@ -32,9 +32,9 @@ export function countingRounds(total: number): number {
   if (total >= 17) return 6
   if (total >= 15) return 5
   if (total >= 12) return 4
-  if (total >= 9)  return 3
-  if (total >= 6)  return 2
-  if (total >= 4)  return 1
+  if (total >= 9) return 3
+  if (total >= 6) return 2
+  if (total >= 4) return 1
   return 0
 }
 
@@ -56,6 +56,8 @@ export function formatHandicap(index: number | null): string {
 
 export function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('es-ES', {
-    day: 'numeric', month: 'short', year: 'numeric',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   })
 }

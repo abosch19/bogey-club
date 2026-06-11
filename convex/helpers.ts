@@ -10,9 +10,7 @@ export function indexForCourse(
   profile: { handicap_index: number; handicap_index_pp?: number },
   courseName: string,
 ): number {
-  return isPitchAndPutt(courseName)
-    ? profile.handicap_index_pp ?? profile.handicap_index
-    : profile.handicap_index
+  return isPitchAndPutt(courseName) ? (profile.handicap_index_pp ?? profile.handicap_index) : profile.handicap_index
 }
 
 /** The profile row linked to the currently authenticated user (or null). */
@@ -21,7 +19,7 @@ export async function getMyProfile(ctx: QueryCtx): Promise<Doc<'profiles'> | nul
   if (!userId) return null
   return await ctx.db
     .query('profiles')
-    .withIndex('by_userId', (q) => q.eq('userId', userId))
+    .withIndex('by_userId', q => q.eq('userId', userId))
     .unique()
 }
 
@@ -62,7 +60,12 @@ export async function resolvePlayer(
 }> {
   if (!rp.is_guest && rp.profileId) {
     const p = await ctx.db.get(rp.profileId as Id<'profiles'>)
-    if (p) return { name: [p.name, p.last_name].filter(Boolean).join(' '), handicap_index: p.handicap_index, avatar_url: await avatarUrl(ctx, p) }
+    if (p)
+      return {
+        name: [p.name, p.last_name].filter(Boolean).join(' '),
+        handicap_index: p.handicap_index,
+        avatar_url: await avatarUrl(ctx, p),
+      }
   }
   if (rp.guestId) {
     const g = await ctx.db.get(rp.guestId as Id<'guest_players'>)
