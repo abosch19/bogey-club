@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { getProfileEditBackAction, parseProfileEditForm, validateAvatarFile } from './profile'
+import { getProfileEditBackAction, parseProfileEditForm, profileToEditForm, validateAvatarFile } from './profile'
 
 describe('parseProfileEditForm', () => {
   it('trims profile identity fields', () => {
@@ -67,5 +67,12 @@ describe('validateAvatarFile', () => {
       ok: false,
       error: 'La imagen debe pesar 5 MB o menos.',
     })
+  })
+})
+
+describe('profileToEditForm', () => {
+  it('maps a loaded profile to editable identity fields', () => {
+    expect(profileToEditForm({ name: 'Alex', last_name: 'Bosch' })).toEqual({ name: 'Alex', last_name: 'Bosch' })
+    expect(profileToEditForm({ name: 'Alex', last_name: undefined })).toEqual({ name: 'Alex', last_name: '' })
   })
 })

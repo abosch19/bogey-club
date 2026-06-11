@@ -12,6 +12,7 @@ export type ProfileEditResult = { ok: true; value: ProfileEditValue } | { ok: fa
 export type ProfileEditBackAction = { type: 'back' } | { type: 'route'; to: '/profile' }
 export type AvatarFileLike = { type: string; size: number }
 export type AvatarFileValidation = { ok: true } | { ok: false; error: string }
+export type ProfileIdentity = { name: string; last_name?: string }
 
 const MAX_AVATAR_BYTES = 5_000_000
 const AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -39,4 +40,11 @@ export function validateAvatarFile(file: AvatarFileLike): AvatarFileValidation {
   if (!AVATAR_MIME_TYPES.has(file.type)) return { ok: false, error: 'Elige una imagen JPG, PNG o WebP.' }
   if (file.size > MAX_AVATAR_BYTES) return { ok: false, error: 'La imagen debe pesar 5 MB o menos.' }
   return { ok: true }
+}
+
+export function profileToEditForm(profile: ProfileIdentity): ProfileEditForm {
+  return {
+    name: profile.name,
+    last_name: profile.last_name ?? '',
+  }
 }

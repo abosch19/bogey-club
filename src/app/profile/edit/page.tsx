@@ -1,10 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useMutation, useQuery } from 'convex/react'
+import type { FunctionReturnType } from 'convex/server'
 import type { Id } from '@convex/_generated/dataModel'
 import { api } from '@convex/_generated/api'
 import { Avatar } from '@/components/ui/avatar'
-import { getProfileEditBackAction, parseProfileEditForm, validateAvatarFile, type ProfileEditForm } from '@/lib/profile'
+import {
+  getProfileEditBackAction,
+  parseProfileEditForm,
+  profileToEditForm,
+  validateAvatarFile,
+  type ProfileEditForm,
+} from '@/lib/profile'
 
 type FieldProps = {
   id: string
@@ -35,38 +42,38 @@ function Field({ id, label, value, type = 'text', inputMode, placeholder, onChan
   )
 }
 
-export default function EditProfilePage() {
-  const profile = useQuery(api.profiles.me)
+type Profile = NonNullable<FunctionReturnType<typeof api.profiles.me>>
+type AvatarUploadResult = { ok: true; storageId: Id<'_storage'> } | { ok: false; error: string }
+
+async function uploadAvatarFile(uploadUrl: string, file: File): Promise<AvatarUploadResult> {
+  const response = await fetch(uploadUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': file.type },
+    body: file,
+    cache: 'no-store',
+  })
+
+  if (!response.ok) return { ok: false, error: 'No se pudo subir la imagen.' }
+
+  const { storageId } = (await response.json()) as { storageId: Id<'_storage'> }
+  return { ok: true, storageId }
+}
+
+function EditProfileForm({ profile }: { profile: Profile }) {
   const updateMe = useMutation(api.profiles.updateMe)
   const generateAvatarUploadUrl = useMutation(api.profiles.generateAvatarUploadUrl)
   const updateAvatar = useMutation(api.profiles.updateAvatar)
   const navigate = useNavigate()
   const location = useLocation()
-  const [form, setForm] = useState<ProfileEditForm | null>(null)
+  const [form, setForm] = useState<ProfileEditForm>(() => profileToEditForm(profile))
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
-  useEffect(() => {
-    if (!profile || form !== null) return
-    setForm({
-      name: profile.name,
-      last_name: profile.last_name ?? '',
-    })
-  }, [form, profile])
-
-  if (profile === undefined || profile === null || form === null) {
-    return (
-      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
-      </div>
-    )
-  }
-
   const fullName = [form.name, form.last_name].filter(Boolean).join(' ') || profile.email || 'Jugador'
 
   function setField<K extends keyof ProfileEditForm>(key: K, value: ProfileEditForm[K]) {
-    setForm(current => (current ? { ...current, [key]: value } : current))
+    setForm(current => ({ ...current, [key]: value }))
   }
 
   function handleBack() {
@@ -81,7 +88,6 @@ export default function EditProfilePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form) return
 
     const parsed = parseProfileEditForm(form)
     if (!parsed.ok) {
@@ -111,22 +117,29 @@ export default function EditProfilePage() {
 
     setUploadingAvatar(true)
     setError('')
-    try {
-      const uploadUrl = await generateAvatarUploadUrl({})
-      const response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': file.type },
-        body: file,
-      })
-      if (!response.ok) throw new Error('No se pudo subir la imagen.')
 
-      const { storageId } = (await response.json()) as { storageId: Id<'_storage'> }
-      await updateAvatar({ avatar_image: storageId })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo cambiar el avatar.')
-    } finally {
+    const uploadUrl = await generateAvatarUploadUrl({}).catch(() => null)
+    if (!uploadUrl) {
+      setError('No se pudo preparar la subida.')
       setUploadingAvatar(false)
+      return
     }
+
+    const uploaded = await uploadAvatarFile(uploadUrl, file)
+    if (!uploaded.ok) {
+      setError(uploaded.error)
+      setUploadingAvatar(false)
+      return
+    }
+
+    const saved = await updateAvatar({ avatar_image: uploaded.storageId })
+      .then(() => true)
+      .catch(() => false)
+    if (!saved) {
+      setError('No se pudo cambiar el avatar.')
+    }
+
+    setUploadingAvatar(false)
   }
 
   return (
@@ -236,4 +249,18 @@ export default function EditProfilePage() {
       </form>
     </div>
   )
+}
+
+export default function EditProfilePage() {
+  const profile = useQuery(api.profiles.me)
+
+  if (profile === undefined || profile === null) {
+    return (
+      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
+  return <EditProfileForm profile={profile} />
 }
