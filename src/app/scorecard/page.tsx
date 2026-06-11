@@ -756,8 +756,6 @@ function TarjetaPage() {
   const isPractice  = !!data?.round.is_practice
   const isActive    = data?.round.status === 'active'
   const completed   = data?.round.status === 'completed' || signed
-  const base        = data?.course?.holes_count ?? 18
-  const totalHoles  = holeMode === '9_twice' ? 18 : holeMode === 'front' || holeMode === 'back' ? 9 : base
   const allHoles: Hole[] = (data?.holes ?? []).map(h => ({ hole_number: h.hole_number, par: h.par, stroke_index: h.stroke_index }))
   const players: Player[] = (data?.players ?? []).map(p => ({ id: p.profileId ?? '', name: p.name ?? 'Inv', course_handicap: p.course_handicap ?? 0, is_guest: p.is_guest, avatar_url: p.avatar_url ?? null }))
   // Holes saved offline (pending sync) overlay the server scores so the card

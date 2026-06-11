@@ -8,7 +8,9 @@
     "dev:convex": "convex dev",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "tsc --noEmit",
+    "lint": "oxlint --deny-warnings && tsc --noEmit",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "generate:splash": "bun scripts/generate-apple-splash.mjs"
   },
   "dependencies": {
@@ -28,6 +30,8 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.1",
     "babel-plugin-react-compiler": "^1.0.0",
+    "oxfmt": "^0.54.0",
+    "oxlint": "^1.69.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.3.0",
     "typescript": "^5",

@@ -49,8 +49,6 @@ function CountUp({ value, format }: { value: number; format: (v: number) => stri
   return <>{format(value * progress)}</>
 }
 
-const PAR_TYPES = [3, 4, 5]
-
 const COURSE_TYPES = [
   { key: 'golf', label: 'Golf' },
   { key: 'pp',   label: 'Pitch & Putt' },

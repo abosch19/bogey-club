@@ -8,11 +8,9 @@ import { PlayerLink } from '@/components/ui/player-link'
 
 export default function LigaPage() {
   const data = useQuery(api.leagues.listForUser)
-  const me = useQuery(api.profiles.me)
   const removeLeague = useMutation(api.leagues.remove)
   const [deleting, setDeleting] = useState<string | null>(null)
 
-  const myId = me?._id ?? ''
   const leagues = data ?? []
 
   async function handleDelete(leagueId: Id<'leagues'>) {

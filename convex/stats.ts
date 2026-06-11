@@ -42,7 +42,6 @@ export const forUser = query({
       .sort((a, b) => (a.date < b.date ? 1 : -1))
       .slice(0, 30)
 
-    const roundIds = new Set(rounds.map((r) => r._id))
     const courseIds = Array.from(new Set(rounds.map((r) => r.courseId)))
 
     const courses = (await Promise.all(courseIds.map((id) => ctx.db.get(id)))).filter(

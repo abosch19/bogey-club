@@ -125,7 +125,7 @@ function SeleccionarJugadoresPage() {
         {/* Selected players strip */}
         {selected.length > 0 && (
           <div className="flex items-center gap-2 mb-4 flex-wrap">
-            {selected.map((p, i) => (
+            {selected.map((p) => (
               <div key={p._id} className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 border border-[#e5e0d4]">
                 <Avatar name={p.name} size={20} />
                 <span className="text-[12px] font-semibold text-[#0e1a16]">{p.name.split(' ')[0]}</span>
@@ -178,7 +178,7 @@ function SeleccionarJugadoresPage() {
         {/* Players list */}
         {loading ? (
           <div className="flex justify-center pt-6"><div className="w-6 h-6 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin"/></div>
-        ) : filtered.map((p, i) => {
+        ) : filtered.map((p) => {
           const isSel = !!selected.find(s => s._id === p._id)
           const isDisabled = false // sin límite
           return (
