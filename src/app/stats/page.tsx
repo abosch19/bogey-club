@@ -63,6 +63,13 @@ const SECTIONS = [
   { key: 'campos', label: 'Campos' },
 ] as const
 
+const HOYOS_PERIODS = [
+  { key: 'all', label: 'Todas' },
+  { key: '10', label: 'Últ. 10' },
+  { key: '5', label: 'Últ. 5' },
+  { key: '3', label: 'Últ. 3' },
+] as const
+
 // Per-player phrase (shown when comparing)
 function playerPhrase(wins: number, losses: number): string {
   const r = wins + losses > 0 ? Math.round((wins / (wins + losses)) * 100) : 0
@@ -122,7 +129,6 @@ type CourseStat = {
   last3: number[]
 }
 type Companion = { id: string; name: string; wins: number; draws: number; losses: number; rounds: number }
-type HoleAvg = { hole: number; avg: number }
 
 export default function StatsPage() {
   const data = useQuery(api.stats.forUser)
@@ -242,19 +248,6 @@ export default function StatsPage() {
   const totalDoubles = allScores.filter(s => s.strokes - s.par >= 2).length
   const totalHolesP = allScores.length || 1
 
-  // Best/worst hole
-  const holeAvgs: Record<number, number[]> = {}
-  for (const s of allScores) {
-    if (!holeAvgs[s.hole_number]) holeAvgs[s.hole_number] = []
-    holeAvgs[s.hole_number].push(s.strokes - s.par)
-  }
-  const holeAvgList = Object.entries(holeAvgs).map(([h, ds]) => ({
-    hole: parseInt(h),
-    avg: ds.reduce((a, b) => a + b, 0) / ds.length,
-  }))
-  const bestHole = holeAvgList.length ? holeAvgList.reduce((best, x) => (x.avg < best.avg ? x : best)) : undefined
-  const worstHole = holeAvgList.length ? holeAvgList.reduce((worst, x) => (x.avg > worst.avg ? x : worst)) : undefined
-
   // Social: head-to-head
   const playerMap: Record<string, { name: string; wins: number; draws: number; losses: number; rounds: number }> = {}
   const playersById = new Map(allPlayers.map(x => [x.id, x]))
@@ -326,7 +319,7 @@ export default function StatsPage() {
             totalHolesP={totalHolesP}
           />
         )}
-        {section === 'hoyos' && <HoyosSection rounds={rounds} bestHole={bestHole} worstHole={worstHole} />}
+        {section === 'hoyos' && <HoyosSection rounds={rounds} />}
         {section === 'social' && (
           <SocialSection
             rounds={rounds}
@@ -604,15 +597,7 @@ function GeneralSection({
 }
 
 // ── HOYOS ────────────────────────────────────────────────────
-function HoyosSection({
-  rounds,
-  bestHole,
-  worstHole,
-}: {
-  rounds: RoundStat[]
-  bestHole: HoleAvg | undefined
-  worstHole: HoleAvg | undefined
-}) {
+function HoyosSection({ rounds }: { rounds: RoundStat[] }) {
   const [hoyosPeriod, setHoyosPeriod] = useState<'all' | '10' | '5' | '3'>('all')
 
   const filteredRounds = hoyosPeriod === 'all' ? rounds : rounds.slice(0, parseInt(hoyosPeriod))
@@ -637,51 +622,9 @@ function HoyosSection({
 
   return (
     <div className="space-y-3">
-      {/* Period filter */}
-      <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4]">
-        {(
-          [
-            ['all', 'Todas'],
-            ['10', 'Últ. 10'],
-            ['5', 'Últ. 5'],
-            ['3', 'Últ. 3'],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            type="button"
-            key={key}
-            onClick={() => setHoyosPeriod(key)}
-            className="flex-1 py-1.5 rounded-full text-[11px] font-bold transition"
-            style={{
-              backgroundColor: hoyosPeriod === key ? '#0e1a16' : 'transparent',
-              color: hoyosPeriod === key ? '#fff' : '#6b7a72',
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Segmented options={HOYOS_PERIODS} value={hoyosPeriod} onChange={setHoyosPeriod} />
       {filteredParStats.length > 0 ? (
         <>
-          {/* Best / worst hole */}
-          {bestHole && worstHole && (
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
-                <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-1">Mejor hoyo</p>
-                <p className="text-[32px] font-black text-[#1f8a5b] leading-none">#{bestHole.hole}</p>
-                <p className="font-mono text-[11px] text-[#6b7a72] mt-1">
-                  {bestHole.avg > 0 ? '+' : ''}
-                  {bestHole.avg.toFixed(2)} vs par
-                </p>
-              </div>
-              <div className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
-                <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-1">Peor hoyo</p>
-                <p className="text-[32px] font-black text-[#a83a25] leading-none">#{worstHole.hole}</p>
-                <p className="font-mono text-[11px] text-[#6b7a72] mt-1">+{worstHole.avg.toFixed(2)} vs par</p>
-              </div>
-            </div>
-          )}
-
           {/* Par type breakdown */}
           {filteredParStats.map(ps => (
             <div key={ps.par} className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
