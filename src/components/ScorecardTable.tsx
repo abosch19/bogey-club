@@ -39,11 +39,14 @@ export function ScoreTable({
   const blockPar = group.reduce((a, h) => a + h.par, 0)
   const label = gi === 0 && groupsCount > 1 ? 'OUT' : groupsCount > 1 ? 'IN' : 'TOT'
   return (
-    <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+    <div className="rounded-[22px] border border-[#ded8cb] bg-white p-2 shadow-[0_12px_28px_rgba(14,26,22,0.07)] overflow-hidden">
       <div className="overflow-x-auto">
         {/* table-fixed + colgroup: hole columns share the width equally, so OUT
             and IN stay aligned whether or not a hole has a score yet. */}
-        <table className="w-full text-center table-fixed" style={{ minWidth: `${group.length * 30 + 96}px` }}>
+        <table
+          className="w-full text-center table-fixed overflow-hidden rounded-[16px]"
+          style={{ minWidth: `${group.length * 30 + 96}px` }}
+        >
           <colgroup>
             <col style={{ width: 44 }} />
             {group.map(h => (
@@ -52,16 +55,16 @@ export function ScoreTable({
             <col style={{ width: 52 }} />
           </colgroup>
           <thead>
-            <tr className="border-b border-[#efebe1]">
-              <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2 text-left">H</td>
+            <tr className="bg-[#0e1a16]">
+              <td className="font-mono text-[9px] text-white/55 py-2.5 px-2 text-left rounded-tl-[14px]">H</td>
               {group.map(h => (
-                <td key={h.hole_number} className="font-mono text-[11px] font-bold text-[#0e1a16] py-2 px-0.5">
+                <td key={h.hole_number} className="font-mono text-[11px] font-bold text-white py-2.5 px-0.5">
                   {h.hole_number}
                 </td>
               ))}
-              <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2">{label}</td>
+              <td className="font-mono text-[9px] text-white/55 py-2.5 px-2 rounded-tr-[14px]">{label}</td>
             </tr>
-            <tr className="border-b border-[#efebe1]">
+            <tr className="border-b border-[#e9e4d8] bg-[#fbfaf6]">
               <td className="font-mono text-[9px] text-[#6b7a72] px-2 py-1 text-left">PAR</td>
               {group.map(h => (
                 <td key={h.hole_number} className="font-mono text-[10px] text-[#6b7a72] py-1 px-0.5">
@@ -70,7 +73,7 @@ export function ScoreTable({
               ))}
               <td className="font-mono text-[11px] font-bold text-[#0e1a16] py-1 px-2">{blockPar}</td>
             </tr>
-            <tr className="border-b border-[#efebe1]">
+            <tr className="border-b border-[#e9e4d8] bg-[#fbfaf6]">
               <td className="font-mono text-[9px] text-[#2a6fdb] px-2 py-1 text-left font-bold">HCP</td>
               {group.map(h => (
                 <td key={h.hole_number} className="font-mono text-[9px] text-[#2a6fdb] py-1 px-0.5">
@@ -91,7 +94,7 @@ export function ScoreTable({
                 const blockDelta = blockTotal ? blockTotal - blockPar : null
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
-                    <td className="px-2 py-1.5">
+                    <td className="px-2 py-2">
                       <PlayerLink profileId={linkId}>
                         <Avatar name={p.name} src={p.avatar_url} size={24} />
                       </PlayerLink>
@@ -106,7 +109,7 @@ export function ScoreTable({
                           <span className="text-[#c4bfb5] text-[13px]">·</span>
                         )
                       return (
-                        <td key={h.hole_number} className="py-1.5 px-0.5">
+                        <td key={h.hole_number} className="py-2 px-0.5">
                           {onEditHole ? (
                             <button
                               type="button"
@@ -122,7 +125,7 @@ export function ScoreTable({
                         </td>
                       )
                     })}
-                    <td className="px-2 py-1.5 min-w-[40px]">
+                    <td className="px-2 py-2 min-w-[40px] bg-[#fbfaf6]">
                       {blockTotal > 0 ? (
                         <div className="text-center">
                           <p className="font-mono text-[12px] font-black text-[#0e1a16] leading-none">{blockTotal}</p>
@@ -148,7 +151,7 @@ export function ScoreTable({
                 }, 0)
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
-                    <td className="px-2 py-1">
+                    <td className="px-2 py-2">
                       <PlayerLink profileId={linkId}>
                         <Avatar name={p.name} src={p.avatar_url} size={24} />
                       </PlayerLink>
@@ -191,7 +194,7 @@ export function ScoreTable({
                         </>
                       )
                       return (
-                        <td key={h.hole_number} className="py-1 px-0.5">
+                        <td key={h.hole_number} className="py-2 px-0.5">
                           {onEditHole ? (
                             <button
                               type="button"
@@ -207,7 +210,9 @@ export function ScoreTable({
                         </td>
                       )
                     })}
-                    <td className="font-mono text-[13px] font-black text-[#1f8a5b] px-2">{blockPts || '–'}</td>
+                    <td className="bg-[#fbfaf6] px-2 font-mono text-[13px] font-black text-[#1f8a5b]">
+                      {blockPts || '–'}
+                    </td>
                   </tr>
                 )
               } else if (viewMode === 'matchplay' || viewMode === 'matchplay_hcp') {
@@ -217,7 +222,7 @@ export function ScoreTable({
                 const endSt = lastScored ? matchState.get(lastScored.hole_number) : undefined
                 return (
                   <tr key={p.id} className="border-t border-[#efebe1]">
-                    <td className="px-2 py-1.5">
+                    <td className="px-2 py-2">
                       <PlayerLink profileId={linkId}>
                         <Avatar name={p.name} src={p.avatar_url} size={24} />
                       </PlayerLink>
@@ -239,7 +244,7 @@ export function ScoreTable({
                         </div>
                       ) : null
                       return (
-                        <td key={h.hole_number} className="py-1.5 px-0.5">
+                        <td key={h.hole_number} className="py-2 px-0.5">
                           {onEditHole ? (
                             <button
                               type="button"
@@ -255,7 +260,7 @@ export function ScoreTable({
                         </td>
                       )
                     })}
-                    <td className="px-2 py-1.5 min-w-[40px]">
+                    <td className="px-2 py-2 min-w-[40px] bg-[#fbfaf6]">
                       {endSt && (endSt.leader?.id === p.id || !endSt.leader) ? (
                         <p
                           className="font-mono text-[10px] font-black text-center"

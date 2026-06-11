@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, type CSSProperties } from 'react'
 
 type HeroCardProps = {
   children: ReactNode
@@ -10,16 +10,24 @@ type HeroCardProps = {
   orbSize?: number
   /** Extra absolutely-positioned art rendered above the texture (flags, balls…). */
   decor?: ReactNode
+  style?: CSSProperties
 }
 
 /** Dark brand card: depth gradient, radial orb, credit-card pinstripes and a
  *  diagonal sheen. Shared look for every hero surface (home, stats, carnet…). */
-export function HeroCard({ children, className = '', orbColor = '#1f8a5b', orbSize = 190, decor }: HeroCardProps) {
+export function HeroCard({
+  children,
+  className = '',
+  orbColor = '#1f8a5b',
+  orbSize = 190,
+  decor,
+  style,
+}: HeroCardProps) {
   const offset = -Math.round(orbSize * 0.26)
   return (
     <div
       className={`rounded-[22px] relative overflow-hidden shadow-[0_14px_34px_rgba(14,26,22,0.28)] ${className}`}
-      style={{ background: 'linear-gradient(140deg, #0a1511 0%, #0e1a16 46%, #17291f 100%)' }}
+      style={{ background: 'linear-gradient(140deg, #0a1511 0%, #0e1a16 46%, #17291f 100%)', ...style }}
     >
       <div
         className="absolute rounded-full"

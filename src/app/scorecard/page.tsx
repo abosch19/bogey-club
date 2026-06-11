@@ -12,6 +12,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { PlayerLink } from '@/components/ui/player-link'
 import { ShareScorecardButton } from '@/components/ShareScorecard'
 import { Segmented } from '@/components/ui/segmented'
+import { HeroCard } from '@/components/ui/hero-card'
 import { ScoreTable, type Player, type Hole, type ViewMode } from '@/components/ScorecardTable'
 import { ScoreLegend } from '@/components/ScoreLegend'
 import { RoundStats, type Score } from '@/components/RoundStats'
@@ -26,6 +27,24 @@ type ClasificacionProps = {
   ranking: Player[]
   getTotal: (pid: string) => number
   realPar: number
+}
+
+function scoreDeltaLabel(delta: number): string {
+  if (delta === 0) return 'E'
+  return delta > 0 ? `+${delta}` : `${delta}`
+}
+
+function scoreDeltaColor(delta: number): string {
+  if (delta <= 0) return '#7dd3a8'
+  if (delta <= 9) return '#e8b75a'
+  return '#ff9a83'
+}
+
+function modeLabel(mode: string): string {
+  if (mode === 'stroke') return 'Stroke'
+  if (mode === 'stableford') return 'Stableford'
+  if (mode === 'matchplay_hcp') return 'Matchplay Hcp'
+  return mode
 }
 
 function Clasificacion({ ranking, getTotal, realPar }: ClasificacionProps) {
@@ -355,14 +374,22 @@ function ScorecardHeader({
   shareButton,
 }: ScorecardHeaderProps) {
   const navigate = useNavigate()
+  const progressPct = holesCount > 0 ? Math.round((myScoresCount / holesCount) * 100) : 0
+  const leader = players
+    .flatMap(p => {
+      const total = getTotal(p.id)
+      return total > 0 ? [{ player: p, total, delta: getDelta(p.id) }] : []
+    })
+    .toSorted((a, b) => a.total - b.total)[0]
+
   return (
-    <div className="safe-top px-[14px] pt-3 pb-2">
-      <div className="flex items-center justify-between mb-2">
+    <div className="safe-top px-[14px] pt-3 pb-3">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-[#6b7a72] font-semibold text-[13px]"
+            className="flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[#6b7a72] font-semibold text-[13px] border border-[#e5e0d4] active:scale-[0.98] transition"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
@@ -378,11 +405,11 @@ function ScorecardHeader({
         </div>
         <div className="flex items-center gap-2">
           {completed ? (
-            <span className="font-mono text-[9px] font-bold text-[#1f8a5b] bg-[#d9eedd] px-2 py-1 rounded-full uppercase tracking-wide">
+            <span className="font-mono text-[9px] font-bold text-[#1f8a5b] bg-white px-2.5 py-1.5 rounded-full uppercase tracking-wide border border-[#d9eedd]">
               Firmada
             </span>
           ) : (
-            <span className="font-mono text-[10px] text-[#6b7a72]">
+            <span className="font-mono text-[10px] text-[#6b7a72] bg-white px-2.5 py-1.5 rounded-full border border-[#e5e0d4]">
               {myScoresCount} / {holesCount} HOYOS
             </span>
           )}
@@ -391,31 +418,50 @@ function ScorecardHeader({
       </div>
 
       {/* Mini info bar — morph target of the round cards in home/stats */}
-      <div
-        className="bg-white rounded-[16px] px-3.5 py-3 border border-[#e5e0d4] mb-2"
-        style={{ viewTransitionName: 'round-card' }}
-      >
-        <div className="flex items-start justify-between gap-2">
+      <HeroCard className="p-4 mb-2" orbSize={170} style={{ viewTransitionName: 'round-card' }}>
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-bold text-[15px] text-[#0e1a16] leading-tight truncate">{courseName}</p>
-            <div className="flex gap-1.5 mt-1 flex-wrap">
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
               {modes.map(m => (
                 <span
                   key={m}
-                  className="font-mono text-[9px] text-[#6b7a72] bg-[#f4f1e9] px-2 py-0.5 rounded-full uppercase"
+                  className="rounded-full bg-white/10 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-wide text-white/65"
                 >
-                  {m === 'stroke'
-                    ? 'Stroke'
-                    : m === 'stableford'
-                      ? 'Stableford'
-                      : m === 'matchplay_hcp'
-                        ? 'Matchplay Hcp'
-                        : m}
+                  {modeLabel(m)}
                 </span>
               ))}
             </div>
+            <h1 className="truncate text-[22px] font-black leading-tight tracking-tight text-white">{courseName}</h1>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/12">
+                <div
+                  className="h-full rounded-full bg-[#1f8a5b] transition-all duration-300"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <span className="font-mono text-[10px] font-bold text-white/65">{progressPct}%</span>
+            </div>
           </div>
-          {!completed && (
+          {leader && (
+            <div className="shrink-0 text-right">
+              <p className="font-mono text-[9px] uppercase tracking-wide text-white/45">Líder</p>
+              <p className="font-mono text-[32px] font-black leading-none text-white">{leader.total}</p>
+              <p className="font-mono text-[12px] font-black" style={{ color: scoreDeltaColor(leader.delta) }}>
+                {scoreDeltaLabel(leader.delta)}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {!completed && (
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-3">
+            <div className="flex -space-x-1.5">
+              {players.slice(0, 5).map(p => (
+                <div key={`${p.id}-${p.name}`} className="rounded-full ring-2 ring-[#0e1a16]">
+                  <Avatar name={p.name} src={p.avatar_url} size={28} />
+                </div>
+              ))}
+            </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <BetControl roundId={roundId} customBet={customBet} />
               <EditPlayersControl
@@ -427,36 +473,37 @@ function ScorecardHeader({
                 isActive={isActive}
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
         {/* Live score strip: total + over/under par through the holes played */}
-        <div className="mt-2.5 pt-2.5 border-t border-[#efebe1] flex items-center gap-x-5 gap-y-2 flex-wrap">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           {players.map(p => {
             const total = getTotal(p.id)
             const delta = getDelta(p.id)
             return (
-              <div key={p.id} className="flex items-center gap-2">
+              <div key={p.id} className="flex min-w-0 items-center gap-2 rounded-[14px] bg-white/9 px-2.5 py-2">
                 <PlayerLink profileId={p.is_guest ? null : p.id}>
                   <Avatar name={p.name} src={p.avatar_url} size={28} />
                 </PlayerLink>
-                {total > 0 ? (
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-mono text-[20px] font-black text-[#0e1a16] leading-none">{total}</span>
-                    <span
-                      className="font-mono text-[12px] font-bold"
-                      style={{ color: delta <= 0 ? '#1f8a5b' : '#9b6e1a' }}
-                    >
-                      {delta > 0 ? `+${delta}` : delta === 0 ? 'E' : delta}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-[#c4bfb5] text-[13px] font-mono">—</span>
-                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[11px] font-bold text-white/75">{p.name}</p>
+                  {total > 0 ? (
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="font-mono text-[18px] font-black text-white leading-none">{total}</span>
+                      <span className="font-mono text-[11px] font-bold" style={{ color: scoreDeltaColor(delta) }}>
+                        {scoreDeltaLabel(delta)}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-white/35 text-[13px] font-mono">—</span>
+                  )}
+                </div>
               </div>
             )
           })}
         </div>
-      </div>
+      </HeroCard>
 
       {/* Mode tabs — the dark pill slides to the active tab */}
       {availableModes.length > 1 && (

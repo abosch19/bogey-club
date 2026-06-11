@@ -55,6 +55,13 @@ function fmtRoundDate(date: string): string {
   return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
 }
 
+function resultColor(delta: number | null): string {
+  if (delta === null) return '#6b7a72'
+  if (delta <= 0) return '#1f8a5b'
+  if (delta <= 9) return '#9b6e1a'
+  return '#c6432d'
+}
+
 type RoundHole = { hole_number: number; par: number }
 type RoundPlayer = {
   name: string
@@ -342,44 +349,93 @@ function RecentRoundsList({ rounds }: RecentRoundsListProps) {
         <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-wide">Todos</span>
       </div>
       <div className="space-y-2">
-        {rounds.map(r => (
-          <Link
-            key={r.id}
-            to={`/scorecard?round=${r.id}`}
-            onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
-            className="block bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden active:scale-[0.99] transition"
-          >
-            {/* Cabecera de la partida */}
-            <div className="flex items-center justify-between px-3 pt-2.5 pb-2">
-              <p className="text-[13px] font-bold text-[#0e1a16] truncate">
-                {r.course_name}
-                {r.is_practice && <span className="text-[#6b7a72] font-normal"> · práctica</span>}
-              </p>
-              <span className="font-mono text-[10px] text-[#6b7a72] flex-shrink-0 ml-2">{fmtRoundDate(r.date)}</span>
-            </div>
-            {/* Mini scorecard — 2 filas: OUT (1-9) / IN (10-18) */}
-            {r.holes.length > 0 ? (
-              (() => {
-                const front = r.holes.filter(h => h.hole_number <= 9)
-                const back = r.holes.filter(h => h.hole_number >= 10)
-                return (
-                  <div>
-                    <div className="overflow-x-auto">
-                      <ScoreNine holes={front} players={r.players} label={back.length ? 'OUT' : 'TOT'} />
+        {rounds.map(r => {
+          const leader = r.players.find(p => p.total !== null)
+          const front = r.holes.filter(h => h.hole_number <= 9)
+          const back = r.holes.filter(h => h.hole_number >= 10)
+          return (
+            <Link
+              key={r.id}
+              to={`/scorecard?round=${r.id}`}
+              onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
+              className="block rounded-[22px] border border-[#ded8cb] bg-white p-2 shadow-[0_14px_34px_rgba(14,26,22,0.08)] active:scale-[0.99] transition overflow-hidden"
+            >
+              <div className="relative overflow-hidden rounded-[18px] bg-[#0e1a16] px-3.5 py-3.5">
+                <div
+                  aria-hidden
+                  className="absolute inset-0 opacity-[0.08]"
+                  style={{
+                    backgroundImage:
+                      'linear-gradient(135deg, transparent 0 42%, #ffffff 42% 44%, transparent 44% 100%)',
+                    backgroundSize: '14px 14px',
+                  }}
+                />
+                <div
+                  aria-hidden
+                  className="absolute right-[-34px] top-[-46px] h-[118px] w-[118px] rounded-full bg-[#1f8a5b] opacity-70"
+                />
+                <div className="relative flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="rounded-full bg-white/12 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-wide text-white/70">
+                        {fmtRoundDate(r.date)}
+                      </span>
+                      {r.is_practice && (
+                        <span className="rounded-full bg-[#e8b75a] px-2 py-1 text-[9px] font-black uppercase text-[#0e1a16]">
+                          Práctica
+                        </span>
+                      )}
                     </div>
-                    {back.length > 0 && (
-                      <div className="overflow-x-auto border-t-2 border-[#efebe1]">
-                        <ScoreNine holes={back} players={r.players} label="IN" />
+                    <p className="truncate text-[15px] font-black leading-tight text-white">{r.course_name}</p>
+                    {leader && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <Avatar name={leader.name} src={leader.avatar_url} size={22} />
+                        <p className="min-w-0 truncate text-[11px] font-semibold text-white/72">{leader.name}</p>
                       </div>
                     )}
                   </div>
-                )
-              })()
-            ) : (
-              <p className="px-3 pb-3 text-[11px] text-[#6b7a72]">Sin golpes anotados</p>
-            )}
-          </Link>
-        ))}
+                  <div className="shrink-0 text-right">
+                    <p className="font-mono text-[9px] uppercase tracking-wide text-white/45">Ganador</p>
+                    <p className="font-mono text-[30px] font-black leading-none text-white">{leader?.total ?? '–'}</p>
+                    <p
+                      className="font-mono text-[11px] font-black"
+                      style={{ color: leader ? resultColor(leader.delta) : 'rgba(255,255,255,0.45)' }}
+                    >
+                      {fmtDelta(leader?.delta ?? null)}
+                    </p>
+                  </div>
+                </div>
+                <div className="relative mt-3 flex items-center justify-between border-t border-white/10 pt-2.5">
+                  <div className="flex -space-x-1.5">
+                    {r.players.slice(0, 4).map(p => (
+                      <div key={p.name} className="rounded-full ring-2 ring-[#0e1a16]">
+                        <Avatar name={p.name} src={p.avatar_url} size={24} />
+                      </div>
+                    ))}
+                  </div>
+                  <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-white/74">
+                    {r.players.length} jugador{r.players.length !== 1 ? 'es' : ''} · {r.holes.length} hoyos
+                  </span>
+                </div>
+              </div>
+              {/* Mini scorecard — 2 filas: OUT (1-9) / IN (10-18) */}
+              {r.holes.length > 0 ? (
+                <div className="mt-2 overflow-hidden rounded-[16px] border border-[#efebe1] bg-[#fbfaf6]">
+                  <div className="overflow-x-auto">
+                    <ScoreNine holes={front} players={r.players} label={back.length ? 'OUT' : 'TOT'} />
+                  </div>
+                  {back.length > 0 && (
+                    <div className="overflow-x-auto border-t-2 border-[#efebe1]">
+                      <ScoreNine holes={back} players={r.players} label="IN" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="px-3 pb-2 pt-3 text-[11px] text-[#6b7a72]">Sin golpes anotados</p>
+              )}
+            </Link>
+          )
+        })}
       </div>
     </div>
   )
