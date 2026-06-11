@@ -88,7 +88,7 @@ function ScrambleSection({ players, par, holeNum, get, setScore, set }: Scramble
             <div className="flex items-center gap-3 px-4 py-3" style={{ backgroundColor: light }}>
               <div className="flex -space-x-2">
                 {members.map(m => (
-                  <Avatar key={m.id} name={m.name} size={36} className="border-[3px] border-white" />
+                  <Avatar key={m.id} name={m.name} src={m.avatar_url} size={36} className="border-[3px] border-white" />
                 ))}
               </div>
               <div className="flex-1">
@@ -206,7 +206,7 @@ function PlayerCard({
     <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
       <div className="flex items-center gap-2.5 px-3 pt-3 pb-2.5">
         <div className="flex-shrink-0 text-center" style={{ minWidth: 44 }}>
-          <Avatar name={p.name} size={40} className="mx-auto" />
+          <Avatar name={p.name} src={p.avatar_url} size={40} className="mx-auto" />
           <p className="font-mono text-[9px] text-[#6b7a72] mt-0.5">
             h{p.course_handicap}
             {(() => {
@@ -416,6 +416,7 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
     id: rp.profileId ?? `guest_${rp._id}`,
     name: rp.name ?? 'Invitado',
     course_handicap: rp.course_handicap ?? 0,
+    avatar_url: rp.avatar_url ?? null,
   }))
   const activePlayer = players.find(p => p.id === selectedPlayerId) ?? players[0]
 
@@ -581,6 +582,7 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
                   <div className="relative">
                     <Avatar
                       name={p.name}
+                      src={p.avatar_url}
                       size={48}
                       style={{ outline: isActive ? '3px solid #0e1a16' : '3px solid transparent', outlineOffset: 2 }}
                     />
