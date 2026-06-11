@@ -9,7 +9,9 @@ import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Avatar } from '@/components/ui/avatar'
 import { Segmented } from '@/components/ui/segmented'
-import { ScoreTable, ScoreLegend, type Player, type Hole, type ViewMode } from '@/components/ScorecardTable'
+import { ScoreTable, type Player, type Hole, type ViewMode } from '@/components/ScorecardTable'
+import { ScoreLegend } from '@/components/ScoreLegend'
+import { RoundStats, type Score } from '@/components/RoundStats'
 
 const SPINNER = (
   <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
@@ -63,8 +65,19 @@ export default function PublicScorecardPage() {
     return allHoles
   })()
 
+  const scores: Score[] = data.scores.map(s => ({
+    profile_id: s.profileId,
+    hole_number: s.hole_number,
+    strokes: s.strokes ?? null,
+    putts: s.putts ?? null,
+    gir: s.gir ?? null,
+    fairway: s.fairway ?? null,
+    penalties: s.penalties ?? null,
+    in_bunker: s.in_bunker ?? null,
+  }))
+
   const getScore = (pid: string, h: number) =>
-    data.scores.find(s => s.profileId === pid && s.hole_number === h)?.strokes ?? null
+    scores.find(s => s.profile_id === pid && s.hole_number === h)?.strokes ?? null
   const getTotal = (pid: string) =>
     holes.reduce((a, h) => {
       const s = getScore(pid, h.hole_number)
@@ -163,6 +176,9 @@ export default function PublicScorecardPage() {
           />
         ))}
         <ScoreLegend viewMode={viewMode} />
+
+        {/* Round stats — same comparative table as the scorecard, read-only */}
+        <RoundStats players={players} scores={scores} holes={holes} myId="" linkPlayers={false} />
       </div>
     </div>
   )
