@@ -26,6 +26,7 @@ import RoundCoursePage from '@/app/round/course/page'
 import RoundPlayersPage from '@/app/round/players/page'
 import RoundFormatPage from '@/app/round/format/page'
 import RoundPairsPage from '@/app/round/pairs/page'
+import PublicScorecardPage from '@/app/s/[id]/page'
 
 /** Legacy route — the summary screen merged into /scorecard. */
 function SummaryRedirect() {
@@ -74,6 +75,10 @@ function AuthGuard({ children }: { children: ReactNode }) {
   const holding = useSplashHold()
   const { pathname } = useLocation()
   const isPublic = PUBLIC_ROUTES.includes(pathname)
+
+  // Shared scorecard links (/s/:id) are open to everyone: no login redirect,
+  // and no redirect away for logged-in users either.
+  if (pathname.startsWith('/s/')) return <>{children}</>
 
   if (isLoading || holding) return <Splash />
 
@@ -190,6 +195,7 @@ export function App() {
           <Route path="/round/players" element={<RoundPlayersPage />} />
           <Route path="/round/format" element={<RoundFormatPage />} />
           <Route path="/round/pairs" element={<RoundPairsPage />} />
+          <Route path="/s/:id" element={<PublicScorecardPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </TransitionRoutes>
       </AuthGuard>

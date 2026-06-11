@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
-import { query, mutation, internalMutation } from './_generated/server'
+import { query, mutation, internalMutation, type QueryCtx } from './_generated/server'
+import type { Id } from './_generated/dataModel'
 import { getMyProfile, requireProfile, resolvePlayer, indexForCourse } from './helpers'
 import { recalcProfile } from './whs'
 import { notifyProfiles } from './push'
@@ -10,47 +11,59 @@ const today = () => new Date().toISOString().split('T')[0]
 /** Full detail of a round: course, holes, players (resolved), scores, modes. */
 export const get = query({
   args: { roundId: v.id('rounds') },
-  handler: async (ctx, { roundId }) => {
-    const round = await ctx.db.get(roundId)
-    if (!round) return null
-    const course = await ctx.db.get(round.courseId)
-    const holes = course
-      ? (
-          await ctx.db
-            .query('holes')
-            .withIndex('by_course', q => q.eq('courseId', round.courseId))
-            .collect()
-        ).sort((a, b) => a.hole_number - b.hole_number)
-      : []
-    const rps = await ctx.db
-      .query('round_players')
-      .withIndex('by_round', q => q.eq('roundId', roundId))
-      .collect()
-    const [players, scores, rawModes] = await Promise.all([
-      Promise.all(
-        rps.map(async rp => ({
-          _id: rp._id,
-          profileId: rp.profileId ?? null,
-          guestId: rp.guestId ?? null,
-          is_guest: rp.is_guest,
-          course_handicap: rp.course_handicap,
-          ...(await resolvePlayer(ctx, rp)),
-        })),
-      ),
-      ctx.db
-        .query('scores')
-        .withIndex('by_round', q => q.eq('roundId', roundId))
-        .collect(),
-      ctx.db
-        .query('round_modes')
-        .withIndex('by_round', q => q.eq('roundId', roundId))
-        .collect(),
-    ])
-    const modes = rawModes.map(m => m.mode)
+  handler: (ctx, { roundId }) => roundDetail(ctx, roundId),
+})
 
-    return { round, course, holes, players, scores, modes }
+/** Same payload for the public share view (/s/:id). Takes the id as a plain
+ *  string so a mangled link returns null instead of a validation error. */
+export const getShared = query({
+  args: { roundId: v.string() },
+  handler: async (ctx, args) => {
+    const roundId = ctx.db.normalizeId('rounds', args.roundId)
+    return roundId ? await roundDetail(ctx, roundId) : null
   },
 })
+
+async function roundDetail(ctx: QueryCtx, roundId: Id<'rounds'>) {
+  const round = await ctx.db.get(roundId)
+  if (!round) return null
+  const course = await ctx.db.get(round.courseId)
+  const holes = course
+    ? (
+        await ctx.db
+          .query('holes')
+          .withIndex('by_course', q => q.eq('courseId', round.courseId))
+          .collect()
+      ).sort((a, b) => a.hole_number - b.hole_number)
+    : []
+  const rps = await ctx.db
+    .query('round_players')
+    .withIndex('by_round', q => q.eq('roundId', roundId))
+    .collect()
+  const [players, scores, rawModes] = await Promise.all([
+    Promise.all(
+      rps.map(async rp => ({
+        _id: rp._id,
+        profileId: rp.profileId ?? null,
+        guestId: rp.guestId ?? null,
+        is_guest: rp.is_guest,
+        course_handicap: rp.course_handicap,
+        ...(await resolvePlayer(ctx, rp)),
+      })),
+    ),
+    ctx.db
+      .query('scores')
+      .withIndex('by_round', q => q.eq('roundId', roundId))
+      .collect(),
+    ctx.db
+      .query('round_modes')
+      .withIndex('by_round', q => q.eq('roundId', roundId))
+      .collect(),
+  ])
+  const modes = rawModes.map(m => m.mode)
+
+  return { round, course, holes, players, scores, modes }
+}
 
 /** The id of the current user's active round, if any (tab bar / home). */
 export const activeIdForUser = query({
@@ -171,8 +184,8 @@ export const create = mutation({
       ctx,
       profiles.filter(p => p._id !== me._id).map(p => p._id),
       {
-        title: 'Nueva partida \u26f3',
-        body: `${me.name} te ha a\u00f1adido a una partida en ${course?.name ?? 'el campo'}`,
+        title: 'Nueva partida ⛳',
+        body: `${me.name} te ha añadido a una partida en ${course?.name ?? 'el campo'}`,
         url: `/scorecard?round=${roundId}`,
       },
     )
