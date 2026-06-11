@@ -1,7 +1,9 @@
 /* Bogey Club service worker — serves the cached shell instantly on launch
    (stale-while-revalidate) and refreshes it in the background, so a new
-   deploy lands on the next launch. Bump CACHE to invalidate. */
-const CACHE = 'bogey-club-v3'
+   deploy lands on the next launch. __BUILD_ID__ is replaced at build time
+   (sw-build-id plugin in vite.config.ts) with a digest of the app shell,
+   so each deploy invalidates the cache without manual bumps. */
+const CACHE = 'bogey-club-__BUILD_ID__'
 const APP_SHELL = [
   '/',
   '/index.html',
