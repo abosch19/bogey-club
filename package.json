@@ -12,7 +12,8 @@
     "test": "bun test",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "generate:splash": "bun scripts/generate-apple-splash.mjs"
+    "generate:splash": "bun scripts/generate-apple-splash.mjs",
+    "doctor": "bunx react-doctor@latest"
   },
   "dependencies": {
     "@auth/core": "^0.37.0",
@@ -36,6 +37,7 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "oxfmt": "^0.54.0",
     "oxlint": "^1.69.0",
+    "react-doctor": "^0.5.1",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.3.0",
     "typescript": "^5",
