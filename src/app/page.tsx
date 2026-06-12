@@ -303,7 +303,7 @@ function ClubFeed({ feed }: ClubFeedProps) {
           <Link
             key={item.id}
             to={`/scorecard?round=${item.round_id}`}
-            className={`rise-in flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-rule-soft' : ''}`}
+            className={`rise-in flex items-center gap-3 py-3 active:opacity-70 ${i > 0 ? 'border-t border-rule-soft' : ''}`}
             style={{ '--rise-index': Math.min(i, 8) } as React.CSSProperties}
           >
             <PlayerLink profileId={item.profile_id}>
@@ -346,11 +346,11 @@ type RecentRoundsListProps = { rounds: FunctionReturnType<typeof api.home.recent
 function RecentRoundsList({ rounds }: RecentRoundsListProps) {
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-2 px-1">
+      <div className="flex items-baseline justify-between mb-3 px-1">
         <h3 className="text-[17px] font-bold text-ink">Últimas partidas</h3>
         <span className="font-mono text-[10px] text-mute uppercase tracking-wide">Todos</span>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {rounds.map((r, i) => {
           const leader = r.players.find(p => p.total !== null)
           const front = r.holes.filter(h => h.hole_number <= 9)
@@ -488,7 +488,7 @@ export default function HomePage() {
       </div>
 
       <div>
-        <div className="px-[14px] space-y-3 mt-2">
+        <div className="px-[14px] space-y-4 mt-3">
           {/* Hero dark card */}
           <HomeHero firstName={firstName} />
 
