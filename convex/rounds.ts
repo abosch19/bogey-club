@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
-import { query, mutation, internalMutation, type QueryCtx } from './_generated/server'
-import type { Id } from './_generated/dataModel'
-import { getMyProfile, requireProfile, resolvePlayer, indexForCourse } from './helpers'
+import { query, mutation, internalMutation, type QueryCtx, type MutationCtx } from './_generated/server'
+import type { Doc, Id } from './_generated/dataModel'
+import { getMyProfile, requireProfile, requireRoundAccess, resolvePlayer, indexForCourse } from './helpers'
 import { recalcProfile } from './whs'
 import { notifyProfiles } from './push'
 import { courseHandicap } from '../src/lib/golf'
@@ -197,91 +197,98 @@ export const create = mutation({
 export const finalize = mutation({
   args: { round_id: v.id('rounds') },
   handler: async (ctx, { round_id }) => {
-    await requireProfile(ctx)
-    const round = await ctx.db.get(round_id)
-    if (!round) return { ok: true }
-    await ctx.db.patch(round_id, { status: 'completed' })
-    if (round.is_practice) return { ok: true }
-
-    const course = await ctx.db.get(round.courseId)
-    if (!course) return { ok: true }
-
-    const [rps, scores] = await Promise.all([
-      ctx.db
-        .query('round_players')
-        .withIndex('by_round', q => q.eq('roundId', round_id))
-        .collect(),
-      ctx.db
-        .query('scores')
-        .withIndex('by_round', q => q.eq('roundId', round_id))
-        .collect(),
-    ])
-
-    for (const rp of rps) {
-      if (rp.is_guest || !rp.profileId) continue
-      const total = scores.filter(s => s.profileId === rp.profileId).reduce((a, s) => a + (s.strokes ?? 0), 0)
-      if (total === 0) continue
-
-      // WHS recalculation for this player.
-      await recalcProfile(ctx, rp.profileId)
-
-      // Course record.
-      const fresh = await ctx.db.get(round.courseId)
-      if (fresh && (!fresh.record_score || total < fresh.record_score)) {
-        await ctx.db.patch(round.courseId, {
-          record_score: total,
-          record_holder_id: rp.profileId,
-          record_date: round.date,
-        })
-      }
-    }
-
+    const { round } = await requireRoundAccess(ctx, round_id)
+    await finalizeRound(ctx, round)
     return { ok: true }
   },
 })
 
+/** Mark a round completed and run the fallout: WHS recalc + course record. */
+async function finalizeRound(ctx: MutationCtx, round: Doc<'rounds'>) {
+  await ctx.db.patch(round._id, { status: 'completed' })
+  if (round.is_practice) return
+
+  const course = await ctx.db.get(round.courseId)
+  if (!course) return
+
+  const [rps, scores] = await Promise.all([
+    ctx.db
+      .query('round_players')
+      .withIndex('by_round', q => q.eq('roundId', round._id))
+      .collect(),
+    ctx.db
+      .query('scores')
+      .withIndex('by_round', q => q.eq('roundId', round._id))
+      .collect(),
+  ])
+
+  for (const rp of rps) {
+    if (rp.is_guest || !rp.profileId) continue
+    const total = scores.filter(s => s.profileId === rp.profileId).reduce((a, s) => a + (s.strokes ?? 0), 0)
+    if (total === 0) continue
+
+    // WHS recalculation for this player.
+    await recalcProfile(ctx, rp.profileId)
+
+    // Course record.
+    const fresh = await ctx.db.get(round.courseId)
+    if (fresh && (!fresh.record_score || total < fresh.record_score)) {
+      await ctx.db.patch(round.courseId, {
+        record_score: total,
+        record_holder_id: rp.profileId,
+        record_date: round.date,
+      })
+    }
+  }
+}
+
 export const setBet = mutation({
   args: { round_id: v.id('rounds'), bet: v.union(v.string(), v.null()) },
   handler: async (ctx, { round_id, bet }) => {
-    await requireProfile(ctx)
+    await requireRoundAccess(ctx, round_id)
     await ctx.db.patch(round_id, { notes: bet || null })
     return { ok: true }
   },
 })
 
+/** Delete a round and every row that hangs off it. */
+async function deleteRoundCascade(ctx: MutationCtx, round_id: Id<'rounds'>) {
+  const byRound = async (table: 'scores' | 'round_modes' | 'round_players') =>
+    ctx.db
+      .query(table)
+      .withIndex('by_round', q => q.eq('roundId', round_id))
+      .collect()
+
+  await Promise.all((await byRound('scores')).map(s => ctx.db.delete(s._id)))
+  await Promise.all((await byRound('round_modes')).map(m => ctx.db.delete(m._id)))
+  await Promise.all((await byRound('round_players')).map(rp => ctx.db.delete(rp._id)))
+
+  const diffs = await ctx.db
+    .query('whs_differentials')
+    .filter(q => q.eq(q.field('roundId'), round_id))
+    .collect()
+  await Promise.all(diffs.map(d => ctx.db.delete(d._id)))
+
+  const tgs = await ctx.db
+    .query('tournament_groups')
+    .withIndex('by_round', q => q.eq('roundId', round_id))
+    .collect()
+  await Promise.all(tgs.map(tg => ctx.db.delete(tg._id)))
+
+  const lrs = await ctx.db
+    .query('league_rounds')
+    .withIndex('by_round', q => q.eq('roundId', round_id))
+    .collect()
+  await Promise.all(lrs.map(lr => ctx.db.delete(lr._id)))
+
+  await ctx.db.delete(round_id)
+}
+
 export const remove = mutation({
   args: { round_id: v.id('rounds') },
   handler: async (ctx, { round_id }) => {
-    await requireProfile(ctx)
-    const byRound = async (table: 'scores' | 'round_modes' | 'round_players') =>
-      ctx.db
-        .query(table)
-        .withIndex('by_round', q => q.eq('roundId', round_id))
-        .collect()
-
-    await Promise.all((await byRound('scores')).map(s => ctx.db.delete(s._id)))
-    await Promise.all((await byRound('round_modes')).map(m => ctx.db.delete(m._id)))
-    await Promise.all((await byRound('round_players')).map(rp => ctx.db.delete(rp._id)))
-
-    const diffs = await ctx.db
-      .query('whs_differentials')
-      .filter(q => q.eq(q.field('roundId'), round_id))
-      .collect()
-    await Promise.all(diffs.map(d => ctx.db.delete(d._id)))
-
-    const tgs = await ctx.db
-      .query('tournament_groups')
-      .withIndex('by_round', q => q.eq('roundId', round_id))
-      .collect()
-    await Promise.all(tgs.map(tg => ctx.db.delete(tg._id)))
-
-    const lrs = await ctx.db
-      .query('league_rounds')
-      .withIndex('by_round', q => q.eq('roundId', round_id))
-      .collect()
-    await Promise.all(lrs.map(lr => ctx.db.delete(lr._id)))
-
-    await ctx.db.delete(round_id)
+    await requireRoundAccess(ctx, round_id)
+    await deleteRoundCascade(ctx, round_id)
     return { ok: true }
   },
 })
@@ -300,30 +307,7 @@ export const internalRemove = internalMutation({
       .collect()
     const profileIds = rps.flatMap(rp => (!rp.is_guest && rp.profileId ? [rp.profileId] : []))
 
-    const byRound = async (table: 'scores' | 'round_modes' | 'round_players') =>
-      ctx.db
-        .query(table)
-        .withIndex('by_round', q => q.eq('roundId', round_id))
-        .collect()
-    await Promise.all((await byRound('scores')).map(s => ctx.db.delete(s._id)))
-    await Promise.all((await byRound('round_modes')).map(m => ctx.db.delete(m._id)))
-    await Promise.all((await byRound('round_players')).map(rp => ctx.db.delete(rp._id)))
-    const diffs = await ctx.db
-      .query('whs_differentials')
-      .filter(q => q.eq(q.field('roundId'), round_id))
-      .collect()
-    await Promise.all(diffs.map(d => ctx.db.delete(d._id)))
-    const tgs = await ctx.db
-      .query('tournament_groups')
-      .withIndex('by_round', q => q.eq('roundId', round_id))
-      .collect()
-    await Promise.all(tgs.map(tg => ctx.db.delete(tg._id)))
-    const lrs = await ctx.db
-      .query('league_rounds')
-      .withIndex('by_round', q => q.eq('roundId', round_id))
-      .collect()
-    await Promise.all(lrs.map(lr => ctx.db.delete(lr._id)))
-    await ctx.db.delete(round_id)
+    await deleteRoundCascade(ctx, round_id)
 
     // WHS indices rebuild from the players' remaining rounds.
     for (const pid of profileIds) await recalcProfile(ctx, pid)
@@ -338,5 +322,63 @@ export const internalRemove = internalMutation({
       await ctx.db.patch(round.courseId, { record_score: null, record_holder_id: null, record_date: null })
     }
     return { ok: true, players_recalced: profileIds.length }
+  },
+})
+
+const STALE_AFTER_MS = 12 * 60 * 60 * 1000
+// An empty card may mean the scores are still queued offline on a phone, so it
+// gets a much longer grace period before being treated as a false start.
+const EMPTY_DELETE_AFTER_MS = 48 * 60 * 60 * 1000
+
+/** Hourly cron: an active round with no new scores in 12h is over. With strokes
+ *  on the card it gets finalized (WHS, course record, push to its players);
+ *  an empty card gets deleted after 48h. */
+export const closeStale = internalMutation({
+  args: {},
+  handler: async ctx => {
+    const now = Date.now()
+    const active = await ctx.db
+      .query('rounds')
+      .withIndex('by_status', q => q.eq('status', 'active'))
+      .collect()
+
+    let completed = 0
+    let deleted = 0
+    for (const round of active) {
+      const scores = await ctx.db
+        .query('scores')
+        .withIndex('by_round', q => q.eq('roundId', round._id))
+        .collect()
+      const lastActivity = scores.reduce((m, s) => Math.max(m, s._creationTime), round._creationTime)
+      if (now - lastActivity < STALE_AFTER_MS) continue
+
+      const hasStrokes = scores.some(s => s.strokes != null)
+      if (!hasStrokes && now - lastActivity < EMPTY_DELETE_AFTER_MS) continue
+
+      if (hasStrokes) {
+        const [course, rps] = await Promise.all([
+          ctx.db.get(round.courseId),
+          ctx.db
+            .query('round_players')
+            .withIndex('by_round', q => q.eq('roundId', round._id))
+            .collect(),
+        ])
+        await finalizeRound(ctx, round)
+        await notifyProfiles(
+          ctx,
+          rps.flatMap(rp => (!rp.is_guest && rp.profileId ? [rp.profileId] : [])),
+          {
+            title: 'Ronda cerrada ⛳',
+            body: `Tu ronda en ${course?.name ?? 'el campo'} se ha cerrado automáticamente`,
+            url: `/scorecard?round=${round._id}`,
+          },
+        )
+        completed++
+      } else {
+        await deleteRoundCascade(ctx, round._id)
+        deleted++
+      }
+    }
+    return { completed, deleted }
   },
 })

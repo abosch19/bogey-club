@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { query, mutation } from './_generated/server'
-import { getMyProfile, requireProfile } from './helpers'
+import { getMyProfile, requireRoundAccess } from './helpers'
 
 /** All scores for a round. */
 export const forRound = query({
@@ -48,8 +48,9 @@ export const saveHole = mutation({
     scores: v.array(scoreEntry),
   },
   handler: async (ctx, { roundId, hole_number, scores }) => {
-    await requireProfile(ctx)
+    const { memberIds } = await requireRoundAccess(ctx, roundId)
     for (const sc of scores) {
+      if (!memberIds.has(sc.profileId)) throw new Error('Jugador fuera de la ronda')
       const existing = await ctx.db
         .query('scores')
         .withIndex('by_round_profile_hole', q =>

@@ -29,6 +29,25 @@ export async function requireProfile(ctx: QueryCtx): Promise<Doc<'profiles'>> {
   return profile
 }
 
+/** Round access guard: the caller must be its creator or one of its players.
+ *  Returns the round plus the registered players' profile ids, so callers can
+ *  also validate per-player payloads (e.g. saveHole). */
+export async function requireRoundAccess(
+  ctx: QueryCtx,
+  roundId: Id<'rounds'>,
+): Promise<{ me: Doc<'profiles'>; round: Doc<'rounds'>; memberIds: Set<Id<'profiles'>> }> {
+  const me = await requireProfile(ctx)
+  const round = await ctx.db.get(roundId)
+  if (!round) throw new Error('La ronda no existe')
+  const rps = await ctx.db
+    .query('round_players')
+    .withIndex('by_round', q => q.eq('roundId', roundId))
+    .collect()
+  const memberIds = new Set(rps.flatMap(rp => (rp.profileId ? [rp.profileId] : [])))
+  if (round.createdBy !== me._id && !memberIds.has(me._id)) throw new Error('No participas en esta ronda')
+  return { me, round, memberIds }
+}
+
 export async function isAdmin(ctx: QueryCtx): Promise<boolean> {
   const profile = await getMyProfile(ctx)
   return profile?.email === ADMIN_EMAIL

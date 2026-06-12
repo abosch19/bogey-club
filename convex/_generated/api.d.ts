@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as courses from "../courses.js";
+import type * as crons from "../crons.js";
 import type * as helpers from "../helpers.js";
 import type * as home from "../home.js";
 import type * as http from "../http.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   auth: typeof auth;
   courses: typeof courses;
+  crons: typeof crons;
   helpers: typeof helpers;
   home: typeof home;
   http: typeof http;
