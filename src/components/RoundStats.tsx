@@ -66,12 +66,12 @@ export function RoundStats({ players, scores, holes, myId, linkPlayers = true }:
   const grid = { display: 'grid', gridTemplateColumns: `minmax(76px, 1.1fr) repeat(${cols.length}, 1fr)` }
 
   return (
-    <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
-      <div className="px-4 py-3 border-b border-[#efebe1]">
-        <p className="font-bold text-[14px] text-[#0e1a16]">Estadísticas de la ronda</p>
+    <div className="bg-white rounded-btn border border-rule overflow-hidden">
+      <div className="px-4 py-3 border-b border-rule-soft">
+        <p className="font-bold text-[14px] text-ink">Estadísticas de la ronda</p>
       </div>
       {/* Column headers */}
-      <div className="border-b border-[#efebe1] bg-[#f4f1e9]" style={grid}>
+      <div className="border-b border-rule-soft bg-paper" style={grid}>
         <div className="py-2 px-4" />
         {cols.map(({ p }, i) => (
           <div key={p.id || i} className="py-2 px-1 text-center">
@@ -88,14 +88,14 @@ export function RoundStats({ players, scores, holes, myId, linkPlayers = true }:
         ))}
       </div>
       {/* Rows */}
-      <div className="divide-y divide-[#efebe1]">
+      <div className="divide-y divide-rule-soft">
         {rows.map(row => {
           const nums = row.vals.filter((x): x is number => x != null)
           const best = compare && nums.length > 1 ? (row.lower ? Math.min(...nums) : Math.max(...nums)) : null
           const worst = compare && nums.length > 1 ? (row.lower ? Math.max(...nums) : Math.min(...nums)) : null
           return (
             <div key={row.label} className="px-4 py-2.5" style={grid}>
-              <p className="text-[12px] text-[#6b7a72] py-0.5">{row.label}</p>
+              <p className="text-[12px] text-mute py-0.5">{row.label}</p>
               {row.vals.map((v, i) => {
                 const wins = v != null && best != null && best !== worst && v === best
                 return (

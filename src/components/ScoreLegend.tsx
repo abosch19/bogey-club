@@ -9,46 +9,46 @@ export function ScoreLegend({ viewMode }: { viewMode: ViewMode }) {
       {viewMode === 'stroke' ? (
         <>
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-full border-[1.5px] border-[#0e1a16] flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full border border-[#0e1a16]" />
+            <div className="w-4 h-4 rounded-full border-[1.5px] border-ink flex items-center justify-center">
+              <div className="w-2 h-2 rounded-full border border-ink" />
             </div>
-            <span className="text-[10px] text-[#6b7a72]">Eagle</span>
+            <span className="text-[10px] text-mute">Eagle</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-full border-[1.5px] border-[#0e1a16]" />
-            <span className="text-[10px] text-[#6b7a72]">Birdie</span>
+            <div className="w-4 h-4 rounded-full border-[1.5px] border-ink" />
+            <span className="text-[10px] text-mute">Birdie</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-[#6b7a72]">Par</span>
+            <span className="text-[10px] text-mute">Par</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-[3px] border-[1.5px] border-[#0e1a16]" />
-            <span className="text-[10px] text-[#6b7a72]">Bogey</span>
+            <div className="w-4 h-4 rounded-[3px] border-[1.5px] border-ink" />
+            <span className="text-[10px] text-mute">Bogey</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-[3px] border-[1.5px] border-[#0e1a16] flex items-center justify-center">
-              <div className="w-2 h-2 rounded-[1px] border border-[#0e1a16]" />
+            <div className="w-4 h-4 rounded-[3px] border-[1.5px] border-ink flex items-center justify-center">
+              <div className="w-2 h-2 rounded-[1px] border border-ink" />
             </div>
-            <span className="text-[10px] text-[#6b7a72]">Doble+</span>
+            <span className="text-[10px] text-mute">Doble+</span>
           </div>
         </>
       ) : viewMode === 'stableford' ? (
         <>
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-[3px] bg-[#dde7fb]" />
-            <span className="text-[10px] text-[#6b7a72]">3-4 pts</span>
+            <div className="w-4 h-4 rounded-[3px] bg-blue-light" />
+            <span className="text-[10px] text-mute">3-4 pts</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-[3px] bg-[#d9eedd]" />
-            <span className="text-[10px] text-[#6b7a72]">2 pts</span>
+            <div className="w-4 h-4 rounded-[3px] bg-accent-light" />
+            <span className="text-[10px] text-mute">2 pts</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-[3px] bg-[#f6e6c4]" />
-            <span className="text-[10px] text-[#6b7a72]">1 pt</span>
+            <div className="w-4 h-4 rounded-[3px] bg-amber-light" />
+            <span className="text-[10px] text-mute">1 pt</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-[3px] bg-[#fadcd6]" />
-            <span className="text-[10px] text-[#6b7a72]">0 pts</span>
+            <div className="w-4 h-4 rounded-[3px] bg-red-light" />
+            <span className="text-[10px] text-mute">0 pts</span>
           </div>
         </>
       ) : null}

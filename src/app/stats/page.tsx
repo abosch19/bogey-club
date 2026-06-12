@@ -1,3 +1,4 @@
+import { PageSkeleton } from '@/components/ui/skeleton'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from 'convex/react'
@@ -80,9 +81,9 @@ function playerPhrase(wins: number, losses: number): string {
 }
 
 const emptyState = (text: string) => (
-  <div className="bg-white rounded-[16px] p-6 border border-[#e5e0d4] text-center">
-    <p className="text-[#6b7a72] text-[14px]">{text}</p>
-    <Link to="/round/course" className="mt-3 inline-block text-[#1f8a5b] font-semibold text-[13px]">
+  <div className="bg-white rounded-btn p-6 border border-rule text-center">
+    <p className="text-mute text-[14px]">{text}</p>
+    <Link to="/round/course" className="mt-3 inline-block text-accent font-semibold text-[13px]">
       Empezar ronda →
     </Link>
   </div>
@@ -211,12 +212,7 @@ export default function StatsPage() {
       .sort((a, b) => b.rounds - a.rounds)
   })()
 
-  if (data === undefined || me === undefined)
-    return (
-      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
-      </div>
-    )
+  if (data === undefined || me === undefined) return <PageSkeleton rows={4} />
 
   // Build derived data from the single stats query
   const hcpIndex: number | null =
@@ -287,13 +283,13 @@ export default function StatsPage() {
           : '¡El récord de derrotas también es un récord!'
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] pb-28">
+    <div className="min-h-screen bg-paper pb-28">
       {/* Header sticky */}
       <div
-        className="sticky top-0 bg-[#f4f1e9]/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
+        className="sticky top-0 bg-paper/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-rule"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
       >
-        <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16] mb-2">Estadísticas</h1>
+        <h1 className="text-[26px] font-black tracking-tight text-ink mb-2">Estadísticas</h1>
         <Segmented options={SECTIONS} value={section} onChange={setSection} className="mb-2" />
         {/* Golf / P&P filter — applies to every stat */}
         <Segmented options={COURSE_TYPES} value={courseType} onChange={setCourseType} color="#1f8a5b" />
@@ -493,10 +489,10 @@ function GeneralSection({
                       : null,
                 },
               ].map(s => (
-                <div key={s.label} className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4]">
-                  <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide">{s.label}</p>
+                <div key={s.label} className="bg-white rounded-btn p-3.5 border border-rule">
+                  <p className="font-mono text-[9px] text-mute uppercase tracking-wide">{s.label}</p>
                   <div className="flex items-baseline gap-1.5 mt-1">
-                    <p className="text-[22px] font-black text-[#0e1a16] leading-none">{s.value}</p>
+                    <p className="text-[22px] font-black text-ink leading-none">{s.value}</p>
                     {s.trend && (
                       <span
                         className="font-mono text-[10px] font-bold"
@@ -507,15 +503,15 @@ function GeneralSection({
                       </span>
                     )}
                   </div>
-                  {s.sub && <p className="text-[10px] text-[#6b7a72] mt-0.5">{s.sub}</p>}
+                  {s.sub && <p className="text-[10px] text-mute mt-0.5">{s.sub}</p>}
                 </div>
               ))
             })()}
           </div>
 
           {/* Score distribution bars */}
-          <div className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
-            <p className="font-bold text-[14px] text-[#0e1a16] mb-3">Distribución de resultados</p>
+          <div className="bg-white rounded-btn p-4 border border-rule">
+            <p className="font-bold text-[14px] text-ink mb-3">Distribución de resultados</p>
             {[
               { label: 'Birdie o mejor', count: totalBirdies, color: '#2a6fdb', bg: '#dde7fb' },
               { label: 'Par', count: totalPars, color: '#1f8a5b', bg: '#d9eedd' },
@@ -523,7 +519,7 @@ function GeneralSection({
               { label: 'Doble +', count: totalDoubles, color: '#a83a25', bg: '#fadcd6' },
             ].map(s => (
               <div key={s.label} className="flex items-center gap-3 mb-2">
-                <p className="text-[12px] text-[#6b7a72] w-28 flex-shrink-0">{s.label}</p>
+                <p className="text-[12px] text-mute w-28 flex-shrink-0">{s.label}</p>
                 <div className="flex-1 h-5 rounded-full overflow-hidden" style={{ backgroundColor: '#f4f1e9' }}>
                   <div
                     className="h-full rounded-full transition-all"
@@ -543,7 +539,7 @@ function GeneralSection({
 
           {/* Recent rounds */}
           <div>
-            <h2 className="text-[14px] font-bold text-[#0e1a16] mb-2">Historial reciente</h2>
+            <h2 className="text-[14px] font-bold text-ink mb-2">Historial reciente</h2>
             <div className="space-y-2">
               {rounds.slice(0, 6).map(r => {
                 const delta = r.total - r.real_par
@@ -552,27 +548,27 @@ function GeneralSection({
                     key={r.id}
                     to={`/scorecard?round=${r.id}`}
                     onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
-                    className="bg-white rounded-[16px] p-3.5 border flex items-center gap-3 block"
+                    className="bg-white rounded-btn p-3.5 border flex items-center gap-3 block"
                     style={{ borderColor: r.total === bestScore ? '#e8b75a' : '#e5e0d4' }}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-[13px] text-[#0e1a16] truncate">{r.course_name}</p>
+                        <p className="font-bold text-[13px] text-ink truncate">{r.course_name}</p>
                         {r.total === bestScore && (
-                          <span className="font-mono text-[8px] bg-[#f6e6c4] text-[#9b6e1a] px-1.5 py-0.5 rounded-full">
+                          <span className="font-mono text-[8px] bg-amber-light text-amber-dark px-1.5 py-0.5 rounded-full">
                             PB
                           </span>
                         )}
                         {r.won && (
-                          <span className="font-mono text-[8px] bg-[#d9eedd] text-[#1f8a5b] px-1.5 py-0.5 rounded-full">
+                          <span className="font-mono text-[8px] bg-accent-light text-accent px-1.5 py-0.5 rounded-full">
                             WIN
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-[#6b7a72]">{formatDate(r.date)}</p>
+                      <p className="text-[11px] text-mute">{formatDate(r.date)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-mono text-[18px] font-black text-[#0e1a16]">{r.total}</p>
+                      <p className="font-mono text-[18px] font-black text-ink">{r.total}</p>
                       <p
                         className="font-mono text-[10px] font-bold"
                         style={{ color: delta <= 0 ? '#1f8a5b' : '#9b6e1a' }}
@@ -627,8 +623,8 @@ function HoyosSection({ rounds }: { rounds: RoundStat[] }) {
         <>
           {/* Par type breakdown */}
           {filteredParStats.map(ps => (
-            <div key={ps.par} className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#efebe1]">
+            <div key={ps.par} className="bg-white rounded-btn border border-rule overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-rule-soft">
                 <div className="flex items-center gap-3">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center font-black text-[16px] text-white"
@@ -637,13 +633,13 @@ function HoyosSection({ rounds }: { rounds: RoundStat[] }) {
                     P{ps.par}
                   </div>
                   <div>
-                    <p className="font-bold text-[14px] text-[#0e1a16]">Par {ps.par}</p>
-                    <p className="font-mono text-[10px] text-[#6b7a72]">{ps.total} hoyos jugados</p>
+                    <p className="font-bold text-[14px] text-ink">Par {ps.par}</p>
+                    <p className="font-mono text-[10px] text-mute">{ps.total} hoyos jugados</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Media</p>
-                  <p className="font-mono text-[24px] font-black text-[#0e1a16] leading-none">{ps.avg.toFixed(1)}</p>
+                  <p className="font-mono text-[9px] text-mute uppercase">Media</p>
+                  <p className="font-mono text-[24px] font-black text-ink leading-none">{ps.avg.toFixed(1)}</p>
                   <p
                     className="font-mono text-[10px] font-bold"
                     style={{ color: ps.avg - ps.par <= 0 ? '#1f8a5b' : '#9b6e1a' }}
@@ -654,7 +650,7 @@ function HoyosSection({ rounds }: { rounds: RoundStat[] }) {
                 </div>
               </div>
               {/* Distribution */}
-              <div className="grid grid-cols-4 divide-x divide-[#efebe1]">
+              <div className="grid grid-cols-4 divide-x divide-rule-soft">
                 {[
                   { label: 'Birdie-', count: ps.birdies, color: '#2a6fdb' },
                   { label: 'Par', count: ps.pars, color: '#1f8a5b' },
@@ -662,13 +658,11 @@ function HoyosSection({ rounds }: { rounds: RoundStat[] }) {
                   { label: 'Dbl+', count: ps.doubles, color: '#a83a25' },
                 ].map(d => (
                   <div key={d.label} className="py-3 text-center">
-                    <p className="font-mono text-[9px] text-[#6b7a72] uppercase">{d.label}</p>
+                    <p className="font-mono text-[9px] text-mute uppercase">{d.label}</p>
                     <p className="font-mono text-[18px] font-black mt-0.5 leading-none" style={{ color: d.color }}>
                       {d.count}
                     </p>
-                    <p className="font-mono text-[9px] text-[#6b7a72] mt-0.5">
-                      {Math.round((d.count / ps.total) * 100)}%
-                    </p>
+                    <p className="font-mono text-[9px] text-mute mt-0.5">{Math.round((d.count / ps.total) * 100)}%</p>
                   </div>
                 ))}
               </div>
@@ -678,7 +672,7 @@ function HoyosSection({ rounds }: { rounds: RoundStat[] }) {
       ) : (
         emptyState('Necesitas más rondas para ver estadísticas por tipo de hoyo.')
       )}
-      <p className="font-mono text-[10px] text-[#6b7a72] text-center">
+      <p className="font-mono text-[10px] text-mute text-center">
         {filteredRounds.length} ronda{filteredRounds.length !== 1 ? 's' : ''} analizadas
       </p>
     </div>
@@ -724,13 +718,13 @@ function SocialWinSummary({ comparePlayerId, companions, totalWins, n, winPhrase
               {selPlayer && (
                 <div className="mt-1">
                   <p className="font-mono text-[9px] text-white/50 uppercase">DERROTAS</p>
-                  <p className="text-[20px] font-black text-[#fadcd6] leading-none">{losses}</p>
+                  <p className="text-[20px] font-black text-red-light leading-none">{losses}</p>
                 </div>
               )}
             </div>
           )}
         </div>
-        <div className="bg-white/10 rounded-[12px] px-3 py-2">
+        <div className="bg-white/10 rounded-field px-3 py-2">
           <p className="text-white text-[13px] font-semibold">{phrase}</p>
         </div>
       </div>
@@ -746,7 +740,7 @@ type SocialPeriodSelectorProps = {
 function SocialPeriodSelector({ socialPeriod, setSocialPeriod }: SocialPeriodSelectorProps) {
   return (
     <div className="flex gap-2">
-      <div className="flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] flex-1">
+      <div className="flex gap-1 bg-white rounded-full p-1 border border-rule flex-1">
         {(
           [
             ['all', 'Todas'],
@@ -820,14 +814,14 @@ function SocialMetricsCard({
     : null
 
   return (
-    <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+    <div className="bg-white rounded-btn border border-rule overflow-hidden">
       {/* Header con selector */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-[#efebe1]">
-        <p className="font-bold text-[14px] text-[#0e1a16] flex-1">Métricas</p>
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-rule-soft">
+        <p className="font-bold text-[14px] text-ink flex-1">Métricas</p>
         <select
           value={comparePlayerId ?? ''}
           onChange={e => setComparePlayerId(e.target.value || null)}
-          className="text-[12px] font-semibold text-[#0e1a16] bg-[#f4f1e9] border border-[#e5e0d4] rounded-full px-3 py-1.5 outline-none max-w-[140px]"
+          className="text-[12px] font-semibold text-ink bg-paper border border-rule rounded-full px-3 py-1.5 outline-none max-w-[140px]"
         >
           <option value="">Solo yo</option>
           {companions.map(c => (
@@ -842,10 +836,10 @@ function SocialMetricsCard({
         (() => {
           const other = companions.find(c => c.id === comparePlayerId)
           return other ? (
-            <div className="grid grid-cols-3 border-b border-[#efebe1] bg-[#f4f1e9]">
+            <div className="grid grid-cols-3 border-b border-rule-soft bg-paper">
               <div className="py-2 px-4" />
               <div className="py-2 px-2 text-center">
-                <p className="font-mono text-[9px] text-[#1f8a5b] font-bold uppercase">Tú</p>
+                <p className="font-mono text-[9px] text-accent font-bold uppercase">Tú</p>
               </div>
               <div className="py-2 px-2 text-center">
                 <p
@@ -957,7 +951,7 @@ function SocialMetricsCard({
         ]
 
         return (
-          <div className="divide-y divide-[#efebe1]">
+          <div className="divide-y divide-rule-soft">
             {rows.map(row => {
               const mineWins =
                 other &&
@@ -974,7 +968,7 @@ function SocialMetricsCard({
                   key={row.label}
                   className={`${other ? 'grid grid-cols-3' : 'flex items-center justify-between'} px-4 py-2.5`}
                 >
-                  <p className="text-[12px] text-[#6b7a72] py-0.5">{row.label}</p>
+                  <p className="text-[12px] text-mute py-0.5">{row.label}</p>
                   {other ? (
                     <>
                       <div
@@ -1001,7 +995,7 @@ function SocialMetricsCard({
                       </div>
                     </>
                   ) : (
-                    <p className="font-mono text-[14px] font-black text-[#0e1a16]">{row.mine}</p>
+                    <p className="font-mono text-[14px] font-black text-ink">{row.mine}</p>
                   )}
                 </div>
               )
@@ -1074,15 +1068,15 @@ function SocialSection({
 function SocialNemesis({ nemesis }: { nemesis: Companion | null }) {
   if (!nemesis || nemesis.losses <= 0) return null
   return (
-    <div className="bg-white rounded-[16px] p-4 border border-[#fadcd6]">
-      <p className="font-mono text-[9px] text-[#a83a25] uppercase tracking-wide mb-2">Tu némesis</p>
+    <div className="bg-white rounded-btn p-4 border border-red-light">
+      <p className="font-mono text-[9px] text-red-dark uppercase tracking-wide mb-2">Tu némesis</p>
       <div className="flex items-center gap-3">
         <Avatar name={nemesis.name} size={44} />
         <div className="flex-1">
-          <p className="font-bold text-[15px] text-[#0e1a16]">{nemesis.name}</p>
-          <p className="text-[12px] text-[#6b7a72]">{nemesis.rounds} rondas juntos</p>
+          <p className="font-bold text-[15px] text-ink">{nemesis.name}</p>
+          <p className="text-[12px] text-mute">{nemesis.rounds} rondas juntos</p>
         </div>
-        <p className="text-[13px] text-[#a83a25] font-semibold">te ganó {nemesis.losses}×</p>
+        <p className="text-[13px] text-red-dark font-semibold">te ganó {nemesis.losses}×</p>
       </div>
     </div>
   )
@@ -1091,17 +1085,17 @@ function SocialNemesis({ nemesis }: { nemesis: Companion | null }) {
 function SocialHeadToHead({ companions }: { companions: Companion[] }) {
   return (
     <div>
-      <h2 className="text-[14px] font-bold text-[#0e1a16] mb-2">Head-to-head</h2>
+      <h2 className="text-[14px] font-bold text-ink mb-2">Head-to-head</h2>
       <div className="space-y-2">
         {companions.map(c => {
           const total = c.wins + c.draws + c.losses
           return (
-            <div key={c.id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
+            <div key={c.id} className="bg-white rounded-btn p-4 border border-rule">
               <div className="flex items-center gap-3 mb-3">
                 <Avatar name={c.name} size={40} />
                 <div className="flex-1">
-                  <p className="font-bold text-[14px] text-[#0e1a16]">{c.name}</p>
-                  <p className="text-[11px] text-[#6b7a72]">
+                  <p className="font-bold text-[14px] text-ink">{c.name}</p>
+                  <p className="text-[11px] text-mute">
                     {c.rounds} ronda{c.rounds !== 1 ? 's' : ''} juntos
                   </p>
                 </div>
@@ -1113,7 +1107,7 @@ function SocialHeadToHead({ companions }: { companions: Companion[] }) {
                   { label: 'E', count: c.draws, color: '#6b7a72', bg: '#f4f1e9' },
                   { label: 'D', count: c.losses, color: '#a83a25', bg: '#fadcd6' },
                 ].map(d => (
-                  <div key={d.label} className="rounded-[12px] py-2.5 text-center" style={{ backgroundColor: d.bg }}>
+                  <div key={d.label} className="rounded-field py-2.5 text-center" style={{ backgroundColor: d.bg }}>
                     <p className="font-mono text-[9px] uppercase tracking-wide font-bold" style={{ color: d.color }}>
                       {d.label}
                     </p>
@@ -1168,7 +1162,7 @@ function CamposSection({ rounds, courseStats }: { rounds: RoundStat[]; courseSta
           })
 
           const scoreChip = (strokes: number | null, par: number) => {
-            if (!strokes) return <span className="text-[#c4bfb5]">–</span>
+            if (!strokes) return <span className="text-faint">–</span>
             const d = strokes - par
             const bg = d <= -1 ? '#dde7fb' : d === 0 ? '#d9eedd' : d === 1 ? '#f6e6c4' : '#fadcd6'
             const tx = d <= -1 ? '#2a6fdb' : d === 0 ? '#1f8a5b' : d === 1 ? '#9b6e1a' : '#a83a25'
@@ -1200,7 +1194,7 @@ function CamposSection({ rounds, courseStats }: { rounds: RoundStat[]; courseSta
               <button
                 type="button"
                 onClick={() => setSelectedCourse(null)}
-                className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]"
+                className="flex items-center gap-1.5 text-ink font-semibold text-[13px]"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                   <path
@@ -1215,8 +1209,8 @@ function CamposSection({ rounds, courseStats }: { rounds: RoundStat[]; courseSta
               </button>
 
               {/* Course header */}
-              <div className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
-                <p className="font-black text-[17px] text-[#0e1a16]">{c.name}</p>
+              <div className="bg-white rounded-btn p-4 border border-rule">
+                <p className="font-black text-[17px] text-ink">{c.name}</p>
                 <div className="flex gap-4 mt-2">
                   {[
                     ['Mejor', c.best],
@@ -1225,8 +1219,8 @@ function CamposSection({ rounds, courseStats }: { rounds: RoundStat[]; courseSta
                     ...(c.record ? [['Récord', c.record]] : []),
                   ].map(([l, v]) => (
                     <div key={String(l)}>
-                      <p className="font-mono text-[9px] text-[#6b7a72] uppercase">{l}</p>
-                      <p className="font-mono text-[16px] font-black text-[#0e1a16]">{v}</p>
+                      <p className="font-mono text-[9px] text-mute uppercase">{l}</p>
+                      <p className="font-mono text-[16px] font-black text-ink">{v}</p>
                     </div>
                   ))}
                 </div>
@@ -1239,9 +1233,9 @@ function CamposSection({ rounds, courseStats }: { rounds: RoundStat[]; courseSta
                     { label: 'Última vuelta', dist: lastDist, score: lastRound.total },
                     { label: 'Mejor vuelta', dist: bestDist, score: bestRound?.total ?? c.best },
                   ].map(v => (
-                    <div key={v.label} className="bg-white rounded-[16px] p-3 border border-[#e5e0d4]">
-                      <p className="font-mono text-[9px] text-[#6b7a72] uppercase mb-1">{v.label}</p>
-                      <p className="font-mono text-[22px] font-black text-[#0e1a16] mb-2">{v.score}</p>
+                    <div key={v.label} className="bg-white rounded-btn p-3 border border-rule">
+                      <p className="font-mono text-[9px] text-mute uppercase mb-1">{v.label}</p>
+                      <p className="font-mono text-[22px] font-black text-ink mb-2">{v.score}</p>
                       {[
                         { label: 'Birdie-', count: v.dist.birdies, color: '#2a6fdb' },
                         { label: 'Par', count: v.dist.pars, color: '#1f8a5b' },
@@ -1249,7 +1243,7 @@ function CamposSection({ rounds, courseStats }: { rounds: RoundStat[]; courseSta
                         { label: 'Dbl+', count: v.dist.doubles, color: '#a83a25' },
                       ].map(d => (
                         <div key={d.label} className="flex items-center justify-between py-0.5">
-                          <span className="text-[10px] text-[#6b7a72]">{d.label}</span>
+                          <span className="text-[10px] text-mute">{d.label}</span>
                           <span className="font-mono text-[11px] font-bold" style={{ color: d.color }}>
                             {d.count}
                           </span>
@@ -1262,29 +1256,27 @@ function CamposSection({ rounds, courseStats }: { rounds: RoundStat[]; courseSta
 
               {/* Hole table: rows = holes, cols = my last / my best */}
               {holeRows.length > 0 && (
-                <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+                <div className="bg-white rounded-btn border border-rule overflow-hidden">
                   <table className="w-full text-center">
                     <thead>
-                      <tr className="border-b border-[#efebe1] bg-[#f4f1e9]">
-                        <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-3 text-left uppercase">Hoyo</td>
-                        <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2 uppercase">Par</td>
-                        <td className="font-mono text-[9px] text-[#6b7a72] py-2 px-2 uppercase">Última</td>
-                        <td className="font-mono text-[9px] text-[#1f8a5b] py-2 px-2 uppercase">Mi mejor</td>
-                        {c.record && (
-                          <td className="font-mono text-[9px] text-[#e8b75a] py-2 px-2 uppercase">Récord</td>
-                        )}
+                      <tr className="border-b border-rule-soft bg-paper">
+                        <td className="font-mono text-[9px] text-mute py-2 px-3 text-left uppercase">Hoyo</td>
+                        <td className="font-mono text-[9px] text-mute py-2 px-2 uppercase">Par</td>
+                        <td className="font-mono text-[9px] text-mute py-2 px-2 uppercase">Última</td>
+                        <td className="font-mono text-[9px] text-accent py-2 px-2 uppercase">Mi mejor</td>
+                        {c.record && <td className="font-mono text-[9px] text-amber py-2 px-2 uppercase">Récord</td>}
                       </tr>
                     </thead>
                     <tbody>
                       {holeRows.map(h => (
-                        <tr key={h.hole_number} className="border-t border-[#efebe1]">
-                          <td className="font-mono text-[12px] font-bold text-[#0e1a16] py-2 px-3 text-left">
+                        <tr key={h.hole_number} className="border-t border-rule-soft">
+                          <td className="font-mono text-[12px] font-bold text-ink py-2 px-3 text-left">
                             {h.hole_number}
                           </td>
-                          <td className="font-mono text-[11px] text-[#6b7a72] py-2 px-2">{h.par}</td>
+                          <td className="font-mono text-[11px] text-mute py-2 px-2">{h.par}</td>
                           <td className="py-2 px-2">{scoreChip(h.my_last, h.par)}</td>
                           <td className="py-2 px-2">{scoreChip(h.my_best, h.par)}</td>
-                          {c.record && <td className="font-mono text-[11px] text-[#e8b75a] py-2 px-2 font-bold">–</td>}
+                          {c.record && <td className="font-mono text-[11px] text-amber py-2 px-2 font-bold">–</td>}
                         </tr>
                       ))}
                     </tbody>
@@ -1308,22 +1300,22 @@ function CamposSection({ rounds, courseStats }: { rounds: RoundStat[]; courseSta
                 type="button"
                 key={c.name}
                 onClick={() => setSelectedCourse(c.name)}
-                className="w-full text-left bg-white rounded-[16px] p-4 border border-[#e5e0d4] active:scale-[0.99] transition block"
+                className="w-full text-left bg-white rounded-btn p-4 border border-rule active:scale-[0.99] transition block"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0 pr-3">
                     <div className="flex items-center gap-2">
-                      <p className="font-bold text-[14px] text-[#0e1a16] leading-tight truncate">{c.name}</p>
-                      {trend === 'up' && <span className="text-[#1f8a5b] text-[14px]">↑</span>}
-                      {trend === 'down' && <span className="text-[#a83a25] text-[14px]">↓</span>}
+                      <p className="font-bold text-[14px] text-ink leading-tight truncate">{c.name}</p>
+                      {trend === 'up' && <span className="text-accent text-[14px]">↑</span>}
+                      {trend === 'down' && <span className="text-red-dark text-[14px]">↓</span>}
                     </div>
-                    <p className="font-mono text-[10px] text-[#6b7a72] mt-0.5">
+                    <p className="font-mono text-[10px] text-mute mt-0.5">
                       {c.rounds} ronda{c.rounds !== 1 ? 's' : ''} · Par {c.par}
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Mejor</p>
-                    <p className="font-mono text-[22px] font-black text-[#0e1a16] leading-none">{c.best}</p>
+                    <p className="font-mono text-[9px] text-mute uppercase">Mejor</p>
+                    <p className="font-mono text-[22px] font-black text-ink leading-none">{c.best}</p>
                     {deltaBest !== null && (
                       <p
                         className="font-mono text-[10px] font-bold"
@@ -1335,20 +1327,20 @@ function CamposSection({ rounds, courseStats }: { rounds: RoundStat[]; courseSta
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-2 border-t border-[#efebe1]">
+                <div className="flex gap-3 pt-2 border-t border-rule-soft">
                   <div>
-                    <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Media</p>
-                    <p className="font-mono text-[14px] font-bold text-[#0e1a16]">{c.avg}</p>
+                    <p className="font-mono text-[9px] text-mute uppercase">Media</p>
+                    <p className="font-mono text-[14px] font-bold text-ink">{c.avg}</p>
                   </div>
                   {c.record && (
                     <div>
-                      <p className="font-mono text-[9px] text-[#6b7a72] uppercase">Récord</p>
-                      <p className="font-mono text-[14px] font-bold text-[#e8b75a]">{c.record}</p>
+                      <p className="font-mono text-[9px] text-mute uppercase">Récord</p>
+                      <p className="font-mono text-[14px] font-bold text-amber">{c.record}</p>
                     </div>
                   )}
                   {vsRecord !== null && (
                     <div>
-                      <p className="font-mono text-[9px] text-[#6b7a72] uppercase">vs Récord</p>
+                      <p className="font-mono text-[9px] text-mute uppercase">vs Récord</p>
                       <p
                         className="font-mono text-[14px] font-bold"
                         style={{ color: vsRecord === 0 ? '#1f8a5b' : '#6b7a72' }}
@@ -1360,13 +1352,13 @@ function CamposSection({ rounds, courseStats }: { rounds: RoundStat[]; courseSta
                   {/* Last 3 scores trend */}
                   {c.last3.length >= 2 && (
                     <div className="ml-auto">
-                      <p className="font-mono text-[9px] text-[#6b7a72] uppercase mb-1">Últimas</p>
+                      <p className="font-mono text-[9px] text-mute uppercase mb-1">Últimas</p>
                       <div className="flex gap-1 items-end">
                         {c.last3
                           .slice(0, 3)
                           .reverse()
                           .map((s, i) => (
-                            <span key={`${s}-${i}`} className="font-mono text-[11px] font-bold text-[#0e1a16]">
+                            <span key={`${s}-${i}`} className="font-mono text-[11px] font-bold text-ink">
                               {s}
                             </span>
                           ))}
@@ -1374,7 +1366,7 @@ function CamposSection({ rounds, courseStats }: { rounds: RoundStat[]; courseSta
                     </div>
                   )}
                 </div>
-                <p className="font-mono text-[9px] text-[#1f8a5b] mt-2">Ver detalle →</p>
+                <p className="font-mono text-[9px] text-accent mt-2">Ver detalle →</p>
               </button>
             )
           })

@@ -26,6 +26,42 @@
   --c-radius: 22px;
   --c-rule: #e5e0d4;
   --c-rule-soft: #efebe1;
+  --c-amber-light: #f6e6c4;
+  --c-amber-dark: #9b6e1a;
+  --c-red-light: #fadcd6;
+  --c-red-dark: #a83a25;
+  --c-faint: #c4bfb5;
+}
+
+/* Named utilities for the palette above (text-ink, bg-paper, border-rule…).
+   `inline` keeps them as live var() references, so retheming only touches :root. */
+@theme inline {
+  --color-ink: var(--c-ink);
+  --color-mute: var(--c-mute);
+  --color-paper: var(--c-bg);
+  --color-accent: var(--c-accent);
+  --color-accent-light: var(--c-accent-light);
+  --color-blue: var(--c-blue);
+  --color-blue-light: var(--c-blue-light);
+  --color-amber: var(--c-amber);
+  --color-red: var(--c-red);
+  --color-rule: var(--c-rule);
+  --color-rule-soft: var(--c-rule-soft);
+  --color-amber-light: var(--c-amber-light);
+  --color-amber-dark: var(--c-amber-dark);
+  --color-red-light: var(--c-red-light);
+  --color-red-dark: var(--c-red-dark);
+  --color-faint: var(--c-faint);
+}
+
+/* Surface scales: rounded-card/btn/field, shadow-card/hero/float. */
+@theme {
+  --radius-card: 22px;
+  --radius-btn: 16px;
+  --radius-field: 12px;
+  --shadow-card: 0 14px 34px rgba(14, 26, 22, 0.08);
+  --shadow-hero: 0 14px 34px rgba(14, 26, 22, 0.28);
+  --shadow-float: 0 10px 34px rgba(14, 26, 22, 0.22), 0 2px 8px rgba(14, 26, 22, 0.08);
 }
 
 * {
@@ -55,6 +91,17 @@ body {
 }
 .safe-bottom {
   padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+
+/* Dark hero surface (HeroCard): depth gradient, pinstripes and diagonal sheen. */
+.hero-card {
+  background: linear-gradient(140deg, #0a1511 0%, var(--c-ink) 46%, #17291f 100%);
+}
+.hero-pinstripes {
+  background-image: repeating-linear-gradient(135deg, #fff 0 1px, transparent 1px 9px);
+}
+.hero-shine {
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.07) 46%, transparent 58%);
 }
 
 /* Primary action: green gradient with a soft glow. */

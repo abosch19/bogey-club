@@ -26,7 +26,7 @@ type FieldProps = {
 function Field({ id, label, value, type = 'text', inputMode, placeholder, onChange }: FieldProps) {
   return (
     <div>
-      <label htmlFor={id} className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide">
+      <label htmlFor={id} className="block text-[12px] font-semibold text-mute mb-1.5 uppercase tracking-wide">
         {label}
       </label>
       <input
@@ -36,7 +36,7 @@ function Field({ id, label, value, type = 'text', inputMode, placeholder, onChan
         value={value}
         placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
-        className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+        className="w-full border border-rule rounded-btn px-4 py-3 text-[14px] text-ink bg-white placeholder-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition"
       />
     </div>
   )
@@ -143,9 +143,9 @@ function EditProfileForm({ profile }: { profile: Profile }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] pb-8">
+    <div className="min-h-screen bg-paper pb-8">
       <div
-        className="sticky top-0 bg-[#f4f1e9]/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
+        className="sticky top-0 bg-paper/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-rule"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
       >
         <div className="flex items-center gap-3">
@@ -153,7 +153,7 @@ function EditProfileForm({ profile }: { profile: Profile }) {
             type="button"
             onClick={handleBack}
             aria-label="Volver al perfil"
-            className="w-10 h-10 rounded-full bg-white border border-[#e5e0d4] flex items-center justify-center active:opacity-70"
+            className="w-10 h-10 rounded-full bg-white border border-rule flex items-center justify-center active:opacity-70"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
@@ -166,20 +166,20 @@ function EditProfileForm({ profile }: { profile: Profile }) {
             </svg>
           </button>
           <div>
-            <p className="text-[11px] font-mono uppercase tracking-wide text-[#6b7a72]">Carnet</p>
-            <h1 className="text-[24px] font-black tracking-tight text-[#0e1a16] leading-none">Editar perfil</h1>
+            <p className="text-[11px] font-mono uppercase tracking-wide text-mute">Carnet</p>
+            <h1 className="text-[24px] font-black tracking-tight text-ink leading-none">Editar perfil</h1>
           </div>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="px-[14px] pt-4 space-y-3">
-        <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4">
+        <div className="bg-white rounded-card border border-rule p-4">
           <div className="flex items-center gap-3">
             <div className="relative">
               <Avatar name={fullName} src={profile.avatar_url} size={64} />
               <label
                 htmlFor="profile-avatar"
-                className="absolute -right-1 -bottom-1 w-8 h-8 rounded-full bg-[#1f8a5b] text-white border-[3px] border-white flex items-center justify-center shadow-[0_4px_12px_rgba(31,138,91,0.35)] active:scale-95 transition"
+                className="absolute -right-1 -bottom-1 w-8 h-8 rounded-full bg-accent text-white border-[3px] border-white flex items-center justify-center shadow-[0_4px_12px_rgba(31,138,91,0.35)] active:scale-95 transition"
                 aria-label="Cambiar imagen del avatar"
               >
                 {uploadingAvatar ? (
@@ -211,16 +211,16 @@ function EditProfileForm({ profile }: { profile: Profile }) {
               />
             </div>
             <div>
-              <p className="text-[16px] font-black text-[#0e1a16]">{fullName}</p>
-              <p className="text-[12px] text-[#6b7a72]">{profile.email}</p>
-              <p className="text-[11px] text-[#6b7a72] mt-1">
+              <p className="text-[16px] font-black text-ink">{fullName}</p>
+              <p className="text-[12px] text-mute">{profile.email}</p>
+              <p className="text-[11px] text-mute mt-1">
                 {uploadingAvatar ? 'Subiendo imagen...' : 'JPG, PNG o WebP hasta 5 MB'}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4 space-y-4">
+        <div className="bg-white rounded-card border border-rule p-4 space-y-4">
           <Field
             id="profile-name"
             label="Nombre"
@@ -237,12 +237,12 @@ function EditProfileForm({ profile }: { profile: Profile }) {
           />
         </div>
 
-        {error && <p className="text-[13px] text-[#c6432d] bg-[#fadcd6] rounded-[12px] px-4 py-3">{error}</p>}
+        {error && <p className="text-[13px] text-red bg-red-light rounded-field px-4 py-3">{error}</p>}
 
         <button
           type="submit"
           disabled={saving}
-          className="w-full py-3.5 rounded-[16px] font-semibold text-[15px] text-white transition active:scale-[0.98] disabled:opacity-60 btn-glow"
+          className="w-full py-3.5 rounded-btn font-semibold text-[15px] text-white transition active:scale-[0.98] disabled:opacity-60 btn-glow"
         >
           {saving ? 'Guardando...' : 'Guardar cambios'}
         </button>
@@ -256,8 +256,8 @@ export default function EditProfilePage() {
 
   if (profile === undefined || profile === null) {
     return (
-      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     )
   }

@@ -39,11 +39,11 @@ export function ScoreTable({
   const blockPar = group.reduce((a, h) => a + h.par, 0)
   const label = gi === 0 && groupsCount > 1 ? 'OUT' : groupsCount > 1 ? 'IN' : 'TOT'
   return (
-    <div className="rounded-[22px] border border-[#ded8cb] bg-white p-1.5 shadow-[0_12px_28px_rgba(14,26,22,0.07)] overflow-hidden">
+    <div className="rounded-card border border-[#ded8cb] bg-white p-1.5 shadow-card overflow-hidden">
       <div className="overflow-x-auto">
         {/* table-fixed + colgroup: hole columns share the width equally, so OUT
             and IN stay aligned whether or not a hole has a score yet. */}
-        <table className="w-full text-center table-fixed overflow-hidden rounded-[16px]">
+        <table className="w-full text-center table-fixed overflow-hidden rounded-btn">
           <colgroup>
             <col style={{ width: 36 }} />
             {group.map(h => (
@@ -52,7 +52,7 @@ export function ScoreTable({
             <col style={{ width: 42 }} />
           </colgroup>
           <thead>
-            <tr className="bg-[#0e1a16]">
+            <tr className="bg-ink">
               <td className="font-mono text-[9px] text-white/55 py-2 px-1.5 text-left rounded-tl-[14px]">H</td>
               {group.map(h => (
                 <td key={h.hole_number} className="font-mono text-[10px] font-bold text-white py-2 px-0">
@@ -62,18 +62,18 @@ export function ScoreTable({
               <td className="font-mono text-[8px] text-white/55 py-2 px-1 rounded-tr-[14px]">{label}</td>
             </tr>
             <tr className="border-b border-[#e9e4d8] bg-[#fbfaf6]">
-              <td className="font-mono text-[8px] text-[#6b7a72] px-1.5 py-1 text-left">PAR</td>
+              <td className="font-mono text-[8px] text-mute px-1.5 py-1 text-left">PAR</td>
               {group.map(h => (
-                <td key={h.hole_number} className="font-mono text-[9px] text-[#6b7a72] py-1 px-0">
+                <td key={h.hole_number} className="font-mono text-[9px] text-mute py-1 px-0">
                   {h.par}
                 </td>
               ))}
-              <td className="font-mono text-[10px] font-bold text-[#0e1a16] py-1 px-1">{blockPar}</td>
+              <td className="font-mono text-[10px] font-bold text-ink py-1 px-1">{blockPar}</td>
             </tr>
             <tr className="border-b border-[#e9e4d8] bg-[#fbfaf6]">
-              <td className="font-mono text-[8px] text-[#2a6fdb] px-1.5 py-1 text-left font-bold">HCP</td>
+              <td className="font-mono text-[8px] text-blue px-1.5 py-1 text-left font-bold">HCP</td>
               {group.map(h => (
-                <td key={h.hole_number} className="font-mono text-[8px] text-[#2a6fdb] py-1 px-0">
+                <td key={h.hole_number} className="font-mono text-[8px] text-blue py-1 px-0">
                   {h.stroke_index}
                 </td>
               ))}
@@ -90,7 +90,7 @@ export function ScoreTable({
                 }, 0)
                 const blockDelta = blockTotal ? blockTotal - blockPar : null
                 return (
-                  <tr key={p.id} className="border-t border-[#efebe1]">
+                  <tr key={p.id} className="border-t border-rule-soft">
                     <td className="px-1.5 py-1.5">
                       <PlayerLink profileId={linkId}>
                         <Avatar name={p.name} src={p.avatar_url} size={22} />
@@ -103,7 +103,7 @@ export function ScoreTable({
                         s != null ? (
                           <ScoreMark strokes={s} delta={d!} size={20} />
                         ) : (
-                          <span className="text-[#c4bfb5] text-[13px]">·</span>
+                          <span className="text-faint text-[13px]">·</span>
                         )
                       return (
                         <td key={h.hole_number} className="py-1.5 px-0">
@@ -125,7 +125,7 @@ export function ScoreTable({
                     <td className="px-1 py-1.5 bg-[#fbfaf6]">
                       {blockTotal > 0 ? (
                         <div className="text-center">
-                          <p className="font-mono text-[11px] font-black text-[#0e1a16] leading-none">{blockTotal}</p>
+                          <p className="font-mono text-[11px] font-black text-ink leading-none">{blockTotal}</p>
                           {blockDelta !== null && (
                             <p
                               className="font-mono text-[8px] font-bold"
@@ -136,7 +136,7 @@ export function ScoreTable({
                           )}
                         </div>
                       ) : (
-                        <span className="text-[#c4bfb5]">–</span>
+                        <span className="text-faint">–</span>
                       )}
                     </td>
                   </tr>
@@ -147,7 +147,7 @@ export function ScoreTable({
                   return s ? a + stablefordPts(s, h.par, strokesReceived(p.course_handicap, h.stroke_index)) : a
                 }, 0)
                 return (
-                  <tr key={p.id} className="border-t border-[#efebe1]">
+                  <tr key={p.id} className="border-t border-rule-soft">
                     <td className="px-1.5 py-1.5">
                       <PlayerLink profileId={linkId}>
                         <Avatar name={p.name} src={p.avatar_url} size={22} />
@@ -186,7 +186,7 @@ export function ScoreTable({
                               )}
                             </div>
                           ) : (
-                            <span className="text-[#c4bfb5] text-[13px]">·</span>
+                            <span className="text-faint text-[13px]">·</span>
                           )}
                         </>
                       )
@@ -207,7 +207,7 @@ export function ScoreTable({
                         </td>
                       )
                     })}
-                    <td className="bg-[#fbfaf6] px-1 font-mono text-[12px] font-black text-[#1f8a5b]">
+                    <td className="bg-[#fbfaf6] px-1 font-mono text-[12px] font-black text-accent">
                       {blockPts || '–'}
                     </td>
                   </tr>
@@ -218,7 +218,7 @@ export function ScoreTable({
                 const lastScored = [...group].reverse().find(h => matchState.get(h.hole_number))
                 const endSt = lastScored ? matchState.get(lastScored.hole_number) : undefined
                 return (
-                  <tr key={p.id} className="border-t border-[#efebe1]">
+                  <tr key={p.id} className="border-t border-rule-soft">
                     <td className="px-1.5 py-1.5">
                       <PlayerLink profileId={linkId}>
                         <Avatar name={p.name} src={p.avatar_url} size={22} />
@@ -227,7 +227,7 @@ export function ScoreTable({
                     {group.map(h => {
                       const st = matchState.get(h.hole_number)
                       const cell = !st ? (
-                        <span className="text-[#c4bfb5] text-[13px]">·</span>
+                        <span className="text-faint text-[13px]">·</span>
                       ) : st.leader?.id === p.id ? (
                         <div
                           className="mx-auto w-[26px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[8px] font-black text-white"
@@ -236,7 +236,7 @@ export function ScoreTable({
                           {st.n}UP
                         </div>
                       ) : !st.leader ? (
-                        <div className="mx-auto w-[26px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[8px] font-bold bg-[#f4f1e9] text-[#6b7a72]">
+                        <div className="mx-auto w-[26px] h-[22px] rounded-[5px] flex items-center justify-center font-mono text-[8px] font-bold bg-paper text-mute">
                           AS
                         </div>
                       ) : null
@@ -266,7 +266,7 @@ export function ScoreTable({
                           {endSt.leader ? `${endSt.n} UP` : 'AS'}
                         </p>
                       ) : (
-                        <p className="text-center text-[#c4bfb5]">–</p>
+                        <p className="text-center text-faint">–</p>
                       )}
                     </td>
                   </tr>

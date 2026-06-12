@@ -53,7 +53,7 @@ function LeaderboardTab({
         return (
           <div
             key={p.id}
-            className="flex items-center gap-3 rounded-[16px] p-3 border"
+            className="flex items-center gap-3 rounded-btn p-3 border"
             style={{
               backgroundColor: isFirst ? '#0e1a16' : isMe ? '#d9eedd' : '#fff',
               borderColor: isFirst ? '#0e1a16' : isMe ? '#1f8a5b' : '#e5e0d4',
@@ -97,10 +97,10 @@ function LeaderboardTab({
                       {delta > 0 ? `+${delta}` : delta === 0 ? 'E' : delta}
                     </p>
                   )}
-                  {mode === 'stableford' && <p className="font-mono text-[9px] text-[#6b7a72]">pts</p>}
+                  {mode === 'stableford' && <p className="font-mono text-[9px] text-mute">pts</p>}
                 </>
               ) : (
-                <p className="font-mono text-[13px] text-[#c4bfb5]">–</p>
+                <p className="font-mono text-[13px] text-faint">–</p>
               )}
             </div>
           </div>
@@ -176,11 +176,11 @@ function GruposTab({
               {!gRound && myId && gPlayers.find(p => p.id === myId) && (
                 <Link
                   to={`/round/course?tournament=${tournamentId}&group=${activeGroup}`}
-                  className="flex items-center justify-between w-full px-4 py-3.5 rounded-full font-bold text-[14px] text-[#0e1a16] transition"
+                  className="flex items-center justify-between w-full px-4 py-3.5 rounded-full font-bold text-[14px] text-ink transition"
                   style={{ backgroundColor: GROUP_COLORS[activeGroup - 1] }}
                 >
                   <span>Iniciar ronda del grupo</span>
-                  <span className="bg-[#0e1a16] text-white text-[11px] font-bold px-2.5 py-1 rounded-full">→</span>
+                  <span className="bg-ink text-white text-[11px] font-bold px-2.5 py-1 rounded-full">→</span>
                 </Link>
               )}
 
@@ -205,20 +205,20 @@ function GruposTab({
                 const pScores = scores[p.id] ?? []
                 const score = pScores.length > 0 ? calcScore(mode, pScores, holes, p) : null
                 return (
-                  <div key={p.id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
+                  <div key={p.id} className="bg-white rounded-btn p-4 border border-rule">
                     <div className="flex items-center gap-3 mb-3">
                       <Avatar name={p.name} size={40} />
                       <div className="flex-1">
-                        <p className="font-bold text-[14px] text-[#0e1a16]">
+                        <p className="font-bold text-[14px] text-ink">
                           {p.name}
                           {p.id === myId ? ' (tú)' : ''}
                         </p>
-                        <p className="font-mono text-[10px] text-[#6b7a72]">
+                        <p className="font-mono text-[10px] text-mute">
                           HCP {p.handicap} · {pScores.length} hoyos
                         </p>
                       </div>
                       {score !== null && (
-                        <p className="font-mono text-[20px] font-black text-[#0e1a16]">
+                        <p className="font-mono text-[20px] font-black text-ink">
                           {score}
                           {mode === 'stableford' ? ' pts' : ''}
                         </p>
@@ -337,8 +337,8 @@ export default function TorneoPage() {
 
   if (loading || !data)
     return (
-      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     )
 
@@ -369,11 +369,11 @@ export default function TorneoPage() {
   const myGroup = players.find(p => p.id === myId)
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] pb-8">
+    <div className="min-h-screen bg-paper pb-8">
       <div className="safe-top px-[14px] pt-3 pb-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
-          <Link to="/" className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <Link to="/" className="flex items-center gap-1.5 text-ink font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
                 d="M19 12H5M5 12l7-7M5 12l7 7"
@@ -388,7 +388,7 @@ export default function TorneoPage() {
           <button
             type="button"
             onClick={markUpdated}
-            className="font-mono text-[10px] text-[#1f8a5b] uppercase tracking-wide"
+            className="font-mono text-[10px] text-accent uppercase tracking-wide"
           >
             ↻ Actualizar
           </button>
@@ -402,7 +402,7 @@ export default function TorneoPage() {
             </p>
             <p className="text-white text-[22px] font-black tracking-tight mt-1">{tournament.name}</p>
             <div className="flex items-center gap-2 mt-2">
-              <div className="w-2 h-2 rounded-full bg-[#1f8a5b] animate-pulse" />
+              <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
               <span className="text-white/70 text-[12px] font-medium">
                 En vivo · {secondsAgo < 5 ? 'ahora mismo' : `hace ${secondsAgo}s`}
               </span>
@@ -419,7 +419,7 @@ export default function TorneoPage() {
         </HeroCard>
 
         {/* Tabs */}
-        <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4] mb-3">
+        <div className="flex gap-1.5 bg-white rounded-full p-1 border border-rule mb-3">
           {(
             [
               ['leaderboard', 'Clasificación'],

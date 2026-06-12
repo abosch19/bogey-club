@@ -94,7 +94,7 @@ export function ShareScorecardButton({
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Compartir tarjeta"
-        className="w-8 h-8 rounded-full bg-[#f4f1e9] border border-[#e5e0d4] flex items-center justify-center active:scale-95 transition"
+        className="w-8 h-8 rounded-full bg-paper border border-rule flex items-center justify-center active:scale-95 transition"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path
@@ -119,9 +119,9 @@ export function ShareScorecardButton({
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-50" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }} />
           <Drawer.Content className="fixed bottom-0 inset-x-0 z-50 mx-auto max-w-[430px] bg-white rounded-t-[28px] p-5 pb-10 outline-none">
-            <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-4" />
-            <Drawer.Title className="text-[18px] font-black text-[#0e1a16] mb-1">Compartir tarjeta</Drawer.Title>
-            <Drawer.Description className="text-[12px] text-[#6b7a72] mb-4">
+            <div className="w-10 h-1 rounded-full bg-rule mx-auto mb-4" />
+            <Drawer.Title className="text-[18px] font-black text-ink mb-1">Compartir tarjeta</Drawer.Title>
+            <Drawer.Description className="text-[12px] text-mute mb-4">
               {courseName} · {dateLabel}
             </Drawer.Description>
             <div className="space-y-2">
@@ -129,11 +129,11 @@ export function ShareScorecardButton({
                 type="button"
                 onClick={shareImage}
                 disabled={busy}
-                className="w-full flex items-center gap-3 bg-[#f4f1e9] rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] text-left active:scale-[0.98] transition disabled:opacity-60"
+                className="w-full flex items-center gap-3 bg-paper rounded-btn px-4 py-3.5 border border-rule text-left active:scale-[0.98] transition disabled:opacity-60"
               >
-                <div className="w-9 h-9 rounded-full bg-white border border-[#e5e0d4] flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 rounded-full bg-white border border-rule flex items-center justify-center flex-shrink-0">
                   {busy ? (
-                    <div className="w-3.5 h-3.5 rounded-full border-2 border-[#6b7a72] border-t-transparent animate-spin" />
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-mute border-t-transparent animate-spin" />
                   ) : (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <rect x="3" y="3" width="18" height="18" rx="3" stroke="#6b7a72" strokeWidth="1.8" />
@@ -149,16 +149,16 @@ export function ShareScorecardButton({
                   )}
                 </div>
                 <div>
-                  <p className="font-bold text-[14px] text-[#0e1a16]">Imagen</p>
-                  <p className="text-[11px] text-[#6b7a72]">La tarjeta como foto, lista para WhatsApp</p>
+                  <p className="font-bold text-[14px] text-ink">Imagen</p>
+                  <p className="text-[11px] text-mute">La tarjeta como foto, lista para WhatsApp</p>
                 </div>
               </button>
               <button
                 type="button"
                 onClick={shareLink}
-                className="w-full flex items-center gap-3 bg-[#f4f1e9] rounded-[16px] px-4 py-3.5 border border-[#e5e0d4] text-left active:scale-[0.98] transition"
+                className="w-full flex items-center gap-3 bg-paper rounded-btn px-4 py-3.5 border border-rule text-left active:scale-[0.98] transition"
               >
-                <div className="w-9 h-9 rounded-full bg-white border border-[#e5e0d4] flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 rounded-full bg-white border border-rule flex items-center justify-center flex-shrink-0">
                   {copied ? (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path
@@ -187,8 +187,8 @@ export function ShareScorecardButton({
                   )}
                 </div>
                 <div>
-                  <p className="font-bold text-[14px] text-[#0e1a16]">{copied ? 'Enlace copiado' : 'Enlace'}</p>
-                  <p className="text-[11px] text-[#6b7a72]">Link público — se ve sin tener cuenta</p>
+                  <p className="font-bold text-[14px] text-ink">{copied ? 'Enlace copiado' : 'Enlace'}</p>
+                  <p className="text-[11px] text-mute">Link público — se ve sin tener cuenta</p>
                 </div>
               </button>
             </div>

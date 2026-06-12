@@ -2,7 +2,7 @@
 // better, square = bogey, double square = double bogey or worse, plain
 // number = par. Monochrome, like a pencil-marked paper card.
 
-const INK = '#0e1a16'
+const INK = 'var(--c-ink)'
 
 export function ScoreMark({ strokes, delta, size = 22 }: { strokes: number; delta: number; size?: number }) {
   const color = INK

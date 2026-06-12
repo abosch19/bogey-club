@@ -1,3 +1,4 @@
+import { PageSkeleton } from '@/components/ui/skeleton'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useQuery, useMutation } from 'convex/react'
@@ -25,22 +26,17 @@ export default function LigaPage() {
     setDeleting(null)
   }
 
-  if (data === undefined)
-    return (
-      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
-      </div>
-    )
+  if (data === undefined) return <PageSkeleton rows={4} />
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] pb-28">
+    <div className="min-h-screen bg-paper pb-28">
       {/* Header sticky */}
       <div
-        className="sticky top-0 bg-[#f4f1e9]/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
+        className="sticky top-0 bg-paper/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-rule"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
       >
         <div className="flex items-center justify-between">
-          <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16]">Liga</h1>
+          <h1 className="text-[26px] font-black tracking-tight text-ink">Liga</h1>
           <Link
             to="/league/new"
             className="btn-glow flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-[13px] text-white transition active:scale-[0.97]"
@@ -57,8 +53,8 @@ export default function LigaPage() {
         {leagues.length === 0 ? (
           <div className="space-y-3">
             {/* Hero empty state */}
-            <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-6">
-              <div className="w-14 h-14 rounded-full bg-[#f6e6c4] flex items-center justify-center mb-4">
+            <div className="bg-white rounded-card border border-rule p-6">
+              <div className="w-14 h-14 rounded-full bg-amber-light flex items-center justify-center mb-4">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z"
@@ -68,8 +64,8 @@ export default function LigaPage() {
                   />
                 </svg>
               </div>
-              <p className="text-[18px] font-black text-[#0e1a16] mb-1">¿Qué es una liga?</p>
-              <p className="text-[13px] text-[#6b7a72] mb-4">
+              <p className="text-[18px] font-black text-ink mb-1">¿Qué es una liga?</p>
+              <p className="text-[13px] text-mute mb-4">
                 Una competición entre amigos a lo largo de varias jornadas. Cada ronda puntúa y al final hay un campeón.
               </p>
               <Link
@@ -82,30 +78,30 @@ export default function LigaPage() {
             </div>
 
             {/* How it works */}
-            <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4">
-              <p className="text-[13px] font-bold text-[#0e1a16] mb-3">¿Cómo funciona?</p>
+            <div className="bg-white rounded-card border border-rule p-4">
+              <p className="text-[13px] font-bold text-ink mb-3">¿Cómo funciona?</p>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#d9eedd] flex items-center justify-center flex-shrink-0 text-[14px]">
+                  <div className="w-9 h-9 rounded-full bg-accent-light flex items-center justify-center flex-shrink-0 text-[14px]">
                     👥
                   </div>
-                  <p className="text-[12px] text-[#6b7a72]">
+                  <p className="text-[12px] text-mute">
                     Invita a tus amigos — con 8 jugadores, puntúan los 4 primeros de cada ronda
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#dde7fb] flex items-center justify-center flex-shrink-0 text-[14px]">
+                  <div className="w-9 h-9 rounded-full bg-blue-light flex items-center justify-center flex-shrink-0 text-[14px]">
                     🏎️
                   </div>
-                  <p className="text-[12px] text-[#6b7a72]">
+                  <p className="text-[12px] text-mute">
                     Sistema de puntos al estilo F1: 25, 18, 15, 12... El mejor acumula más
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#f6e6c4] flex items-center justify-center flex-shrink-0 text-[14px]">
+                  <div className="w-9 h-9 rounded-full bg-amber-light flex items-center justify-center flex-shrink-0 text-[14px]">
                     🏆
                   </div>
-                  <p className="text-[12px] text-[#6b7a72]">
+                  <p className="text-[12px] text-mute">
                     Al final de la temporada, el clasificado número 1 se lleva la gloria
                   </p>
                 </div>
@@ -113,8 +109,8 @@ export default function LigaPage() {
             </div>
 
             {/* Example standings preview */}
-            <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4">
-              <p className="text-[13px] font-bold text-[#0e1a16] mb-3">Ejemplo de clasificación</p>
+            <div className="bg-white rounded-card border border-rule p-4">
+              <p className="text-[13px] font-bold text-ink mb-3">Ejemplo de clasificación</p>
               <div className="space-y-1.5">
                 {[
                   { pos: 1, name: 'Tú', pts: 68, color: '#1f8a5b', highlight: true },
@@ -133,9 +129,9 @@ export default function LigaPage() {
                       {p.pos}
                     </span>
                     <Avatar name={p.name} size={28} />
-                    <span className="flex-1 text-[13px] font-semibold text-[#0e1a16]">{p.name}</span>
-                    <span className="font-mono text-[14px] font-black text-[#0e1a16]">{p.pts}</span>
-                    <span className="font-mono text-[9px] text-[#6b7a72]">PTS</span>
+                    <span className="flex-1 text-[13px] font-semibold text-ink">{p.name}</span>
+                    <span className="font-mono text-[14px] font-black text-ink">{p.pts}</span>
+                    <span className="font-mono text-[9px] text-mute">PTS</span>
                   </div>
                 ))}
               </div>
@@ -145,7 +141,7 @@ export default function LigaPage() {
           <div className="space-y-4">
             {leagues.map(({ league, standings: st }) => {
               return (
-                <div key={league._id} className="bg-white rounded-[22px] border border-[#e5e0d4] overflow-hidden">
+                <div key={league._id} className="bg-white rounded-card border border-rule overflow-hidden">
                   {/* League header */}
                   <div className="p-4 relative overflow-hidden" style={{ backgroundColor: '#1a2a4a' }}>
                     <div
@@ -164,7 +160,7 @@ export default function LigaPage() {
                           type="button"
                           onClick={() => handleDelete(league._id)}
                           disabled={deleting === league._id}
-                          className="mt-1 flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#c6432d]/80 hover:bg-[#c6432d] transition disabled:opacity-50 text-white text-[11px] font-semibold"
+                          className="mt-1 flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-red/80 hover:bg-red transition disabled:opacity-50 text-white text-[11px] font-semibold"
                           title="Borrar liga"
                         >
                           {deleting === league._id ? (
@@ -203,7 +199,7 @@ export default function LigaPage() {
                       {st.slice(0, 5).map((s: any, i: number) => (
                         <div
                           key={s.profile_id}
-                          className="flex items-center gap-3 py-1.5 px-2 rounded-[12px]"
+                          className="flex items-center gap-3 py-1.5 px-2 rounded-field"
                           style={{ backgroundColor: i === 0 ? '#f6e6c4' : 'transparent' }}
                         >
                           <span
@@ -215,19 +211,16 @@ export default function LigaPage() {
                           <PlayerLink profileId={s.profile_id}>
                             <Avatar name={s.name} size={28} />
                           </PlayerLink>
-                          <PlayerLink
-                            profileId={s.profile_id}
-                            className="flex-1 text-[13px] font-semibold text-[#0e1a16]"
-                          >
+                          <PlayerLink profileId={s.profile_id} className="flex-1 text-[13px] font-semibold text-ink">
                             {s.name}
                           </PlayerLink>
-                          <span className="font-mono text-[14px] font-black text-[#0e1a16]">{s.total_points}</span>
-                          <span className="font-mono text-[9px] text-[#6b7a72]">PTS</span>
+                          <span className="font-mono text-[14px] font-black text-ink">{s.total_points}</span>
+                          <span className="font-mono text-[9px] text-mute">PTS</span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-center text-[13px] text-[#6b7a72] py-4">Aún no hay clasificación</p>
+                    <p className="text-center text-[13px] text-mute py-4">Aún no hay clasificación</p>
                   )}
                 </div>
               )

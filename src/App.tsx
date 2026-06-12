@@ -43,15 +43,15 @@ const TAB_ROUTES = ['/', '/league', '/stats', '/profile']
 /** Mirrors the #splash markup in index.html so the bundle→auth handoff is seamless. */
 function Splash() {
   return (
-    <div className="fixed inset-0 bg-[#f4f1e9] flex flex-col items-center justify-center">
+    <div className="fixed inset-0 bg-paper flex flex-col items-center justify-center">
       <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
         <circle cx="32" cy="32" r="30" fill="#9bc9a3" />
         <path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.2" strokeLinecap="round" />
         <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16" />
         <circle cx="24" cy="50" r="2.6" fill="#0e1a16" />
       </svg>
-      <div className="mt-3 text-[22px] leading-none font-black tracking-tight text-[#0e1a16]">
-        Bogey <span className="text-[#1f8a5b]">Club</span>
+      <div className="mt-3 text-[22px] leading-none font-black tracking-tight text-ink">
+        Bogey <span className="text-accent">Club</span>
       </div>
     </div>
   )

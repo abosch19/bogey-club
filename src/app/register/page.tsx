@@ -11,8 +11,8 @@ function LogoPin() {
         <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16" />
         <circle cx="24" cy="50" r="2.6" fill="#0e1a16" />
       </svg>
-      <div className="text-[22px] font-black tracking-tight text-[#0e1a16]">
-        Bogey <span className="text-[#1f8a5b]">Club</span>
+      <div className="text-[22px] font-black tracking-tight text-ink">
+        Bogey <span className="text-accent">Club</span>
       </div>
     </div>
   )
@@ -53,18 +53,18 @@ export default function RegistroPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center px-[14px]">
+    <div className="min-h-screen bg-paper flex items-center justify-center px-[14px]">
       <div className="w-full max-w-[400px]">
         <LogoPin />
 
-        <div className="bg-white rounded-[22px] border border-[#e5e0d4] px-6 py-7">
-          <h1 className="text-[20px] font-bold text-[#0e1a16] mb-6 text-center">Crea tu cuenta</h1>
+        <div className="bg-white rounded-card border border-rule px-6 py-7">
+          <h1 className="text-[20px] font-bold text-ink mb-6 text-center">Crea tu cuenta</h1>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
                 htmlFor="register-name"
-                className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide"
+                className="block text-[12px] font-semibold text-mute mb-1.5 uppercase tracking-wide"
               >
                 Nombre
               </label>
@@ -75,14 +75,14 @@ export default function RegistroPage() {
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 required
                 placeholder="Tu nombre o apodo"
-                className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+                className="w-full border border-rule rounded-btn px-4 py-3 text-[14px] text-ink bg-white placeholder-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition"
               />
             </div>
 
             <div>
               <label
                 htmlFor="register-last-name"
-                className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide"
+                className="block text-[12px] font-semibold text-mute mb-1.5 uppercase tracking-wide"
               >
                 Apellidos
               </label>
@@ -92,14 +92,14 @@ export default function RegistroPage() {
                 value={last_name}
                 onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))}
                 placeholder="Tus apellidos (opcional)"
-                className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+                className="w-full border border-rule rounded-btn px-4 py-3 text-[14px] text-ink bg-white placeholder-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition"
               />
             </div>
 
             <div>
               <label
                 htmlFor="register-email"
-                className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide"
+                className="block text-[12px] font-semibold text-mute mb-1.5 uppercase tracking-wide"
               >
                 Email
               </label>
@@ -110,14 +110,14 @@ export default function RegistroPage() {
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                 required
                 placeholder="tu@email.com"
-                className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+                className="w-full border border-rule rounded-btn px-4 py-3 text-[14px] text-ink bg-white placeholder-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition"
               />
             </div>
 
             <div>
               <label
                 htmlFor="register-password"
-                className="block text-[12px] font-semibold text-[#6b7a72] mb-1.5 uppercase tracking-wide"
+                className="block text-[12px] font-semibold text-mute mb-1.5 uppercase tracking-wide"
               >
                 Contraseña
               </label>
@@ -128,13 +128,13 @@ export default function RegistroPage() {
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                 required
                 placeholder="Mínimo 8 caracteres"
-                className="w-full border border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] bg-white placeholder-[#c4bfb5] focus:outline-none focus:border-[#1f8a5b] focus:ring-2 focus:ring-[#1f8a5b]/20 transition"
+                className="w-full border border-rule rounded-btn px-4 py-3 text-[14px] text-ink bg-white placeholder-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition"
               />
-              <p className="text-[11px] text-[#6b7a72] mt-1.5">Al menos 8 caracteres.</p>
+              <p className="text-[11px] text-mute mt-1.5">Al menos 8 caracteres.</p>
             </div>
 
             {error && (
-              <p className="text-[13px] text-[#c6432d] bg-[#fadcd6] border border-[#f0bab0] rounded-[10px] px-4 py-2.5">
+              <p className="text-[13px] text-red bg-red-light border border-[#f0bab0] rounded-[10px] px-4 py-2.5">
                 {error}
               </p>
             )}
@@ -142,7 +142,7 @@ export default function RegistroPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-[16px] font-semibold text-[15px] text-white mt-2 transition active:scale-[0.98] disabled:opacity-60"
+              className="w-full py-3.5 rounded-btn font-semibold text-[15px] text-white mt-2 transition active:scale-[0.98] disabled:opacity-60"
               style={{ backgroundColor: '#1f8a5b' }}
             >
               {loading ? 'Creando cuenta…' : 'Crear cuenta'}
@@ -150,9 +150,9 @@ export default function RegistroPage() {
           </form>
         </div>
 
-        <p className="text-center text-[13px] text-[#6b7a72] mt-5">
+        <p className="text-center text-[13px] text-mute mt-5">
           ¿Ya tienes cuenta?{' '}
-          <Link to="/login" className="text-[#1f8a5b] font-semibold hover:underline">
+          <Link to="/login" className="text-accent font-semibold hover:underline">
             Entrar
           </Link>
         </p>

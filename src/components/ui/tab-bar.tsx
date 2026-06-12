@@ -95,7 +95,7 @@ export function TabBar() {
           name={fullName}
           src={profile?.avatar_url}
           size={30}
-          className={a ? 'ring-2 ring-[#0e1a16] ring-offset-2 ring-offset-[#ececec]' : ''}
+          className={a ? 'ring-2 ring-ink ring-offset-2 ring-offset-[#ececec]' : ''}
         />
       ),
     },
@@ -154,7 +154,7 @@ export function TabBar() {
   return (
     // Glass pill; globals.css drops the blur to solid white while html[data-nav]
     // is set, because view-transition snapshots render backdrop-filter as a square.
-    <nav className="vt-tab-bar tabbar-float fixed left-1/2 -translate-x-1/2 z-50 bg-white/45 backdrop-blur-md backdrop-saturate-150 rounded-full shadow-[0_10px_34px_rgba(14,26,22,0.22),0_2px_8px_rgba(14,26,22,0.08)] px-2 py-1.5">
+    <nav className="vt-tab-bar tabbar-float fixed left-1/2 -translate-x-1/2 z-50 bg-white/45 backdrop-blur-md backdrop-saturate-150 rounded-full shadow-float px-2 py-1.5">
       <div
         ref={containerRef}
         className="relative flex items-center touch-none select-none"
@@ -182,7 +182,7 @@ export function TabBar() {
                 suppressNextClickRef.current = false
                 event.preventDefault()
               }}
-              className={`relative z-10 w-[62px] h-[46px] flex items-center justify-center rounded-full transition-colors ${isActive ? 'text-[#0e1a16]' : 'text-[#44524b]'}`}
+              className={`relative z-10 w-[62px] h-[46px] flex items-center justify-center rounded-full transition-colors ${isActive ? 'text-ink' : 'text-[#44524b]'}`}
             >
               {icon(isActive)}
             </button>

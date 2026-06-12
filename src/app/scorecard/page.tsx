@@ -1,3 +1,4 @@
+import { Skeleton } from '@/components/ui/skeleton'
 import { useSearchParams, useNavigate } from 'react-router'
 import { useState, Suspense } from 'react'
 import { useQuery, useMutation } from 'convex/react'
@@ -18,8 +19,10 @@ import { ScoreLegend } from '@/components/ScoreLegend'
 import { RoundStats, type Score } from '@/components/RoundStats'
 
 const SPINNER = (
-  <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-    <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+  <div className="min-h-screen bg-paper pb-28 px-[14px]" style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}>
+    <Skeleton className="h-28 rounded-card mb-4" />
+    <Skeleton className="h-10 rounded-full mb-3" />
+    <Skeleton className="h-96 rounded-card" />
   </div>
 )
 
@@ -57,7 +60,7 @@ function Clasificacion({ ranking, getTotal, realPar }: ClasificacionProps) {
         return (
           <div
             key={p.id}
-            className="rounded-[16px] p-4 border flex items-center gap-3"
+            className="rounded-btn p-4 border flex items-center gap-3"
             style={{ backgroundColor: isFirst ? '#0e1a16' : '#fff', borderColor: isFirst ? '#0e1a16' : '#e5e0d4' }}
           >
             <div
@@ -140,9 +143,9 @@ function BetControl({ roundId, customBet }: BetControlProps) {
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-50" style={{ backgroundColor: 'rgba(14,26,22,0.5)' }} />
           <Drawer.Content className="fixed bottom-0 inset-x-0 z-50 mx-auto max-w-[430px] bg-white rounded-t-[28px] p-5 pb-10 outline-none">
-            <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-4" />
-            <Drawer.Title className="text-[18px] font-black text-[#0e1a16] mb-1">Apuesta de la ronda</Drawer.Title>
-            <Drawer.Description className="text-[12px] text-[#6b7a72] mb-4">
+            <div className="w-10 h-1 rounded-full bg-rule mx-auto mb-4" />
+            <Drawer.Title className="text-[18px] font-black text-ink mb-1">Apuesta de la ronda</Drawer.Title>
+            <Drawer.Description className="text-[12px] text-mute mb-4">
               El que pierda tiene que cumplirla. Se mostrará al firmar.
             </Drawer.Description>
             <input
@@ -150,13 +153,13 @@ function BetControl({ roundId, customBet }: BetControlProps) {
               value={bet}
               onChange={e => setBetEdit(e.target.value)}
               placeholder="Ej: el que pierde paga las cervezas..."
-              className="w-full border-2 border-[#e5e0d4] rounded-[16px] px-4 py-3 text-[14px] text-[#0e1a16] outline-none focus:border-[#e8b75a] mb-4"
+              className="w-full border-2 border-rule rounded-btn px-4 py-3 text-[14px] text-ink outline-none focus:border-amber mb-4"
             />
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setShowBetModal(false)}
-                className="flex-1 py-3 rounded-full border border-[#e5e0d4] font-semibold text-[14px] text-[#6b7a72]"
+                className="flex-1 py-3 rounded-full border border-rule font-semibold text-[14px] text-mute"
               >
                 Cancelar
               </button>
@@ -169,7 +172,7 @@ function BetControl({ roundId, customBet }: BetControlProps) {
                   setSavingBet(false)
                   setShowBetModal(false)
                 }}
-                className="flex-1 py-3 rounded-full font-bold text-[14px] text-[#0e1a16] disabled:opacity-60"
+                className="flex-1 py-3 rounded-full font-bold text-[14px] text-ink disabled:opacity-60"
                 style={{ backgroundColor: '#e8b75a' }}
               >
                 {savingBet ? 'Guardando...' : bet ? 'Guardar apuesta' : 'Quitar apuesta'}
@@ -214,7 +217,7 @@ function EditPlayersControl({ roundId, myId, players, allProfiles, isPractice, i
         type="button"
         onClick={() => setShowEditPlayers(true)}
         aria-label="Editar jugadores"
-        className="w-8 h-8 rounded-full bg-[#f4f1e9] border border-[#e5e0d4] flex items-center justify-center"
+        className="w-8 h-8 rounded-full bg-paper border border-rule flex items-center justify-center"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path
@@ -241,31 +244,31 @@ function EditPlayersControl({ roundId, myId, players, allProfiles, isPractice, i
             aria-describedby={undefined}
             className="fixed bottom-0 inset-x-0 z-50 mx-auto max-w-[430px] bg-white rounded-t-[28px] p-5 pb-10 max-h-[85vh] overflow-y-auto outline-none"
           >
-            <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-4" />
+            <div className="w-10 h-1 rounded-full bg-rule mx-auto mb-4" />
             <div className="flex items-center justify-between mb-4">
-              <Drawer.Title className="text-[18px] font-black text-[#0e1a16]">Jugadores</Drawer.Title>
+              <Drawer.Title className="text-[18px] font-black text-ink">Jugadores</Drawer.Title>
               <button
                 type="button"
                 onClick={() => setShowEditPlayers(false)}
                 aria-label="Cerrar"
-                className="text-[#6b7a72] text-[20px]"
+                className="text-mute text-[20px]"
               >
                 ×
               </button>
             </div>
             {/* Current players */}
-            <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-2">En esta ronda</p>
+            <p className="font-mono text-[9px] text-mute uppercase tracking-wide mb-2">En esta ronda</p>
             <div className="space-y-2 mb-4">
               {players.map(p => (
-                <div key={p.id} className="flex items-center gap-3 bg-[#f4f1e9] rounded-[12px] px-3 py-2.5">
+                <div key={p.id} className="flex items-center gap-3 bg-paper rounded-field px-3 py-2.5">
                   <Avatar name={p.name} src={p.avatar_url} size={32} />
-                  <span className="flex-1 font-semibold text-[13px] text-[#0e1a16]">{p.name}</span>
-                  <span className="font-mono text-[10px] text-[#6b7a72]">hcp {p.course_handicap}</span>
+                  <span className="flex-1 font-semibold text-[13px] text-ink">{p.name}</span>
+                  <span className="font-mono text-[10px] text-mute">hcp {p.course_handicap}</span>
                   {p.id !== myId && (
                     <button
                       type="button"
                       onClick={() => removePlayer(p.id)}
-                      className="text-[#c6432d] text-[11px] font-semibold px-2 py-1 rounded-full border border-[#c6432d] hover:bg-[#fadcd6] transition"
+                      className="text-red text-[11px] font-semibold px-2 py-1 rounded-full border border-red hover:bg-red-light transition"
                     >
                       Quitar
                     </button>
@@ -274,7 +277,7 @@ function EditPlayersControl({ roundId, myId, players, allProfiles, isPractice, i
               ))}
             </div>
             {/* Add players */}
-            <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-2">Añadir jugador</p>
+            <p className="font-mono text-[9px] text-mute uppercase tracking-wide mb-2">Añadir jugador</p>
             <div className="space-y-2">
               {(allProfiles ?? []).flatMap(p =>
                 players.find(rp => rp.id === p._id)
@@ -284,18 +287,18 @@ function EditPlayersControl({ roundId, myId, players, allProfiles, isPractice, i
                         type="button"
                         key={p._id}
                         onClick={() => addPlayer(p._id)}
-                        className="w-full flex items-center gap-3 bg-white rounded-[12px] px-3 py-2.5 border border-[#e5e0d4] text-left active:opacity-70"
+                        className="w-full flex items-center gap-3 bg-white rounded-field px-3 py-2.5 border border-rule text-left active:opacity-70"
                       >
                         <Avatar name={p.name} src={p.avatar_url} size={32} />
-                        <span className="flex-1 font-semibold text-[13px] text-[#0e1a16]">{p.name}</span>
-                        <span className="font-mono text-[10px] text-[#1f8a5b] font-bold">+ Añadir</span>
+                        <span className="flex-1 font-semibold text-[13px] text-ink">{p.name}</span>
+                        <span className="font-mono text-[10px] text-accent font-bold">+ Añadir</span>
                       </button>,
                     ],
               )}
             </div>
 
             {/* Danger zone — práctica o ronda en curso */}
-            <div className="mt-5 pt-4 border-t border-[#efebe1]">
+            <div className="mt-5 pt-4 border-t border-rule-soft">
               {isPractice || isActive ? (
                 <button
                   type="button"
@@ -307,16 +310,16 @@ function EditPlayersControl({ roundId, myId, players, allProfiles, isPractice, i
                     await removeRoundMut({ round_id: roundId as Id<'rounds'> })
                     navigate('/')
                   }}
-                  className="w-full py-3 rounded-full border-2 border-[#c6432d] text-[#c6432d] font-bold text-[14px] transition active:opacity-80"
+                  className="w-full py-3 rounded-full border-2 border-red text-red font-bold text-[14px] transition active:opacity-80"
                 >
                   {isPractice ? 'Borrar ronda de práctica' : 'Descartar ronda en curso'}
                 </button>
               ) : (
-                <div className="bg-[#f4f1e9] rounded-[12px] px-4 py-3 text-center">
-                  <p className="text-[12px] text-[#6b7a72] font-semibold">
+                <div className="bg-paper rounded-field px-4 py-3 text-center">
+                  <p className="text-[12px] text-mute font-semibold">
                     Ronda competitiva finalizada — no se puede borrar
                   </p>
-                  <p className="font-mono text-[10px] text-[#6b7a72] mt-0.5">Contacta al admin si hay un error</p>
+                  <p className="font-mono text-[10px] text-mute mt-0.5">Contacta al admin si hay un error</p>
                 </div>
               )}
             </div>
@@ -389,7 +392,7 @@ function ScorecardHeader({
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[#6b7a72] font-semibold text-[13px] border border-[#e5e0d4] active:scale-[0.98] transition"
+            className="flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-mute font-semibold text-[13px] border border-rule active:scale-[0.98] transition"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
@@ -405,11 +408,11 @@ function ScorecardHeader({
         </div>
         <div className="flex items-center gap-2">
           {completed ? (
-            <span className="font-mono text-[9px] font-bold text-[#1f8a5b] bg-white px-2.5 py-1.5 rounded-full uppercase tracking-wide border border-[#d9eedd]">
+            <span className="font-mono text-[9px] font-bold text-accent bg-white px-2.5 py-1.5 rounded-full uppercase tracking-wide border border-accent-light">
               Firmada
             </span>
           ) : (
-            <span className="font-mono text-[10px] text-[#6b7a72] bg-white px-2.5 py-1.5 rounded-full border border-[#e5e0d4]">
+            <span className="font-mono text-[10px] text-mute bg-white px-2.5 py-1.5 rounded-full border border-rule">
               {myScoresCount} / {holesCount} HOYOS
             </span>
           )}
@@ -435,7 +438,7 @@ function ScorecardHeader({
             <div className="mt-3 flex items-center gap-3">
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/12">
                 <div
-                  className="h-full rounded-full bg-[#1f8a5b] transition-all duration-300"
+                  className="h-full rounded-full bg-accent transition-all duration-300"
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
@@ -457,7 +460,7 @@ function ScorecardHeader({
           <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-3">
             <div className="flex -space-x-1.5">
               {players.slice(0, 5).map(p => (
-                <div key={`${p.id}-${p.name}`} className="rounded-full ring-2 ring-[#0e1a16]">
+                <div key={`${p.id}-${p.name}`} className="rounded-full ring-2 ring-ink">
                   <Avatar name={p.name} src={p.avatar_url} size={28} />
                 </div>
               ))}
@@ -512,24 +515,24 @@ function ScorecardHeader({
 
       {/* Matchplay live result */}
       {(viewMode === 'matchplay_hcp' || viewMode === 'matchplay') && matchplayResult && (
-        <div className="bg-white rounded-[16px] px-4 py-3 border border-[#e5e0d4] mb-2">
+        <div className="bg-white rounded-btn px-4 py-3 border border-rule mb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <PlayerLink profileId={matchplayResult.a.is_guest ? null : matchplayResult.a.id}>
                 <Avatar name={matchplayResult.a.name} src={matchplayResult.a.avatar_url} size={32} />
               </PlayerLink>
-              <span className="font-bold text-[13px] text-[#0e1a16]">{matchplayResult.a.name.split(' ')[0]}</span>
+              <span className="font-bold text-[13px] text-ink">{matchplayResult.a.name.split(' ')[0]}</span>
             </div>
             <div className="text-center px-4">
-              <p className="font-mono text-[20px] font-black text-[#0e1a16]">{matchplayResult.label}</p>
+              <p className="font-mono text-[20px] font-black text-ink">{matchplayResult.label}</p>
               {matchplayResult.leader && (
-                <p className="font-mono text-[9px] text-[#6b7a72] uppercase">
+                <p className="font-mono text-[9px] text-mute uppercase">
                   {matchplayResult.leader.name.split(' ')[0]} gana
                 </p>
               )}
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-[13px] text-[#0e1a16]">{matchplayResult.b.name.split(' ')[0]}</span>
+              <span className="font-bold text-[13px] text-ink">{matchplayResult.b.name.split(' ')[0]}</span>
               <PlayerLink profileId={matchplayResult.b.is_guest ? null : matchplayResult.b.id}>
                 <Avatar name={matchplayResult.b.name} src={matchplayResult.b.avatar_url} size={32} />
               </PlayerLink>
@@ -568,10 +571,10 @@ function BottomCTA({
 }: BottomCTAProps) {
   if (completed && !signed) return null
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-paper to-transparent">
       {completed ? (
         <>
-          <div className="bg-[#d9eedd] rounded-[16px] px-4 py-3 mb-2 flex items-center gap-2">
+          <div className="bg-accent-light rounded-btn px-4 py-3 mb-2 flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
                 d="M5 13l4 4L19 7"
@@ -581,13 +584,13 @@ function BottomCTA({
                 strokeLinejoin="round"
               />
             </svg>
-            <span className="text-[#1f8a5b] font-semibold text-[13px]">Ronda firmada y guardada</span>
+            <span className="text-accent font-semibold text-[13px]">Ronda firmada y guardada</span>
           </div>
           {/* Apuesta — si existe en notes */}
           {customBet && (
-            <div className="bg-[#f6e6c4] border-2 border-[#e8b75a] rounded-[16px] px-4 py-3 mb-2">
-              <p className="font-mono text-[9px] text-[#9b6e1a] uppercase tracking-wide mb-1">Apuesta de la ronda</p>
-              <p className="font-bold text-[15px] text-[#0e1a16]">{customBet}</p>
+            <div className="bg-amber-light border-2 border-amber rounded-btn px-4 py-3 mb-2">
+              <p className="font-mono text-[9px] text-amber-dark uppercase tracking-wide mb-1">Apuesta de la ronda</p>
+              <p className="font-bold text-[15px] text-ink">{customBet}</p>
               {/* Winner */}
               {(() => {
                 const sorted = players
@@ -598,7 +601,9 @@ function BottomCTA({
                   .toSorted((a, b) => a.total - b.total)
                 if (sorted.length >= 2 && sorted[0].total < sorted[1].total) {
                   const loser = sorted[sorted.length - 1]
-                  return <p className="text-[13px] text-[#9b6e1a] mt-1 font-semibold">{loser.name}, te toca a ti. 😏</p>
+                  return (
+                    <p className="text-[13px] text-amber-dark mt-1 font-semibold">{loser.name}, te toca a ti. 😏</p>
+                  )
                 }
                 return null
               })()}
@@ -614,7 +619,7 @@ function BottomCTA({
           style={{ backgroundColor: '#e8b75a', color: '#0e1a16' }}
         >
           <span>Firmar y guardar ronda</span>
-          <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
+          <span className="bg-ink text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
             {saving ? '…' : '✓ FIRMAR'}
           </span>
         </button>
@@ -668,12 +673,12 @@ function mergePendingScores(serverScores: Score[], pendingRound: PendingHole[]):
 function PendingSyncBanner({ count }: { count: number }) {
   if (count === 0) return null
   return (
-    <div className="flex items-center gap-2.5 rounded-[12px] bg-[#f6e6c4] px-4 py-2.5">
+    <div className="flex items-center gap-2.5 rounded-field bg-amber-light px-4 py-2.5">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="flex-shrink-0">
         <path d="M21 12a9 9 0 1 1-2.64-6.36" stroke="#9b6e1a" strokeWidth="2.2" strokeLinecap="round" />
         <path d="M21 3v6h-6" stroke="#9b6e1a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      <p className="text-[12px] font-semibold text-[#9b6e1a]">
+      <p className="text-[12px] font-semibold text-amber-dark">
         {count === 1
           ? '1 hoyo guardado sin conexión — se sincronizará automáticamente'
           : `${count} hoyos guardados sin conexión — se sincronizarán automáticamente`}
@@ -714,7 +719,7 @@ function Celebration({ holes, myId, getScore, myTotal, deltaStr }: CelebrationPr
     .join(' · ')
   const colors = ['#1f8a5b', '#e8b75a', '#2a6fdb', '#c6432d', '#9bc9a3', '#ffffff']
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0e1a16] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-ink overflow-hidden">
       <style>{`
         @keyframes summary-pop { from { transform: scale(0.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
         @keyframes confetti-fall {
@@ -931,7 +936,7 @@ function TarjetaPage() {
   const celebrationDeltaStr = myDelta > 0 ? `+${myDelta}` : myDelta === 0 ? 'E' : `${myDelta}`
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] pb-32">
+    <div className="min-h-screen bg-paper pb-32">
       {celebrating && (
         <Celebration holes={holes} myId={myId} getScore={getScore} myTotal={myTotal} deltaStr={celebrationDeltaStr} />
       )}

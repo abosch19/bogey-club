@@ -18,7 +18,7 @@ export function Segmented<K extends string>({
   value,
   onChange,
   className = '',
-  color = '#0e1a16',
+  color = 'var(--c-ink)',
 }: SegmentedProps<K>) {
   const containerRef = useRef<HTMLDivElement>(null)
   const suppressNextClickRef = useRef(false)
@@ -79,7 +79,7 @@ export function Segmented<K extends string>({
   return (
     <div
       ref={containerRef}
-      className={`relative flex gap-1 bg-white rounded-full p-1 border border-[#e5e0d4] touch-none select-none ${className}`}
+      className={`relative flex gap-1 bg-white rounded-full p-1 border border-rule touch-none select-none ${className}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
@@ -108,7 +108,7 @@ export function Segmented<K extends string>({
             event.preventDefault()
           }}
           className="relative flex-1 py-1.5 rounded-full text-[11px] font-bold transition-colors duration-300"
-          style={{ color: index === indicatorIdx ? '#fff' : '#6b7a72' }}
+          style={{ color: index === indicatorIdx ? '#fff' : 'var(--c-mute)' }}
         >
           {o.label}
         </button>

@@ -8,8 +8,8 @@ import { Avatar } from '@/components/ui/avatar'
 type Player = { _id: string; name: string; handicap_index: number; team: 1 | 2 }
 
 const SPINNER = (
-  <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-    <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+  <div className="min-h-screen bg-paper flex items-center justify-center">
+    <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
   </div>
 )
 
@@ -93,13 +93,13 @@ function ParejasPage() {
   const balanced = team1.length === team2.length
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] flex flex-col">
+    <div className="min-h-screen bg-paper flex flex-col">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]"
+            className="flex items-center gap-1.5 text-ink font-semibold text-[13px]"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
@@ -112,17 +112,15 @@ function ParejasPage() {
             </svg>
             Atrás
           </button>
-          <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-[0.15em]">SCRAMBLE · PAREJAS</span>
+          <span className="font-mono text-[10px] text-mute uppercase tracking-[0.15em]">SCRAMBLE · PAREJAS</span>
         </div>
 
-        <h1 className="text-[28px] font-black tracking-tight text-[#0e1a16] leading-tight mb-1">
+        <h1 className="text-[28px] font-black tracking-tight text-ink leading-tight mb-1">
           Asigna las
           <br />
-          <span className="text-[#1f8a5b]">parejas.</span>
+          <span className="text-accent">parejas.</span>
         </h1>
-        <p className="text-[13px] text-[#6b7a72] mb-5">
-          Distribuidos por hándicap. Toca el número para cambiar de equipo.
-        </p>
+        <p className="text-[13px] text-mute mb-5">Distribuidos por hándicap. Toca el número para cambiar de equipo.</p>
 
         {/* Teams display */}
         <div className="grid grid-cols-2 gap-3 mb-4">
@@ -135,7 +133,7 @@ function ParejasPage() {
             return (
               <div
                 key={t}
-                className="rounded-[16px] p-4 border-2"
+                className="rounded-btn p-4 border-2"
                 style={{ backgroundColor: tc.light, borderColor: tc.bg }}
               >
                 <div className="flex items-center gap-2 mb-3">
@@ -145,22 +143,22 @@ function ParejasPage() {
                   >
                     {t}
                   </div>
-                  <p className="font-bold text-[14px] text-[#0e1a16]">Equipo {t}</p>
+                  <p className="font-bold text-[14px] text-ink">Equipo {t}</p>
                 </div>
                 <div className="space-y-2">
                   {members.map(p => (
                     <div key={p._id} className="flex items-center gap-2 bg-white rounded-[10px] px-2.5 py-2">
                       <Avatar name={p.name} size={28} />
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-[12px] text-[#0e1a16] truncate">{p.name.split(' ')[0]}</p>
-                        <p className="font-mono text-[9px] text-[#6b7a72]">h{formatHandicap(p.handicap_index)}</p>
+                        <p className="font-semibold text-[12px] text-ink truncate">{p.name.split(' ')[0]}</p>
+                        <p className="font-mono text-[9px] text-mute">h{formatHandicap(p.handicap_index)}</p>
                       </div>
                     </div>
                   ))}
-                  {members.length === 0 && <p className="text-[12px] text-[#6b7a72] text-center py-2">Sin jugadores</p>}
+                  {members.length === 0 && <p className="text-[12px] text-mute text-center py-2">Sin jugadores</p>}
                 </div>
                 <div className="mt-2 pt-2 border-t border-white/60">
-                  <p className="font-mono text-[9px] text-[#6b7a72] text-center">HCP medio: {avgHcp}</p>
+                  <p className="font-mono text-[9px] text-mute text-center">HCP medio: {avgHcp}</p>
                 </div>
               </div>
             )
@@ -168,13 +166,13 @@ function ParejasPage() {
         </div>
 
         {/* Player list to reassign */}
-        <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden mb-3">
-          <div className="px-4 py-3 border-b border-[#efebe1] flex items-center justify-between">
-            <p className="font-bold text-[14px] text-[#0e1a16]">Cambiar de equipo</p>
+        <div className="bg-white rounded-btn border border-rule overflow-hidden mb-3">
+          <div className="px-4 py-3 border-b border-rule-soft flex items-center justify-between">
+            <p className="font-bold text-[14px] text-ink">Cambiar de equipo</p>
             <button
               type="button"
               onClick={swapTeams}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border border-[#e5e0d4] text-[#6b7a72] bg-[#f4f1e9] active:opacity-70"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border border-rule text-mute bg-paper active:opacity-70"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                 <path
@@ -191,12 +189,12 @@ function ParejasPage() {
           {players.map((p, i) => (
             <div
               key={p._id}
-              className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}
+              className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? 'border-t border-rule-soft' : ''}`}
             >
               <Avatar name={p.name} size={36} />
               <div className="flex-1">
-                <p className="font-semibold text-[13px] text-[#0e1a16]">{p.name}</p>
-                <p className="font-mono text-[10px] text-[#6b7a72]">h{formatHandicap(p.handicap_index)}</p>
+                <p className="font-semibold text-[13px] text-ink">{p.name}</p>
+                <p className="font-mono text-[10px] text-mute">h{formatHandicap(p.handicap_index)}</p>
               </div>
               {/* Team toggle */}
               <div className="flex gap-1.5">
@@ -220,14 +218,14 @@ function ParejasPage() {
         </div>
 
         {!balanced && (
-          <p className="text-[12px] text-[#c6432d] bg-[#fadcd6] rounded-[10px] px-3 py-2 mb-3 text-center">
+          <p className="text-[12px] text-red bg-red-light rounded-[10px] px-3 py-2 mb-3 text-center">
             Los equipos deben tener el mismo número de jugadores
           </p>
         )}
       </div>
 
       {/* CTA */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-paper to-transparent">
         <button
           type="button"
           onClick={handleStart}
@@ -240,7 +238,7 @@ function ParejasPage() {
             {' vs '}
             {team2.length > 0 ? team2.map(p => p.name.split(' ')[0]).join(' & ') : 'Equipo 2'}
           </span>
-          <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
+          <span className="bg-ink text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
             {saving ? '…' : 'EMPEZAR →'}
           </span>
         </button>

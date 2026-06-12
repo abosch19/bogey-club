@@ -60,10 +60,10 @@ function PlayerPicker({ allProfiles, selected, search, groupSize, setConfig, onT
   return (
     <div>
       <div className="flex items-center justify-between mb-2 px-1">
-        <p className="font-bold text-[14px] text-[#0e1a16]">Jugadores ({selected.length})</p>
-        <p className="text-[12px] text-[#6b7a72]">{Math.ceil(selected.length / groupSize)} grupos</p>
+        <p className="font-bold text-[14px] text-ink">Jugadores ({selected.length})</p>
+        <p className="text-[12px] text-mute">{Math.ceil(selected.length / groupSize)} grupos</p>
       </div>
-      <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2.5 border border-[#e5e0d4] mb-2">
+      <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2.5 border border-rule mb-2">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
           <circle cx="11" cy="11" r="7" stroke="#6b7a72" strokeWidth="1.8" />
           <path d="M16 16L21 21" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round" />
@@ -73,7 +73,7 @@ function PlayerPicker({ allProfiles, selected, search, groupSize, setConfig, onT
           onChange={e => setConfig(c => ({ ...c, search: e.target.value }))}
           placeholder="Buscar jugador…"
           aria-label="Buscar jugador"
-          className="flex-1 bg-transparent text-[13px] text-[#0e1a16] outline-none placeholder-[#a09a90]"
+          className="flex-1 bg-transparent text-[13px] text-ink outline-none placeholder-[#a09a90]"
         />
       </div>
       <div className="space-y-1.5">
@@ -85,7 +85,7 @@ function PlayerPicker({ allProfiles, selected, search, groupSize, setConfig, onT
               type="button"
               key={p.id}
               onClick={() => onToggle(p)}
-              className="w-full flex items-center gap-3 rounded-[16px] p-3 border transition"
+              className="w-full flex items-center gap-3 rounded-btn p-3 border transition"
               style={{
                 backgroundColor: isSel ? '#0e1a16' : '#fff',
                 borderColor: isSel ? '#0e1a16' : '#e5e0d4',
@@ -142,32 +142,32 @@ function ConfigStep({ config, setConfig, courses, allProfiles, selected, onToggl
 
   return (
     <>
-      <h1 className="text-[28px] font-black tracking-tight text-[#0e1a16] mb-5">
+      <h1 className="text-[28px] font-black tracking-tight text-ink mb-5">
         Torneo del
         <br />
-        <span className="text-[#1f8a5b]">día.</span>
+        <span className="text-accent">día.</span>
       </h1>
 
       <div className="space-y-3">
         {/* Torneo info card */}
-        <div className="bg-[#f4f1e9] rounded-[16px] p-4 mb-3">
-          <p className="font-bold text-[13px] text-[#0e1a16] mb-1">¿Qué es el Torneo del día?</p>
-          <p className="text-[12px] text-[#6b7a72] leading-relaxed">
+        <div className="bg-paper rounded-btn p-4 mb-3">
+          <p className="font-bold text-[13px] text-ink mb-1">¿Qué es el Torneo del día?</p>
+          <p className="text-[12px] text-mute leading-relaxed">
             Juntáis a todos (6, 8, 10 jugadores...) y el sistema os divide en grupos equilibrados por hándicap. Cada
             grupo juega su partida y al final hay un leaderboard único para todos.
           </p>
-          <div className="flex gap-3 mt-3 text-[11px] text-[#6b7a72]">
-            <span className="bg-white rounded-full px-2 py-1 border border-[#e5e0d4]">Stableford</span>
-            <span className="bg-white rounded-full px-2 py-1 border border-[#e5e0d4]">Stroke</span>
-            <span className="bg-white rounded-full px-2 py-1 border border-[#e5e0d4]">BBB</span>
+          <div className="flex gap-3 mt-3 text-[11px] text-mute">
+            <span className="bg-white rounded-full px-2 py-1 border border-rule">Stableford</span>
+            <span className="bg-white rounded-full px-2 py-1 border border-rule">Stroke</span>
+            <span className="bg-white rounded-full px-2 py-1 border border-rule">BBB</span>
           </div>
         </div>
 
         {/* Name */}
-        <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
+        <div className="bg-white rounded-btn border border-rule p-4">
           <label
             htmlFor="tournament-name"
-            className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2"
+            className="font-mono text-[9px] text-mute uppercase tracking-wide block mb-2"
           >
             Nombre del torneo
           </label>
@@ -176,15 +176,15 @@ function ConfigStep({ config, setConfig, courses, allProfiles, selected, onToggl
             value={name}
             onChange={e => setConfig(c => ({ ...c, name: e.target.value }))}
             placeholder="Torneo del sábado"
-            className="w-full text-[16px] font-bold text-[#0e1a16] bg-transparent outline-none placeholder-[#c4bfb5]"
+            className="w-full text-[16px] font-bold text-ink bg-transparent outline-none placeholder-faint"
           />
         </div>
 
         {/* Course */}
-        <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
+        <div className="bg-white rounded-btn border border-rule p-4">
           <label
             htmlFor="tournament-course"
-            className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2"
+            className="font-mono text-[9px] text-mute uppercase tracking-wide block mb-2"
           >
             Campo
           </label>
@@ -192,7 +192,7 @@ function ConfigStep({ config, setConfig, courses, allProfiles, selected, onToggl
             id="tournament-course"
             value={courseId}
             onChange={e => setConfig(c => ({ ...c, courseId: e.target.value as Id<'courses'> }))}
-            className="w-full text-[14px] font-semibold text-[#0e1a16] bg-transparent outline-none"
+            className="w-full text-[14px] font-semibold text-ink bg-transparent outline-none"
           >
             {courses.map(c => (
               <option key={c.id} value={c.id}>
@@ -204,18 +204,18 @@ function ConfigStep({ config, setConfig, courses, allProfiles, selected, onToggl
 
         {/* Mode */}
         <div
-          className="bg-white rounded-[16px] border border-[#e5e0d4] p-4"
+          className="bg-white rounded-btn border border-rule p-4"
           role="radiogroup"
           aria-label="Modalidad del torneo"
         >
-          <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-3">Modalidad</p>
+          <p className="font-mono text-[9px] text-mute uppercase tracking-wide block mb-3">Modalidad</p>
           <div className="space-y-2">
             {MODES.map(m => (
               <button
                 type="button"
                 key={m.id}
                 onClick={() => setConfig(c => ({ ...c, mode: m.id }))}
-                className="w-full flex items-center justify-between p-3 rounded-[12px] border transition text-left"
+                className="w-full flex items-center justify-between p-3 rounded-field border transition text-left"
                 style={{
                   backgroundColor: mode === m.id ? '#0e1a16' : '#f4f1e9',
                   borderColor: mode === m.id ? '#0e1a16' : '#e5e0d4',
@@ -246,38 +246,38 @@ function ConfigStep({ config, setConfig, courses, allProfiles, selected, onToggl
         </div>
 
         {/* Reparto info */}
-        <div className="bg-[#f4f1e9] rounded-[16px] px-4 py-3 flex items-center gap-2">
+        <div className="bg-paper rounded-btn px-4 py-3 flex items-center gap-2">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" stroke="#6b7a72" strokeWidth="1.8" />
             <path d="M12 8v4l3 3" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
-          <p className="text-[12px] text-[#6b7a72]">
+          <p className="text-[12px] text-mute">
             Los grupos se reparten automáticamente equilibrando hándicap con algo de aleatoriedad. Podrás ajustar en el
             siguiente paso.
           </p>
         </div>
 
         {/* Group size */}
-        <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4 flex items-center justify-between">
+        <div className="bg-white rounded-btn border border-rule p-4 flex items-center justify-between">
           <div>
-            <p className="font-bold text-[14px] text-[#0e1a16]">Jugadores por grupo</p>
-            <p className="text-[12px] text-[#6b7a72] mt-0.5">Grupos de {groupSize} jugadores</p>
+            <p className="font-bold text-[14px] text-ink">Jugadores por grupo</p>
+            <p className="text-[12px] text-mute mt-0.5">Grupos de {groupSize} jugadores</p>
           </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
               aria-label="Reducir jugadores por grupo"
               onClick={() => setConfig(c => ({ ...c, groupSize: Math.max(2, c.groupSize - 1) }))}
-              className="w-9 h-9 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-[16px] text-[#6b7a72]"
+              className="w-9 h-9 rounded-full border-2 border-rule flex items-center justify-center text-[16px] text-mute"
             >
               −
             </button>
-            <span className="font-mono text-[20px] font-black text-[#0e1a16] w-6 text-center">{groupSize}</span>
+            <span className="font-mono text-[20px] font-black text-ink w-6 text-center">{groupSize}</span>
             <button
               type="button"
               aria-label="Aumentar jugadores por grupo"
               onClick={() => setConfig(c => ({ ...c, groupSize: Math.min(4, c.groupSize + 1) }))}
-              className="w-9 h-9 rounded-full bg-[#0e1a16] flex items-center justify-center text-[16px] text-white"
+              className="w-9 h-9 rounded-full bg-ink flex items-center justify-center text-[16px] text-white"
             >
               +
             </button>
@@ -302,7 +302,7 @@ function ConfigStep({ config, setConfig, courses, allProfiles, selected, onToggl
           style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}
         >
           <span>Crear grupos automáticos</span>
-          <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">SIGUIENTE →</span>
+          <span className="bg-ink text-white text-[12px] font-bold px-3 py-1.5 rounded-full">SIGUIENTE →</span>
         </button>
       </div>
     </>
@@ -333,11 +333,11 @@ function GruposStep({
   return (
     <>
       <div className="flex items-center justify-between mb-1">
-        <h1 className="text-[24px] font-black tracking-tight text-[#0e1a16]">Ajusta los grupos</h1>
+        <h1 className="text-[24px] font-black tracking-tight text-ink">Ajusta los grupos</h1>
         <button
           type="button"
           onClick={() => setGroups(autoGroup(selected, groupSize))}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[12px] font-semibold border border-[#e5e0d4] bg-white text-[#6b7a72] active:opacity-70"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[12px] font-semibold border border-rule bg-white text-mute active:opacity-70"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
             <path
@@ -352,16 +352,16 @@ function GruposStep({
           Redistribuir
         </button>
       </div>
-      <p className="text-[13px] text-[#6b7a72] mb-4">Toca los números de grupo para mover jugadores.</p>
+      <p className="text-[13px] text-mute mb-4">Toca los números de grupo para mover jugadores.</p>
 
       <div className="space-y-3 mb-5">
         {Array.from({ length: nGroups }, (_, gi) => gi + 1).map(groupNum => {
           const gi = groupNum - 1
           const gPlayers = groups.filter(p => p.group === groupNum)
           return (
-            <div key={groupNum} className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+            <div key={groupNum} className="bg-white rounded-btn border border-rule overflow-hidden">
               <div
-                className="flex items-center gap-2 px-4 py-3 border-b border-[#efebe1]"
+                className="flex items-center gap-2 px-4 py-3 border-b border-rule-soft"
                 style={{ backgroundColor: groupColors[gi] + '18' }}
               >
                 <div
@@ -370,16 +370,16 @@ function GruposStep({
                 >
                   {gi + 1}
                 </div>
-                <p className="font-bold text-[14px] text-[#0e1a16]">Grupo {gi + 1}</p>
-                <span className="font-mono text-[10px] text-[#6b7a72] ml-auto">{gPlayers.length} jugadores</span>
+                <p className="font-bold text-[14px] text-ink">Grupo {gi + 1}</p>
+                <span className="font-mono text-[10px] text-mute ml-auto">{gPlayers.length} jugadores</span>
               </div>
-              <div className="divide-y divide-[#efebe1]">
+              <div className="divide-y divide-rule-soft">
                 {gPlayers.map(p => (
                   <div key={p.id} className="flex items-center gap-3 px-4 py-2.5">
                     <Avatar name={p.name} size={32} />
                     <div className="flex-1">
-                      <p className="font-semibold text-[13px] text-[#0e1a16]">{p.name}</p>
-                      <p className="font-mono text-[10px] text-[#6b7a72]">HCP {formatHandicap(p.handicap_index)}</p>
+                      <p className="font-semibold text-[13px] text-ink">{p.name}</p>
+                      <p className="font-mono text-[10px] text-mute">HCP {formatHandicap(p.handicap_index)}</p>
                     </div>
                     {/* Move to other group */}
                     <div className="flex gap-1">
@@ -416,7 +416,7 @@ function GruposStep({
         style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}
       >
         <span>Iniciar torneo · {nGroups} grupos</span>
-        <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
+        <span className="bg-ink text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
           {saving ? '…' : 'EMPEZAR →'}
         </span>
       </button>
@@ -438,8 +438,8 @@ function NuevoTorneoPage() {
 
   if (!me || coursesData === undefined || profilesData === undefined)
     return (
-      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     )
 
@@ -528,13 +528,13 @@ function NuevoTorneoWizard({
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9]">
+    <div className="min-h-screen bg-paper">
       <div className="safe-top px-[14px] pt-3 pb-8">
         <div className="flex items-center gap-3 mb-5">
           <button
             type="button"
             onClick={() => (step === 'grupos' ? setFlow(f => ({ ...f, step: 'config' })) : navigate(-1))}
-            className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]"
+            className="flex items-center gap-1.5 text-ink font-semibold text-[13px]"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
@@ -547,7 +547,7 @@ function NuevoTorneoWizard({
             </svg>
             {step === 'grupos' ? 'Configuración' : 'Atrás'}
           </button>
-          <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-wide">
+          <span className="font-mono text-[10px] text-mute uppercase tracking-wide">
             {step === 'config' ? 'TORNEO · 1/2' : 'TORNEO · 2/2'}
           </span>
         </div>
@@ -585,8 +585,8 @@ export default function Page() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-          <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+        <div className="min-h-screen bg-paper flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
         </div>
       }
     >

@@ -43,8 +43,8 @@ export function PushSettings() {
   const isOn = state === 'on'
 
   return (
-    <div className="flex items-center gap-3 bg-white rounded-[16px] px-4 py-3.5 border border-[#e5e0d4]">
-      <div className="w-9 h-9 rounded-full bg-[#f6e6c4] flex items-center justify-center">
+    <div className="flex items-center gap-3 bg-white rounded-btn px-4 py-3.5 border border-rule">
+      <div className="w-9 h-9 rounded-full bg-amber-light flex items-center justify-center">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
           <path
             d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"
@@ -56,8 +56,8 @@ export function PushSettings() {
         </svg>
       </div>
       <div className="flex-1">
-        <p className="font-semibold text-[14px] text-[#0e1a16]">Notificaciones</p>
-        <p className="text-[11px] text-[#6b7a72]">{SUBTITLE[state]}</p>
+        <p className="font-semibold text-[14px] text-ink">Notificaciones</p>
+        <p className="text-[11px] text-mute">{SUBTITLE[state]}</p>
       </div>
       {canToggle && (
         <button

@@ -32,7 +32,7 @@ function HoleOptionButton({ active, label, sub, onClick }: HoleOptionButtonProps
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center justify-between p-4 rounded-[16px] border transition"
+      className="w-full flex items-center justify-between p-4 rounded-btn border transition"
       style={{
         backgroundColor: active ? '#0e1a16' : '#fff',
         borderColor: active ? '#0e1a16' : '#e5e0d4',
@@ -65,7 +65,7 @@ type CourseCardProps = {
 function CourseCard({ course, isSel, onSelect, onEdit }: CourseCardProps) {
   return (
     <div
-      className="relative w-full text-left rounded-[16px] p-4 border transition-all active:scale-[0.99]"
+      className="relative w-full text-left rounded-btn p-4 border transition-all active:scale-[0.99]"
       style={{
         backgroundColor: isSel ? '#0e1a16' : '#ffffff',
         borderColor: isSel ? '#0e1a16' : '#e5e0d4',
@@ -75,12 +75,12 @@ function CourseCard({ course, isSel, onSelect, onEdit }: CourseCardProps) {
         type="button"
         onClick={onSelect}
         aria-label={`Seleccionar ${course.name}`}
-        className="absolute inset-0 rounded-[16px] cursor-pointer"
+        className="absolute inset-0 rounded-btn cursor-pointer"
       />
       <div className="relative pointer-events-none flex items-center gap-3">
         {/* Icon */}
         <div
-          className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0"
+          className="w-11 h-11 rounded-field flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: isSel ? 'rgba(255,255,255,0.12)' : '#d9eedd' }}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -198,11 +198,11 @@ function HoleModeSheet({ open, selected, holeMode, setHoleMode, onDismiss, onNex
           aria-describedby={undefined}
           className="fixed bottom-0 inset-x-0 z-50 mx-auto max-w-[430px] bg-white rounded-t-[28px] p-6 pb-10 outline-none"
         >
-          <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-5" />
+          <div className="w-10 h-1 rounded-full bg-rule mx-auto mb-5" />
           {selected && (
             <>
-              <Drawer.Title className="text-[20px] font-black text-[#0e1a16] mb-1">{selected.name}</Drawer.Title>
-              <p className="text-[13px] text-[#6b7a72] mb-5">
+              <Drawer.Title className="text-[20px] font-black text-ink mb-1">{selected.name}</Drawer.Title>
+              <p className="text-[13px] text-mute mb-5">
                 {selected.holes_count === 9 ? '¿Cuántos hoyos vais a jugar?' : '¿Qué parte del campo jugáis?'}
               </p>
               <div className="space-y-2 mb-5">
@@ -241,14 +241,14 @@ function HoleModeSheet({ open, selected, holeMode, setHoleMode, onDismiss, onNex
                 <button
                   type="button"
                   onClick={onDismiss}
-                  className="flex-1 py-3.5 rounded-full border border-[#e5e0d4] font-semibold text-[14px] text-[#6b7a72]"
+                  className="flex-1 py-3.5 rounded-full border border-rule font-semibold text-[14px] text-mute"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={onNext}
-                  className="flex-1 py-3.5 rounded-full font-bold text-[14px] text-[#0e1a16]"
+                  className="flex-1 py-3.5 rounded-full font-bold text-[14px] text-ink"
                   style={{ backgroundColor: '#1f8a5b' }}
                 >
                   Siguiente →
@@ -305,14 +305,14 @@ function SeleccionarCampoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] flex flex-col">
+    <div className="min-h-screen bg-paper flex flex-col">
       {/* Header */}
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]"
+            className="flex items-center gap-1.5 text-ink font-semibold text-[13px]"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
@@ -325,17 +325,17 @@ function SeleccionarCampoPage() {
             </svg>
             Atrás
           </button>
-          <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-[0.15em]">NUEVA RONDA · 1 / 3</span>
+          <span className="font-mono text-[10px] text-mute uppercase tracking-[0.15em]">NUEVA RONDA · 1 / 3</span>
         </div>
 
-        <h1 className="text-[30px] font-black tracking-tight text-[#0e1a16] leading-tight mb-1">
+        <h1 className="text-[30px] font-black tracking-tight text-ink leading-tight mb-1">
           ¿Dónde
           <br />
-          <span className="text-[#1f8a5b]">jugamos hoy?</span>
+          <span className="text-accent">jugamos hoy?</span>
         </h1>
 
         {/* Golf / P&P tabs */}
-        <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4] mt-4 mb-3">
+        <div className="flex gap-1.5 bg-white rounded-full p-1 border border-rule mt-4 mb-3">
           {(
             [
               ['golf', 'Golf'],
@@ -361,7 +361,7 @@ function SeleccionarCampoPage() {
         </div>
 
         {/* Search */}
-        <div className="flex items-center gap-3 bg-white rounded-full px-4 py-3 border border-[#e5e0d4]">
+        <div className="flex items-center gap-3 bg-white rounded-full px-4 py-3 border border-rule">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="7" stroke="#6b7a72" strokeWidth="1.8" />
             <path d="M16 16L21 21" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round" />
@@ -371,7 +371,7 @@ function SeleccionarCampoPage() {
             onChange={e => setSearch(e.target.value)}
             aria-label="Buscar campo"
             placeholder="Buscar campo…"
-            className="flex-1 bg-transparent text-[14px] text-[#0e1a16] placeholder-[#a09a90] outline-none"
+            className="flex-1 bg-transparent text-[14px] text-ink placeholder-[#a09a90] outline-none"
           />
         </div>
       </div>
@@ -380,10 +380,10 @@ function SeleccionarCampoPage() {
       <div className="flex-1 px-[14px] pb-32 overflow-y-auto space-y-2">
         {loading ? (
           <div className="flex justify-center pt-10">
-            <div className="w-6 h-6 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+            <div className="w-6 h-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <p className="text-center text-[#6b7a72] text-[14px] pt-10">No hay campos con ese nombre</p>
+          <p className="text-center text-mute text-[14px] pt-10">No hay campos con ese nombre</p>
         ) : (
           filtered.map(course => (
             <CourseCard
@@ -415,15 +415,15 @@ function SeleccionarCampoPage() {
       />
 
       {selected && !showHoleModal && (
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-paper to-transparent">
           <button
             type="button"
             onClick={() => setShowHoleModal(true)}
-            className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] text-[#0e1a16] transition active:scale-[0.98]"
+            className="w-full flex items-center justify-between px-5 py-4 rounded-full font-bold text-[14px] text-ink transition active:scale-[0.98]"
             style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}
           >
             <span>{selected.name}</span>
-            <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">SIGUIENTE →</span>
+            <span className="bg-ink text-white text-[12px] font-bold px-3 py-1.5 rounded-full">SIGUIENTE →</span>
           </button>
         </div>
       )}
@@ -435,8 +435,8 @@ export default function Page() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-          <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+        <div className="min-h-screen bg-paper flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
         </div>
       }
     >

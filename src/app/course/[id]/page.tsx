@@ -14,8 +14,8 @@ export default function EditCampoPage() {
 
   if (!course)
     return (
-      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     )
 
@@ -67,13 +67,13 @@ function CourseEditor({ course }: { course: CourseData }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] pb-8">
+    <div className="min-h-screen bg-paper pb-8">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-4">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]"
+            className="flex items-center gap-1.5 text-ink font-semibold text-[13px]"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
@@ -98,38 +98,32 @@ function CourseEditor({ course }: { course: CourseData }) {
         </div>
 
         {/* Course name */}
-        <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4 mb-3">
-          <label
-            htmlFor="course-name"
-            className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2"
-          >
+        <div className="bg-white rounded-btn border border-rule p-4 mb-3">
+          <label htmlFor="course-name" className="font-mono text-[9px] text-mute uppercase tracking-wide block mb-2">
             Nombre del campo
           </label>
           <input
             id="course-name"
             value={courseName}
             onChange={e => setCourseName(e.target.value)}
-            className="w-full text-[16px] font-bold text-[#0e1a16] bg-transparent outline-none border-b border-[#e5e0d4] pb-1"
+            className="w-full text-[16px] font-bold text-ink bg-transparent outline-none border-b border-rule pb-1"
           />
         </div>
 
-        {msg && <p className="text-[13px] text-[#1f8a5b] bg-[#d9eedd] rounded-[10px] px-4 py-2.5 mb-3">{msg}</p>}
+        {msg && <p className="text-[13px] text-accent bg-accent-light rounded-[10px] px-4 py-2.5 mb-3">{msg}</p>}
 
         {/* Holes table */}
-        <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
-          <div className="grid grid-cols-5 gap-0 border-b border-[#efebe1] bg-[#f4f1e9]">
+        <div className="bg-white rounded-btn border border-rule overflow-hidden">
+          <div className="grid grid-cols-5 gap-0 border-b border-rule-soft bg-paper">
             {['Hoyo', 'Par', 'HCP (SI)', 'Dist (m)', 'Zona'].map(h => (
-              <div
-                key={h}
-                className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide py-2.5 px-2 text-center"
-              >
+              <div key={h} className="font-mono text-[9px] text-mute uppercase tracking-wide py-2.5 px-2 text-center">
                 {h === 'Zona' ? '' : h}
               </div>
             ))}
           </div>
           {holes.map((h, i) => (
-            <div key={h._id} className={`grid grid-cols-5 gap-0 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}>
-              <div className="flex items-center justify-center py-2.5 px-2 font-mono text-[13px] font-bold text-[#0e1a16]">
+            <div key={h._id} className={`grid grid-cols-5 gap-0 ${i > 0 ? 'border-t border-rule-soft' : ''}`}>
+              <div className="flex items-center justify-center py-2.5 px-2 font-mono text-[13px] font-bold text-ink">
                 {h.hole_number}
               </div>
               {(['par', 'stroke_index', 'distance_m'] as const).map(field => (
@@ -139,17 +133,15 @@ function CourseEditor({ course }: { course: CourseData }) {
                     aria-label={`${field === 'par' ? 'Par' : field === 'stroke_index' ? 'Stroke index' : 'Distancia en metros'} del hoyo ${h.hole_number}`}
                     value={field === 'distance_m' ? (h.distance_m ?? '') : h[field]}
                     onChange={e => updateHole(h._id, field, e.target.value)}
-                    className="w-full text-center font-mono text-[13px] text-[#0e1a16] bg-[#f4f1e9] rounded-[8px] py-1.5 outline-none focus:bg-[#d9eedd] transition"
+                    className="w-full text-center font-mono text-[13px] text-ink bg-paper rounded-[8px] py-1.5 outline-none focus:bg-accent-light transition"
                   />
                 </div>
               ))}
               <div className="flex items-center justify-center py-2.5 px-2">
                 {h.stroke_index <= 9 ? (
-                  <span className="font-mono text-[8px] bg-[#dde7fb] text-[#2a6fdb] px-1.5 py-0.5 rounded-full">
-                    Front
-                  </span>
+                  <span className="font-mono text-[8px] bg-blue-light text-blue px-1.5 py-0.5 rounded-full">Front</span>
                 ) : (
-                  <span className="font-mono text-[8px] bg-[#d9eedd] text-[#1f8a5b] px-1.5 py-0.5 rounded-full">
+                  <span className="font-mono text-[8px] bg-accent-light text-accent px-1.5 py-0.5 rounded-full">
                     Back
                   </span>
                 )}
@@ -158,7 +150,7 @@ function CourseEditor({ course }: { course: CourseData }) {
           ))}
         </div>
 
-        <p className="text-[11px] text-[#6b7a72] text-center mt-3">
+        <p className="text-[11px] text-mute text-center mt-3">
           HCP = Stroke Index (1 = más difícil, {holes.length} = más fácil)
         </p>
       </div>

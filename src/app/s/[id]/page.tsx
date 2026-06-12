@@ -14,8 +14,8 @@ import { ScoreLegend } from '@/components/ScoreLegend'
 import { RoundStats, type Score } from '@/components/RoundStats'
 
 const SPINNER = (
-  <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-    <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+  <div className="min-h-screen bg-paper flex items-center justify-center">
+    <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
   </div>
 )
 
@@ -27,9 +27,9 @@ export default function PublicScorecardPage() {
   if (data === undefined) return SPINNER
   if (data === null || !id) {
     return (
-      <div className="min-h-screen bg-[#f4f1e9] flex flex-col items-center justify-center gap-2 px-8 text-center">
-        <p className="text-[15px] font-bold text-[#0e1a16]">Tarjeta no encontrada</p>
-        <p className="text-[12px] text-[#6b7a72]">El enlace no es válido o la ronda ya no existe.</p>
+      <div className="min-h-screen bg-paper flex flex-col items-center justify-center gap-2 px-8 text-center">
+        <p className="text-[15px] font-bold text-ink">Tarjeta no encontrada</p>
+        <p className="text-[12px] text-mute">El enlace no es válido o la ronda ya no existe.</p>
       </div>
     )
   }
@@ -99,7 +99,7 @@ export default function PublicScorecardPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] pb-12">
+    <div className="min-h-screen bg-paper pb-12">
       <div className="safe-top px-[14px] pt-4 pb-2">
         {/* Brand strip — this page is the first contact for invitees */}
         <div className="flex items-center gap-1.5 mb-3">
@@ -109,28 +109,28 @@ export default function PublicScorecardPage() {
             <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16" />
             <circle cx="24" cy="50" r="2.6" fill="#0e1a16" />
           </svg>
-          <span className="text-[14px] leading-none font-black tracking-tight text-[#0e1a16]">
-            Bogey <span className="text-[#1f8a5b]">Club</span>
+          <span className="text-[14px] leading-none font-black tracking-tight text-ink">
+            Bogey <span className="text-accent">Club</span>
           </span>
         </div>
 
         {/* Round info card */}
-        <div className="bg-white rounded-[16px] px-3.5 py-3 border border-[#e5e0d4] mb-2">
+        <div className="bg-white rounded-btn px-3.5 py-3 border border-rule mb-2">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="font-bold text-[15px] text-[#0e1a16] leading-tight truncate">{courseName}</p>
-              <p className="font-mono text-[10px] text-[#6b7a72] mt-0.5">
+              <p className="font-bold text-[15px] text-ink leading-tight truncate">{courseName}</p>
+              <p className="font-mono text-[10px] text-mute mt-0.5">
                 {dateLabel} · {holes.length} hoyos
               </p>
             </div>
             {completed && (
-              <span className="font-mono text-[9px] font-bold text-[#1f8a5b] bg-[#d9eedd] px-2 py-1 rounded-full uppercase tracking-wide flex-shrink-0">
+              <span className="font-mono text-[9px] font-bold text-accent bg-accent-light px-2 py-1 rounded-full uppercase tracking-wide flex-shrink-0">
                 Firmada
               </span>
             )}
           </div>
           {/* Totals per player */}
-          <div className="mt-2.5 pt-2.5 border-t border-[#efebe1] flex items-center gap-x-5 gap-y-2 flex-wrap">
+          <div className="mt-2.5 pt-2.5 border-t border-rule-soft flex items-center gap-x-5 gap-y-2 flex-wrap">
             {players.map(p => {
               const total = getTotal(p.id)
               const delta = getDelta(p.id)
@@ -139,7 +139,7 @@ export default function PublicScorecardPage() {
                   <Avatar name={p.name} src={p.avatar_url} size={28} />
                   {total > 0 ? (
                     <div className="flex items-baseline gap-1.5">
-                      <span className="font-mono text-[20px] font-black text-[#0e1a16] leading-none">{total}</span>
+                      <span className="font-mono text-[20px] font-black text-ink leading-none">{total}</span>
                       <span
                         className="font-mono text-[12px] font-bold"
                         style={{ color: delta <= 0 ? '#1f8a5b' : '#9b6e1a' }}
@@ -148,7 +148,7 @@ export default function PublicScorecardPage() {
                       </span>
                     </div>
                   ) : (
-                    <span className="text-[#c4bfb5] text-[13px] font-mono">—</span>
+                    <span className="text-faint text-[13px] font-mono">—</span>
                   )}
                 </div>
               )

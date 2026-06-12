@@ -13,16 +13,16 @@ export default function PlayerPage() {
 
   if (player === undefined) {
     return (
-      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     )
   }
   if (player === null) {
     return (
-      <div className="min-h-screen bg-[#f4f1e9] flex flex-col items-center justify-center gap-3">
-        <p className="text-[14px] text-[#6b7a72]">Jugador no encontrado.</p>
-        <Link to="/players" className="text-[#1f8a5b] font-semibold text-[13px]">
+      <div className="min-h-screen bg-paper flex flex-col items-center justify-center gap-3">
+        <p className="text-[14px] text-mute">Jugador no encontrado.</p>
+        <Link to="/players" className="text-accent font-semibold text-[13px]">
           Ver jugadores →
         </Link>
       </div>
@@ -30,10 +30,10 @@ export default function PlayerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] pb-28">
+    <div className="min-h-screen bg-paper pb-28">
       {/* Header sticky */}
       <div
-        className="sticky top-0 bg-[#f4f1e9]/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-[#e5e0d4]"
+        className="sticky top-0 bg-paper/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-rule"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
       >
         <div className="flex items-center gap-3">
@@ -41,7 +41,7 @@ export default function PlayerPage() {
             type="button"
             onClick={() => navigate(-1)}
             aria-label="Volver"
-            className="flex items-center gap-1 text-[#6b7a72] font-semibold text-[13px]"
+            className="flex items-center gap-1 text-mute font-semibold text-[13px]"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
@@ -54,7 +54,7 @@ export default function PlayerPage() {
             </svg>
             Atrás
           </button>
-          <h1 className="text-[26px] font-black tracking-tight text-[#0e1a16]">{player.name.split(' ')[0]}</h1>
+          <h1 className="text-[26px] font-black tracking-tight text-ink">{player.name.split(' ')[0]}</h1>
         </div>
       </div>
 
@@ -71,7 +71,7 @@ export default function PlayerPage() {
                 </svg>
                 <span className="text-white text-[14px] font-bold">Bogey Club</span>
               </div>
-              <span className="font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-[#e8b75a] bg-[#e8b75a]/10 border border-[#e8b75a]/30 px-2.5 py-1 rounded-full">
+              <span className="font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-amber bg-amber/10 border border-amber/30 px-2.5 py-1 rounded-full">
                 Socio
               </span>
             </div>
@@ -80,7 +80,7 @@ export default function PlayerPage() {
                 name={player.name}
                 src={player.avatar_url}
                 size={56}
-                className="ring-2 ring-[#1f8a5b] ring-offset-2 ring-offset-[#0e1a16]"
+                className="ring-2 ring-accent ring-offset-2 ring-offset-ink"
               />
               <div>
                 <div className="flex items-center gap-2">
@@ -134,10 +134,10 @@ export default function PlayerPage() {
         </HeroCard>
 
         {/* Last rounds */}
-        <h2 className="text-[14px] font-bold text-[#0e1a16] mb-2 mt-4">Últimas partidas</h2>
+        <h2 className="text-[14px] font-bold text-ink mb-2 mt-4">Últimas partidas</h2>
         {player.rounds.length === 0 ? (
-          <div className="bg-white rounded-[16px] p-6 border border-[#e5e0d4] text-center">
-            <p className="text-[#6b7a72] text-[14px]">Todavía no ha firmado ninguna ronda.</p>
+          <div className="bg-white rounded-btn p-6 border border-rule text-center">
+            <p className="text-mute text-[14px]">Todavía no ha firmado ninguna ronda.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -146,24 +146,24 @@ export default function PlayerPage() {
                 key={r.id}
                 to={`/scorecard?round=${r.id}`}
                 onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
-                className="bg-white rounded-[16px] p-3.5 border border-[#e5e0d4] flex items-center gap-3 block active:scale-[0.99] transition"
+                className="bg-white rounded-btn p-3.5 border border-rule flex items-center gap-3 block active:scale-[0.99] transition"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-bold text-[13px] text-[#0e1a16] truncate">
+                    <p className="font-bold text-[13px] text-ink truncate">
                       {r.course_name}
-                      {r.is_practice && <span className="text-[#6b7a72] font-normal"> · práctica</span>}
+                      {r.is_practice && <span className="text-mute font-normal"> · práctica</span>}
                     </p>
                     {r.won && (
-                      <span className="font-mono text-[8px] bg-[#d9eedd] text-[#1f8a5b] px-1.5 py-0.5 rounded-full">
+                      <span className="font-mono text-[8px] bg-accent-light text-accent px-1.5 py-0.5 rounded-full">
                         WIN
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-[#6b7a72]">{formatDate(r.date)}</p>
+                  <p className="text-[11px] text-mute">{formatDate(r.date)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-mono text-[18px] font-black text-[#0e1a16]">{r.total}</p>
+                  <p className="font-mono text-[18px] font-black text-ink">{r.total}</p>
                   <p
                     className="font-mono text-[10px] font-bold"
                     style={{ color: r.delta <= 0 ? '#1f8a5b' : '#9b6e1a' }}

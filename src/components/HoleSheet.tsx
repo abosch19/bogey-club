@@ -66,12 +66,12 @@ function ScrambleSection({ players, par, holeNum, get, setScore, set }: Scramble
 
   return (
     <div className="px-[14px] space-y-3">
-      <div className="bg-[#d9eedd] rounded-[12px] px-4 py-2.5 flex items-center gap-2">
+      <div className="bg-accent-light rounded-field px-4 py-2.5 flex items-center gap-2">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path d="M5 3v18" />
           <path d="M5 4h11l-2 3 2 3H5" />
         </svg>
-        <p className="text-[12px] text-[#1f8a5b] font-semibold">
+        <p className="text-[12px] text-accent font-semibold">
           {hasTwoTeams
             ? 'Scramble por equipos — un resultado por equipo'
             : 'Scramble — todos juegan, anotar el mejor resultado del equipo'}
@@ -84,7 +84,7 @@ function ScrambleSection({ players, par, holeNum, get, setScore, set }: Scramble
         const colors = delta != null ? scoreColor(delta) : null
 
         return (
-          <div key={team} className="bg-white rounded-[22px] overflow-hidden border-2" style={{ borderColor: color }}>
+          <div key={team} className="bg-white rounded-card overflow-hidden border-2" style={{ borderColor: color }}>
             <div className="flex items-center gap-3 px-4 py-3" style={{ backgroundColor: light }}>
               <div className="flex -space-x-2">
                 {members.map(m => (
@@ -95,13 +95,13 @@ function ScrambleSection({ players, par, holeNum, get, setScore, set }: Scramble
                 <p className="font-black text-[15px]" style={{ color }}>
                   {hasTwoTeams ? `Equipo ${team}` : members.map(m => m.name.split(' ')[0]).join(' & ')}
                 </p>
-                <p className="font-mono text-[10px] text-[#6b7a72]">
+                <p className="font-mono text-[10px] text-mute">
                   {members.map(m => `h${m.course_handicap}`).join(' · ')}
                 </p>
               </div>
               {colors && sc.strokes != null && (
                 <div
-                  className="w-12 h-12 rounded-[12px] flex flex-col items-center justify-center font-mono font-black"
+                  className="w-12 h-12 rounded-field flex flex-col items-center justify-center font-mono font-black"
                   style={{ backgroundColor: colors.bg, color: colors.text }}
                 >
                   <span className="text-[20px] leading-none">{sc.strokes}</span>
@@ -113,7 +113,7 @@ function ScrambleSection({ players, par, holeNum, get, setScore, set }: Scramble
             </div>
 
             <div className="px-4 pt-4 pb-3">
-              <p className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide mb-2">
+              <p className="font-mono text-[9px] text-mute uppercase tracking-wide mb-2">
                 Resultado del equipo · hoyo {holeNum}
               </p>
               <div className="flex gap-2">
@@ -126,7 +126,7 @@ function ScrambleSection({ players, par, holeNum, get, setScore, set }: Scramble
                       key={s}
                       type="button"
                       onClick={() => members.forEach(m => setScore(m.id, s))}
-                      className="flex-1 h-14 rounded-[16px] transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                      className="flex-1 h-14 rounded-btn transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
                       style={{
                         backgroundColor: isSel ? c.bg : '#f4f1e9',
                         color: isSel ? c.text : '#9b9b8a',
@@ -147,8 +147,8 @@ function ScrambleSection({ players, par, holeNum, get, setScore, set }: Scramble
               </div>
             </div>
 
-            <div className="flex items-center gap-2 px-4 pb-4 border-t border-[#efebe1] pt-3">
-              <span className="font-mono text-[11px] text-[#6b7a72] w-12">Putts</span>
+            <div className="flex items-center gap-2 px-4 pb-4 border-t border-rule-soft pt-3">
+              <span className="font-mono text-[11px] text-mute w-12">Putts</span>
               <div className="flex gap-2 flex-1">
                 {[0, 1, 2, 3, 4].map(n => (
                   <button
@@ -203,15 +203,15 @@ function PlayerCard({
   const scoreOpts = [par - 1, par, par + 1, par + 2, par + 3, par + 4].filter(s => s >= 1)
 
   return (
-    <div className="bg-white rounded-[16px] border border-[#e5e0d4] overflow-hidden">
+    <div className="bg-white rounded-btn border border-rule overflow-hidden">
       <div className="flex items-center gap-2.5 px-3 pt-3 pb-2.5">
         <div className="flex-shrink-0 text-center" style={{ minWidth: 44 }}>
           <Avatar name={p.name} src={p.avatar_url} size={40} className="mx-auto" />
-          <p className="font-mono text-[9px] text-[#6b7a72] mt-0.5">
+          <p className="font-mono text-[9px] text-mute mt-0.5">
             h{p.course_handicap}
             {(() => {
               const rcv = strokesReceived(p.course_handicap, hole?.stroke_index ?? 18)
-              return rcv > 0 ? <span className="text-[#1f8a5b] font-black"> +{rcv}</span> : null
+              return rcv > 0 ? <span className="text-accent font-black"> +{rcv}</span> : null
             })()}
           </p>
         </div>
@@ -228,7 +228,7 @@ function PlayerCard({
                 key={s}
                 type="button"
                 onClick={() => setScore(p.id, s)}
-                className="flex-1 h-12 rounded-[12px] transition active:scale-95 flex flex-col items-center justify-center"
+                className="flex-1 h-12 rounded-field transition active:scale-95 flex flex-col items-center justify-center"
                 style={{
                   backgroundColor: isSelected ? c.bg : '#f4f1e9',
                   color: isSelected ? c.text : '#9b9b8a',
@@ -279,8 +279,8 @@ function PlayerCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 px-3 py-2.5 border-t border-[#efebe1]">
-        <span className="font-mono text-[11px] text-[#6b7a72] w-12">Putts</span>
+      <div className="flex items-center gap-2 px-3 py-2.5 border-t border-rule-soft">
+        <span className="font-mono text-[11px] text-mute w-12">Putts</span>
         <div className="flex gap-2 flex-1">
           {[0, 1, 2, 3, 4].map(n => (
             <button
@@ -299,7 +299,7 @@ function PlayerCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 px-3 pb-3 border-t border-[#efebe1] pt-2.5">
+      <div className="flex items-center gap-2 px-3 pb-3 border-t border-rule-soft pt-2.5">
         {par > 3 && (
           <button
             type="button"
@@ -331,19 +331,19 @@ function PlayerCard({
             type="button"
             onClick={() => set(p.id, 'penalties', Math.max(0, sc.penalties - 1))}
             aria-label="Quitar penalti"
-            className="w-8 h-8 rounded-full bg-[#f4f1e9] flex items-center justify-center text-[16px] text-[#6b7a72]"
+            className="w-8 h-8 rounded-full bg-paper flex items-center justify-center text-[16px] text-mute"
           >
             -
           </button>
           <div className="text-center">
-            <span className="font-mono text-[14px] font-black text-[#0e1a16]">{sc.penalties}</span>
-            <p className="font-mono text-[8px] text-[#6b7a72] leading-none">Pen</p>
+            <span className="font-mono text-[14px] font-black text-ink">{sc.penalties}</span>
+            <p className="font-mono text-[8px] text-mute leading-none">Pen</p>
           </div>
           <button
             type="button"
             onClick={() => set(p.id, 'penalties', sc.penalties + 1)}
             aria-label="Añadir penalti"
-            className="w-8 h-8 rounded-full bg-[#f4f1e9] flex items-center justify-center text-[16px] text-[#6b7a72]"
+            className="w-8 h-8 rounded-full bg-paper flex items-center justify-center text-[16px] text-mute"
           >
             +
           </button>
@@ -351,23 +351,23 @@ function PlayerCard({
       </div>
 
       {isExp && (
-        <div className="px-3 pb-3 pt-1 border-t border-[#efebe1]">
+        <div className="px-3 pb-3 pt-1 border-t border-rule-soft">
           <div className="flex items-center gap-3">
-            <span className="text-[12px] text-[#6b7a72] font-medium">Golpes exactos:</span>
+            <span className="text-[12px] text-mute font-medium">Golpes exactos:</span>
             <button
               type="button"
               onClick={() => sc.strokes && set(p.id, 'strokes', Math.max(1, sc.strokes - 1))}
               aria-label="Un golpe menos"
-              className="w-8 h-8 rounded-full border border-[#e5e0d4] flex items-center justify-center text-[16px] text-[#6b7a72]"
+              className="w-8 h-8 rounded-full border border-rule flex items-center justify-center text-[16px] text-mute"
             >
               -
             </button>
-            <span className="font-mono text-[20px] font-black text-[#0e1a16] w-8 text-center">{sc.strokes ?? '-'}</span>
+            <span className="font-mono text-[20px] font-black text-ink w-8 text-center">{sc.strokes ?? '-'}</span>
             <button
               type="button"
               onClick={() => set(p.id, 'strokes', (sc.strokes ?? par) + 1)}
               aria-label="Un golpe más"
-              className="w-8 h-8 rounded-full bg-[#0e1a16] flex items-center justify-center text-[16px] text-white"
+              className="w-8 h-8 rounded-full bg-ink flex items-center justify-center text-[16px] text-white"
             >
               +
             </button>
@@ -522,7 +522,7 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
   if (!hole)
     return (
       <div className="py-16 flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+        <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     )
 
@@ -532,14 +532,14 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
     <div className="flex flex-col">
       {/* Header */}
       <div className="px-[14px] pb-2 text-center">
-        <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-[0.15em]">
+        <span className="font-mono text-[10px] text-mute uppercase tracking-[0.15em]">
           Hoyo {holeNum} de {totalHoles}
         </span>
       </div>
 
       {/* Hole hero — solo lo esencial */}
       <div
-        className="mx-[14px] rounded-[16px] px-4 py-4 mb-3 relative overflow-hidden"
+        className="mx-[14px] rounded-btn px-4 py-4 mb-3 relative overflow-hidden"
         style={{ backgroundColor: '#0e1a16' }}
       >
         <div
@@ -630,7 +630,7 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
             onClick={() => onChangeHole(holeNum - 1)}
             disabled={holeNum <= 1}
             aria-label="Hoyo anterior"
-            className="w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center bg-[#f4f1e9] border border-[#e5e0d4] transition active:scale-95 disabled:opacity-30"
+            className="w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center bg-paper border border-rule transition active:scale-95 disabled:opacity-30"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path
@@ -656,7 +656,7 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
             onClick={() => onChangeHole(holeNum + 1)}
             disabled={holeNum >= totalHoles}
             aria-label="Hoyo siguiente"
-            className="w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center bg-[#f4f1e9] border border-[#e5e0d4] transition active:scale-95 disabled:opacity-30"
+            className="w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center bg-paper border border-rule transition active:scale-95 disabled:opacity-30"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M9 18l6-6-6-6" stroke="#0e1a16" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -691,7 +691,7 @@ export function HoleSheet({ roundId, holeNumber, onClose, onChangeHole, onFinish
           aria-describedby={undefined}
           className="fixed bottom-0 inset-x-0 z-50 mx-auto max-w-[430px] bg-white rounded-t-[28px] pt-3 pb-6 max-h-[94vh] overflow-y-auto outline-none"
         >
-          <div className="w-10 h-1 rounded-full bg-[#e5e0d4] mx-auto mb-3" />
+          <div className="w-10 h-1 rounded-full bg-rule mx-auto mb-3" />
           {holeNumber !== null && (
             <HoleEntry
               key={holeNumber}

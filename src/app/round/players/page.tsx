@@ -17,14 +17,14 @@ type GuestFormProps = {
 
 function GuestForm({ guestName, guestHcp, setGuest, onAdd }: GuestFormProps) {
   return (
-    <div className="bg-white rounded-[16px] p-4 border border-[#1f8a5b]">
-      <p className="text-[13px] font-bold text-[#0e1a16] mb-3">Datos del invitado</p>
+    <div className="bg-white rounded-btn p-4 border border-accent">
+      <p className="text-[13px] font-bold text-ink mb-3">Datos del invitado</p>
       <input
         value={guestName}
         onChange={e => setGuest(g => ({ ...g, name: e.target.value }))}
         placeholder="Nombre"
         aria-label="Nombre del invitado"
-        className="w-full border border-[#e5e0d4] rounded-[12px] px-4 py-2.5 text-[14px] outline-none focus:border-[#1f8a5b] mb-2"
+        className="w-full border border-rule rounded-field px-4 py-2.5 text-[14px] outline-none focus:border-accent mb-2"
       />
       <input
         value={guestHcp}
@@ -34,20 +34,20 @@ function GuestForm({ guestName, guestHcp, setGuest, onAdd }: GuestFormProps) {
         min="0"
         max="54"
         aria-label="Hándicap del invitado"
-        className="w-full border border-[#e5e0d4] rounded-[12px] px-4 py-2.5 text-[14px] outline-none focus:border-[#1f8a5b] mb-3"
+        className="w-full border border-rule rounded-field px-4 py-2.5 text-[14px] outline-none focus:border-accent mb-3"
       />
       <div className="flex gap-2">
         <button
           type="button"
           onClick={() => setGuest(g => ({ ...g, show: false }))}
-          className="flex-1 py-2.5 rounded-full border border-[#e5e0d4] text-[13px] font-semibold text-[#6b7a72]"
+          className="flex-1 py-2.5 rounded-full border border-rule text-[13px] font-semibold text-mute"
         >
           Cancelar
         </button>
         <button
           type="button"
           onClick={onAdd}
-          className="flex-1 py-2.5 rounded-full text-[13px] font-bold text-[#0e1a16]"
+          className="flex-1 py-2.5 rounded-full text-[13px] font-bold text-ink"
           style={{ backgroundColor: '#1f8a5b' }}
         >
           Añadir
@@ -69,7 +69,7 @@ function PlayerRow({ player: p, isSel, onToggle }: PlayerRowProps) {
     <button
       type="button"
       onClick={() => !isDisabled && onToggle(p)}
-      className={`w-full flex items-center gap-3 rounded-[16px] p-4 border transition-all ${isDisabled ? 'opacity-40' : 'active:scale-[0.99]'}`}
+      className={`w-full flex items-center gap-3 rounded-btn p-4 border transition-all ${isDisabled ? 'opacity-40' : 'active:scale-[0.99]'}`}
       style={{ backgroundColor: isSel ? '#0e1a16' : '#ffffff', borderColor: isSel ? '#0e1a16' : '#e5e0d4' }}
     >
       <Avatar name={p.name} size={44} />
@@ -105,10 +105,10 @@ type FooterCtaProps = {
 
 function FooterCta({ count, onNext }: FooterCtaProps) {
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-paper to-transparent">
       {/* Torneo info — no toggle, just info */}
       {count >= 5 && (
-        <div className="flex items-center gap-2 bg-[#dde7fb] rounded-[10px] px-3 py-2 mb-2">
+        <div className="flex items-center gap-2 bg-blue-light rounded-[10px] px-3 py-2 mb-2">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
             <path
               d="M8 21h8M12 17v4M5 3h14v7a7 7 0 0 1-14 0V3z"
@@ -117,7 +117,7 @@ function FooterCta({ count, onNext }: FooterCtaProps) {
               strokeLinecap="round"
             />
           </svg>
-          <p className="font-mono text-[10px] font-bold text-[#2a6fdb] uppercase tracking-wide">
+          <p className="font-mono text-[10px] font-bold text-blue uppercase tracking-wide">
             Modo torneo — {Math.ceil(count / 4)} grupos automáticos
           </p>
         </div>
@@ -135,7 +135,7 @@ function FooterCta({ count, onNext }: FooterCtaProps) {
         <span>
           {count} jugador{count !== 1 ? 'es' : ''}
         </span>
-        <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
+        <span className="bg-ink text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
           {count >= 5 ? 'CREAR TORNEO →' : 'SIGUIENTE →'}
         </span>
       </button>
@@ -238,13 +238,13 @@ function SeleccionarJugadoresPage() {
   const filtered = allPlayers.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] flex flex-col">
+    <div className="min-h-screen bg-paper flex flex-col">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]"
+            className="flex items-center gap-1.5 text-ink font-semibold text-[13px]"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
@@ -257,15 +257,15 @@ function SeleccionarJugadoresPage() {
             </svg>
             Atrás
           </button>
-          <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-[0.15em]">NUEVA RONDA · 2 / 3</span>
+          <span className="font-mono text-[10px] text-mute uppercase tracking-[0.15em]">NUEVA RONDA · 2 / 3</span>
         </div>
 
-        <h1 className="text-[28px] font-black tracking-tight text-[#0e1a16] leading-tight mb-1">
+        <h1 className="text-[28px] font-black tracking-tight text-ink leading-tight mb-1">
           ¿Quién juega
           <br />
-          <span className="text-[#1f8a5b]">hoy?</span>
+          <span className="text-accent">hoy?</span>
         </h1>
-        <p className="text-[13px] text-[#6b7a72] mb-4">Selecciona hasta 4 jugadores en total.</p>
+        <p className="text-[13px] text-mute mb-4">Selecciona hasta 4 jugadores en total.</p>
 
         {/* Selected players strip */}
         {selected.length > 0 && (
@@ -273,16 +273,16 @@ function SeleccionarJugadoresPage() {
             {selected.map(p => (
               <div
                 key={p._id}
-                className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 border border-[#e5e0d4]"
+                className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 border border-rule"
               >
                 <Avatar name={p.name} size={20} />
-                <span className="text-[12px] font-semibold text-[#0e1a16]">{p.name.split(' ')[0]}</span>
+                <span className="text-[12px] font-semibold text-ink">{p.name.split(' ')[0]}</span>
                 {p._id !== meParsed?._id && (
                   <button
                     type="button"
                     onClick={() => togglePlayer(p)}
                     aria-label={`Quitar a ${p.name}`}
-                    className="text-[#6b7a72] hover:text-[#c6432d] ml-0.5"
+                    className="text-mute hover:text-red ml-0.5"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                       <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -295,7 +295,7 @@ function SeleccionarJugadoresPage() {
         )}
 
         {/* Search */}
-        <div className="flex items-center gap-3 bg-white rounded-full px-4 py-3 border border-[#e5e0d4]">
+        <div className="flex items-center gap-3 bg-white rounded-full px-4 py-3 border border-rule">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="7" stroke="#6b7a72" strokeWidth="1.8" />
             <path d="M16 16L21 21" stroke="#6b7a72" strokeWidth="1.8" strokeLinecap="round" />
@@ -305,7 +305,7 @@ function SeleccionarJugadoresPage() {
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar amigos…"
             aria-label="Buscar amigos"
-            className="flex-1 bg-transparent text-[14px] text-[#0e1a16] placeholder-[#a09a90] outline-none"
+            className="flex-1 bg-transparent text-[14px] text-ink placeholder-[#a09a90] outline-none"
           />
         </div>
       </div>
@@ -316,7 +316,7 @@ function SeleccionarJugadoresPage() {
           <button
             type="button"
             onClick={() => setGuest(g => ({ ...g, show: true }))}
-            className="w-full flex items-center gap-3 bg-white rounded-[16px] p-4 border border-dashed border-[#c4bfb5] text-[#6b7a72] text-[14px] font-semibold transition hover:border-[#1f8a5b] hover:text-[#1f8a5b]"
+            className="w-full flex items-center gap-3 bg-white rounded-btn p-4 border border-dashed border-faint text-mute text-[14px] font-semibold transition hover:border-accent hover:text-accent"
           >
             <div className="w-11 h-11 rounded-full border-2 border-dashed border-current flex items-center justify-center text-[20px] font-light">
               +
@@ -331,7 +331,7 @@ function SeleccionarJugadoresPage() {
         {/* Players list */}
         {loading ? (
           <div className="flex justify-center pt-6">
-            <div className="w-6 h-6 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+            <div className="w-6 h-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
           </div>
         ) : (
           filtered.map(p => (
@@ -350,8 +350,8 @@ export default function Page() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-          <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+        <div className="min-h-screen bg-paper flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
         </div>
       }
     >

@@ -1,3 +1,4 @@
+import { PageSkeleton } from '@/components/ui/skeleton'
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useQuery } from 'convex/react'
@@ -90,23 +91,23 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
         <col style={{ width: 52 }} />
       </colgroup>
       <thead>
-        <tr className="border-y border-[#efebe1] bg-[#faf8f2]">
-          <td className="font-mono text-[9px] text-[#6b7a72] py-1.5 px-2 text-left">H</td>
+        <tr className="border-y border-rule-soft bg-[#faf8f2]">
+          <td className="font-mono text-[9px] text-mute py-1.5 px-2 text-left">H</td>
           {holes.map(h => (
-            <td key={h.hole_number} className="font-mono text-[10px] font-bold text-[#0e1a16] py-1.5 px-0.5">
+            <td key={h.hole_number} className="font-mono text-[10px] font-bold text-ink py-1.5 px-0.5">
               {h.hole_number}
             </td>
           ))}
-          <td className="font-mono text-[9px] text-[#6b7a72] py-1.5 px-2">{label}</td>
+          <td className="font-mono text-[9px] text-mute py-1.5 px-2">{label}</td>
         </tr>
-        <tr className="border-b border-[#efebe1]">
-          <td className="font-mono text-[9px] text-[#6b7a72] px-2 py-1 text-left">PAR</td>
+        <tr className="border-b border-rule-soft">
+          <td className="font-mono text-[9px] text-mute px-2 py-1 text-left">PAR</td>
           {holes.map(h => (
-            <td key={h.hole_number} className="font-mono text-[9px] text-[#6b7a72] py-1 px-0.5">
+            <td key={h.hole_number} className="font-mono text-[9px] text-mute py-1 px-0.5">
               {h.par}
             </td>
           ))}
-          <td className="font-mono text-[10px] font-bold text-[#0e1a16] py-1 px-2">{blockPar}</td>
+          <td className="font-mono text-[10px] font-bold text-ink py-1 px-2">{blockPar}</td>
         </tr>
       </thead>
       <tbody>
@@ -122,7 +123,7 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
                 }, 0)
               : null
           return (
-            <tr key={p.name} className="border-t border-[#efebe1]">
+            <tr key={p.name} className="border-t border-rule-soft">
               <td className="px-2 py-1.5">
                 <PlayerLink profileId={p.profile_id}>
                   <Avatar name={p.name} src={p.avatar_url} size={20} />
@@ -136,7 +137,7 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
                     {s != null ? (
                       <ScoreMark strokes={s} delta={d!} size={20} />
                     ) : (
-                      <span className="text-[#c4bfb5] text-[12px]">·</span>
+                      <span className="text-faint text-[12px]">·</span>
                     )}
                   </td>
                 )
@@ -144,7 +145,7 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
               <td className="px-2 py-1.5">
                 {blockTotal !== null ? (
                   <div>
-                    <p className="font-mono text-[11px] font-black text-[#0e1a16] leading-none">{blockTotal}</p>
+                    <p className="font-mono text-[11px] font-black text-ink leading-none">{blockTotal}</p>
                     <p
                       className="font-mono text-[8px] font-bold"
                       style={{ color: (blockDelta ?? 0) <= 0 ? '#1f8a5b' : '#9b6e1a' }}
@@ -153,7 +154,7 @@ function ScoreNine({ holes, players, label }: { holes: RoundHole[]; players: Rou
                     </p>
                   </div>
                 ) : (
-                  <span className="text-[#c4bfb5] text-[12px]">–</span>
+                  <span className="text-faint text-[12px]">–</span>
                 )}
               </td>
             </tr>
@@ -194,7 +195,7 @@ function HomeHero({ firstName }: HomeHeroProps) {
         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-4"
         style={{ backgroundColor: 'rgba(255,255,255,0.14)' }}
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-[#1f8a5b]" />
+        <span className="w-1.5 h-1.5 rounded-full bg-accent" />
         <span className="text-white text-[11px] font-semibold">Listo para jugar</span>
       </div>
       <h1 className="text-white text-[28px] font-black tracking-tight leading-tight mb-3">
@@ -203,7 +204,7 @@ function HomeHero({ firstName }: HomeHeroProps) {
       </h1>
 
       {/* Frase del día — entre el texto y los botones */}
-      <div className="rounded-[12px] px-3 py-2.5 mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+      <div className="rounded-field px-3 py-2.5 mb-4" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
         <p className="text-white/70 text-[12px] italic leading-snug">"{DAILY_QUOTE.text}"</p>
         <p className="font-mono text-[9px] text-white/35 mt-1">— {DAILY_QUOTE.author}</p>
       </div>
@@ -223,20 +224,20 @@ type ActiveRoundCardProps = { activeRound: NonNullable<Dashboard['activeRound']>
 /** Tarjeta de la ronda en curso con las barras de color por hoyo. */
 function ActiveRoundCard({ activeRound }: ActiveRoundCardProps) {
   return (
-    <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4">
+    <div className="bg-white rounded-card border border-rule p-4">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[11px] font-bold text-[#1f8a5b] bg-[#d9eedd] px-2.5 py-1 rounded-full">
+        <span className="text-[11px] font-bold text-accent bg-accent-light px-2.5 py-1 rounded-full">
           ● En curso · {activeRound.course_name}
         </span>
-        <span className="font-mono text-[11px] text-[#6b7a72]">
+        <span className="font-mono text-[11px] text-mute">
           {activeRound.holes_played} / {activeRound.total_holes}
         </span>
       </div>
 
       <div className="flex items-end gap-4 mb-3">
         <div>
-          <p className="text-[11px] text-[#6b7a72] mb-0.5">Vas</p>
-          <p className="text-[38px] font-black text-[#0e1a16] leading-none">
+          <p className="text-[11px] text-mute mb-0.5">Vas</p>
+          <p className="text-[38px] font-black text-ink leading-none">
             {activeRound.score_delta > 0
               ? `+${activeRound.score_delta}`
               : activeRound.score_delta === 0
@@ -259,7 +260,7 @@ function ActiveRoundCard({ activeRound }: ActiveRoundCardProps) {
               )
             })}
           </div>
-          <div className="flex justify-between mt-1 font-mono text-[9px] text-[#6b7a72]">
+          <div className="flex justify-between mt-1 font-mono text-[9px] text-mute">
             <span>H1</span>
             <span>H{activeRound.holes_played} ↓</span>
             <span>H{activeRound.total_holes}</span>
@@ -270,14 +271,14 @@ function ActiveRoundCard({ activeRound }: ActiveRoundCardProps) {
       <Link
         to={`/scorecard?round=${activeRound.id}`}
         onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
-        className="flex items-center justify-between w-full py-3 px-4 rounded-[16px] font-bold text-[14px] text-white transition active:scale-[0.98]"
+        className="flex items-center justify-between w-full py-3 px-4 rounded-btn font-bold text-[14px] text-white transition active:scale-[0.98]"
         style={{ backgroundColor: '#0e1a16' }}
       >
         <span>
           Continuar · hoyo {activeRound.next_hole} par {activeRound.next_par}
         </span>
         <span
-          className="px-2.5 py-1 rounded-full text-[11px] font-black text-[#0e1a16]"
+          className="px-2.5 py-1 rounded-full text-[11px] font-black text-ink"
           style={{ backgroundColor: '#1f8a5b' }}
         >
           →
@@ -292,24 +293,24 @@ type ClubFeedProps = { feed: Dashboard['feed'] }
 /** Sección "El club" — feed de actividad reciente de los socios. */
 function ClubFeed({ feed }: ClubFeedProps) {
   return (
-    <div className="bg-white rounded-[22px] border border-[#e5e0d4] p-4">
+    <div className="bg-white rounded-card border border-rule p-4">
       <div className="flex items-baseline justify-between mb-3">
-        <h3 className="text-[17px] font-bold text-[#0e1a16]">El club</h3>
-        <span className="text-[11px] text-[#2a6fdb] font-semibold">Ver feed →</span>
+        <h3 className="text-[17px] font-bold text-ink">El club</h3>
+        <span className="text-[11px] text-blue font-semibold">Ver feed →</span>
       </div>
       <div className="space-y-0">
         {feed.map((item, i) => (
           <Link
             key={item.id}
             to={`/scorecard?round=${item.round_id}`}
-            className={`flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-[#efebe1]' : ''}`}
+            className={`flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-rule-soft' : ''}`}
           >
             <PlayerLink profileId={item.profile_id}>
               <Avatar name={item.name} src={item.avatar_url} size={36} />
             </PlayerLink>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-[13px] text-[#0e1a16] leading-tight">
+                <p className="text-[13px] text-ink leading-tight">
                   <PlayerLink profileId={item.profile_id} className="font-bold">
                     {item.name}
                   </PlayerLink>{' '}
@@ -326,7 +327,7 @@ function ClubFeed({ feed }: ClubFeedProps) {
                 {item.badge === '🐦' && <span className="text-[14px] flex-shrink-0">🐦</span>}
                 {item.badge === '🦅' && <span className="text-[14px] flex-shrink-0">🦅</span>}
               </div>
-              <p className="text-[11px] text-[#6b7a72] mt-0.5">{item.detail}</p>
+              <p className="text-[11px] text-mute mt-0.5">{item.detail}</p>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
               <path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" />
@@ -345,8 +346,8 @@ function RecentRoundsList({ rounds }: RecentRoundsListProps) {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2 px-1">
-        <h3 className="text-[17px] font-bold text-[#0e1a16]">Últimas partidas</h3>
-        <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-wide">Todos</span>
+        <h3 className="text-[17px] font-bold text-ink">Últimas partidas</h3>
+        <span className="font-mono text-[10px] text-mute uppercase tracking-wide">Todos</span>
       </div>
       <div className="space-y-2">
         {rounds.map(r => {
@@ -358,9 +359,9 @@ function RecentRoundsList({ rounds }: RecentRoundsListProps) {
               key={r.id}
               to={`/scorecard?round=${r.id}`}
               onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
-              className="block rounded-[22px] border border-[#ded8cb] bg-white p-2 shadow-[0_14px_34px_rgba(14,26,22,0.08)] active:scale-[0.99] transition overflow-hidden"
+              className="block rounded-card border border-[#ded8cb] bg-white p-2 shadow-card active:scale-[0.99] transition overflow-hidden"
             >
-              <div className="relative overflow-hidden rounded-[18px] bg-[#0e1a16] px-3.5 py-3.5">
+              <div className="relative overflow-hidden rounded-[18px] bg-ink px-3.5 py-3.5">
                 <div
                   aria-hidden
                   className="absolute inset-0 opacity-[0.08]"
@@ -372,7 +373,7 @@ function RecentRoundsList({ rounds }: RecentRoundsListProps) {
                 />
                 <div
                   aria-hidden
-                  className="absolute right-[-34px] top-[-46px] h-[118px] w-[118px] rounded-full bg-[#1f8a5b] opacity-70"
+                  className="absolute right-[-34px] top-[-46px] h-[118px] w-[118px] rounded-full bg-accent opacity-70"
                 />
                 <div className="relative flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -381,7 +382,7 @@ function RecentRoundsList({ rounds }: RecentRoundsListProps) {
                         {fmtRoundDate(r.date)}
                       </span>
                       {r.is_practice && (
-                        <span className="rounded-full bg-[#e8b75a] px-2 py-1 text-[9px] font-black uppercase text-[#0e1a16]">
+                        <span className="rounded-full bg-amber px-2 py-1 text-[9px] font-black uppercase text-ink">
                           Práctica
                         </span>
                       )}
@@ -408,7 +409,7 @@ function RecentRoundsList({ rounds }: RecentRoundsListProps) {
                 <div className="relative mt-3 flex items-center justify-between border-t border-white/10 pt-2.5">
                   <div className="flex -space-x-1.5">
                     {r.players.slice(0, 4).map(p => (
-                      <div key={p.name} className="rounded-full ring-2 ring-[#0e1a16]">
+                      <div key={p.name} className="rounded-full ring-2 ring-ink">
                         <Avatar name={p.name} src={p.avatar_url} size={24} />
                       </div>
                     ))}
@@ -420,18 +421,18 @@ function RecentRoundsList({ rounds }: RecentRoundsListProps) {
               </div>
               {/* Mini scorecard — 2 filas: OUT (1-9) / IN (10-18) */}
               {r.holes.length > 0 ? (
-                <div className="mt-2 overflow-hidden rounded-[16px] border border-[#efebe1] bg-[#fbfaf6]">
+                <div className="mt-2 overflow-hidden rounded-btn border border-rule-soft bg-[#fbfaf6]">
                   <div className="overflow-x-auto">
                     <ScoreNine holes={front} players={r.players} label={back.length ? 'OUT' : 'TOT'} />
                   </div>
                   {back.length > 0 && (
-                    <div className="overflow-x-auto border-t-2 border-[#efebe1]">
+                    <div className="overflow-x-auto border-t-2 border-rule-soft">
                       <ScoreNine holes={back} players={r.players} label="IN" />
                     </div>
                   )}
                 </div>
               ) : (
-                <p className="px-3 pb-2 pt-3 text-[11px] text-[#6b7a72]">Sin golpes anotados</p>
+                <p className="px-3 pb-2 pt-3 text-[11px] text-mute">Sin golpes anotados</p>
               )}
             </Link>
           )
@@ -451,11 +452,7 @@ export default function HomePage() {
   }, [data, navigate])
 
   if (data === undefined || data === null) {
-    return (
-      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
-      </div>
-    )
+    return <PageSkeleton rows={3} />
   }
 
   const { profile, activeRound, activeLeague, feed, completedRoundsCount } = data
@@ -463,10 +460,10 @@ export default function HomePage() {
   const firstName = profile.name.split(' ')[0]
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] pb-28">
+    <div className="min-h-screen bg-paper pb-28">
       {/* Header sticky — se mantiene arriba al hacer scroll */}
       <div
-        className="sticky top-0 bg-[#f4f1e9]/85 backdrop-blur-md z-40 flex items-center justify-between px-[14px] pb-2 border-b border-[#e5e0d4]"
+        className="sticky top-0 bg-paper/85 backdrop-blur-md z-40 flex items-center justify-between px-[14px] pb-2 border-b border-rule"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
       >
         <div className="flex items-center gap-2">
@@ -475,7 +472,7 @@ export default function HomePage() {
             <path d="M24 16 L24 50" stroke="#0e1a16" strokeWidth="2.5" strokeLinecap="round" />
             <path d="M24 16 Q40 18 40 22 Q40 26 24 28 Z" fill="#0e1a16" />
           </svg>
-          <span className="text-[26px] font-black tracking-tight text-[#0e1a16]">Bogey Club</span>
+          <span className="text-[26px] font-black tracking-tight text-ink">Bogey Club</span>
         </div>
         <Link
           to="/round/course"
@@ -495,8 +492,8 @@ export default function HomePage() {
 
           {/* Onboarding card — only when 0 completed rounds and no active round */}
           {completedRoundsCount === 0 && !activeRound && (
-            <div className="bg-white rounded-[22px] border-2 border-[#1f8a5b] p-4">
-              <p className="font-black text-[16px] text-[#0e1a16] mb-2">Bienvenido al club 🏌️</p>
+            <div className="bg-white rounded-card border-2 border-accent p-4">
+              <p className="font-black text-[16px] text-ink mb-2">Bienvenido al club 🏌️</p>
               <div className="space-y-2">
                 {[
                   { n: '1', text: 'Empieza una ronda con tus amigos' },
@@ -504,10 +501,10 @@ export default function HomePage() {
                   { n: '3', text: 'Ve tus stats y el ranking al terminar' },
                 ].map(s => (
                   <div key={s.n} className="flex gap-3 items-center">
-                    <div className="w-6 h-6 rounded-full bg-[#1f8a5b] flex items-center justify-center text-white text-[11px] font-black">
+                    <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-white text-[11px] font-black">
                       {s.n}
                     </div>
-                    <p className="text-[13px] text-[#6b7a72]">{s.text}</p>
+                    <p className="text-[13px] text-mute">{s.text}</p>
                   </div>
                 ))}
               </div>

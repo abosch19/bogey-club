@@ -9,10 +9,10 @@ import { lastRound$ } from '@/lib/store'
 // Stroke Play — hidden when Scramble is active
 function StrokePlayCard() {
   return (
-    <div className="rounded-[16px] p-4 border-2" style={{ backgroundColor: '#0e1a16', borderColor: '#0e1a16' }}>
+    <div className="rounded-btn p-4 border-2" style={{ backgroundColor: '#0e1a16', borderColor: '#0e1a16' }}>
       <div className="flex items-center gap-3">
         <div
-          className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0"
+          className="w-11 h-11 rounded-field flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: '#1f8a5b' }}
         >
           <svg
@@ -69,7 +69,7 @@ function ModeOptionCard({
 }: ModeOptionCardProps) {
   return (
     <div
-      className="relative w-full text-left rounded-[16px] p-4 border transition-all active:scale-[0.99]"
+      className="relative w-full text-left rounded-btn p-4 border transition-all active:scale-[0.99]"
       style={{
         backgroundColor: isSelected ? '#0e1a16' : '#ffffff',
         borderColor: isSelected ? '#0e1a16' : '#e5e0d4',
@@ -81,12 +81,12 @@ function ModeOptionCard({
         onClick={onActivate}
         disabled={isDisabled}
         aria-label={mode.name}
-        className="absolute inset-0 rounded-[16px]"
+        className="absolute inset-0 rounded-btn"
         style={{ cursor: isDisabled ? 'default' : 'pointer' }}
       />
       <div className="relative pointer-events-none flex items-center gap-3">
         <div
-          className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0"
+          className="w-11 h-11 rounded-field flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.12)' : mode.color + '22' }}
         >
           <svg
@@ -125,7 +125,7 @@ function ModeOptionCard({
               {mode.name}
             </span>
             {!compatible && (
-              <span className="font-mono text-[8px] bg-[#f6e6c4] text-[#9b6e1a] px-2 py-0.5 rounded-full uppercase">
+              <span className="font-mono text-[8px] bg-amber-light text-amber-dark px-2 py-0.5 rounded-full uppercase">
                 {mode.players} jug.
               </span>
             )}
@@ -171,15 +171,15 @@ function ModeOptionCard({
         </div>
       </div>
       {isSelected && expanded && (
-        <div className="mt-2 p-3 rounded-[10px] bg-[#f4f1e9]">
+        <div className="mt-2 p-3 rounded-[10px] bg-paper">
           {mode.id === 'wolf' && (
-            <p className="text-[11px] text-[#6b7a72]">
+            <p className="text-[11px] text-mute">
               Cada hoyo, un jugador es el "lobo". Antes de empezar el hoyo decide: elegir pareja (y competir juntos) o
               ir solo (si gana, dobles puntos). Rota entre todos los jugadores.
             </p>
           )}
           {mode.id === 'bbb' && (
-            <p className="text-[11px] text-[#6b7a72]">
+            <p className="text-[11px] text-mute">
               3 puntos por hoyo: Bingo (1º en llegar al green), Bango (más cerca del hoyo cuando todos están en green),
               Bongo (1º en embocar). Al anotar cada hoyo se reparten los 3 puntos.
             </p>
@@ -199,7 +199,7 @@ type FooterCtaProps = {
 
 function FooterCta({ extras, isScrambleSelected, loading, onStart }: FooterCtaProps) {
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-[#f4f1e9] to-transparent">
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-[14px] pb-8 pt-4 bg-gradient-to-t from-paper to-transparent">
       <button
         type="button"
         onClick={onStart}
@@ -212,7 +212,7 @@ function FooterCta({ extras, isScrambleSelected, loading, onStart }: FooterCtaPr
             ? 'Scramble'
             : `Stroke${extras.length > 0 ? ` + ${extras.map(e => GAME_MODES.find(m => m.id === e)?.name.split(' ')[0]).join(' + ')}` : ' Play'}`}
         </span>
-        <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
+        <span className="bg-ink text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
           {loading ? '…' : 'EMPEZAR →'}
         </span>
       </button>
@@ -311,13 +311,13 @@ function SeleccionarModalidadPage() {
   const modesByCompat = GAME_MODES.filter(m => m.id !== 'stroke')
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] flex flex-col">
+    <div className="min-h-screen bg-paper flex flex-col">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center justify-between mb-5">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]"
+            className="flex items-center gap-1.5 text-ink font-semibold text-[13px]"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
@@ -330,22 +330,22 @@ function SeleccionarModalidadPage() {
             </svg>
             Atrás
           </button>
-          <span className="font-mono text-[10px] text-[#6b7a72] uppercase tracking-[0.15em]">NUEVA RONDA · 3 / 3</span>
+          <span className="font-mono text-[10px] text-mute uppercase tracking-[0.15em]">NUEVA RONDA · 3 / 3</span>
         </div>
 
-        <h1 className="text-[28px] font-black tracking-tight text-[#0e1a16] leading-tight">
+        <h1 className="text-[28px] font-black tracking-tight text-ink leading-tight">
           ¿A qué
           <br />
-          <span className="text-[#1f8a5b]">jugamos?</span>
+          <span className="text-accent">jugamos?</span>
         </h1>
         <div className="flex items-center gap-2 mt-1">
-          <p className="text-[13px] text-[#6b7a72]">
+          <p className="text-[13px] text-mute">
             {isScrambleSelected
               ? 'Scramble activo — sin resultado individual.'
               : 'Stroke Play siempre activo. Añade hasta 2 más.'}
           </p>
           {leagueId && (
-            <span className="font-mono text-[9px] bg-[#dde7fb] text-[#2a6fdb] px-2 py-0.5 rounded-full uppercase font-bold">
+            <span className="font-mono text-[9px] bg-blue-light text-blue px-2 py-0.5 rounded-full uppercase font-bold">
               LIGA
             </span>
           )}
@@ -378,9 +378,9 @@ function SeleccionarModalidadPage() {
         })}
         {/* Hint: añade Stableford si solo tienes Stroke */}
         {extras.length === 0 && (
-          <div className="bg-[#f6e6c4] rounded-[12px] px-4 py-3 flex gap-2">
+          <div className="bg-amber-light rounded-field px-4 py-3 flex gap-2">
             <span className="text-[16px]">💡</span>
-            <p className="text-[12px] text-[#9b6e1a]">
+            <p className="text-[12px] text-amber-dark">
               Añade <strong>Stableford</strong> para ver puntos en tiempo real en la tarjeta. Ideal para nivelar con el
               handicap.
             </p>
@@ -388,8 +388,8 @@ function SeleccionarModalidadPage() {
         )}
 
         {/* Apuesta */}
-        <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
-          <label htmlFor="apuesta" className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2">
+        <div className="bg-white rounded-btn border border-rule p-4">
+          <label htmlFor="apuesta" className="font-mono text-[9px] text-mute uppercase tracking-wide block mb-2">
             Apuesta (opcional)
           </label>
           <input
@@ -398,7 +398,7 @@ function SeleccionarModalidadPage() {
             value={bet}
             onChange={e => setBet(e.target.value)}
             placeholder="El que pierde paga las cervezas..."
-            className="w-full text-[14px] text-[#0e1a16] bg-transparent outline-none placeholder-[#c4bfb5]"
+            className="w-full text-[14px] text-ink bg-transparent outline-none placeholder-faint"
           />
         </div>
       </div>
@@ -413,8 +413,8 @@ export default function Page() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-          <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+        <div className="min-h-screen bg-paper flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
         </div>
       }
     >

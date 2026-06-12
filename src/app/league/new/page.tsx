@@ -38,13 +38,13 @@ export default function NuevaLigaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9]">
+    <div className="min-h-screen bg-paper">
       <div className="safe-top px-[14px] pt-3 pb-8">
         <div className="flex items-center gap-3 mb-6">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]"
+            className="flex items-center gap-1.5 text-ink font-semibold text-[13px]"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
@@ -59,18 +59,15 @@ export default function NuevaLigaPage() {
           </button>
         </div>
 
-        <h1 className="text-[28px] font-black tracking-tight text-[#0e1a16] mb-6">
+        <h1 className="text-[28px] font-black tracking-tight text-ink mb-6">
           Monta tu
           <br />
-          <span className="text-[#1f8a5b]">liga.</span>
+          <span className="text-accent">liga.</span>
         </h1>
 
         <div className="space-y-3">
-          <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
-            <label
-              htmlFor="league-name"
-              className="font-mono text-[9px] text-[#6b7a72] uppercase tracking-wide block mb-2"
-            >
+          <div className="bg-white rounded-btn border border-rule p-4">
+            <label htmlFor="league-name" className="font-mono text-[9px] text-mute uppercase tracking-wide block mb-2">
               Nombre
             </label>
             <input
@@ -78,24 +75,24 @@ export default function NuevaLigaPage() {
               value={name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               placeholder="Liga Bogey 2026"
-              className="w-full text-[18px] font-bold text-[#0e1a16] bg-transparent outline-none placeholder-[#c4bfb5]"
+              className="w-full text-[18px] font-bold text-ink bg-transparent outline-none placeholder-faint"
             />
           </div>
 
-          <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4 flex items-center justify-between">
+          <div className="bg-white rounded-btn border border-rule p-4 flex items-center justify-between">
             <div>
-              <p className="font-bold text-[14px] text-[#0e1a16]">Número de rondas</p>
-              <p className="text-[12px] text-[#6b7a72] mt-0.5">Cuántas jornadas dura</p>
+              <p className="font-bold text-[14px] text-ink">Número de rondas</p>
+              <p className="text-[12px] text-mute mt-0.5">Cuántas jornadas dura</p>
             </div>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setForm(f => ({ ...f, rounds: Math.max(2, f.rounds - 1) }))}
-                className="w-9 h-9 rounded-full border-2 border-[#e5e0d4] flex items-center justify-center text-[18px] text-[#6b7a72]"
+                className="w-9 h-9 rounded-full border-2 border-rule flex items-center justify-center text-[18px] text-mute"
               >
                 −
               </button>
-              <span className="font-mono text-[22px] font-black text-[#0e1a16] w-8 text-center">{rounds}</span>
+              <span className="font-mono text-[22px] font-black text-ink w-8 text-center">{rounds}</span>
               <button
                 type="button"
                 onClick={() => setForm(f => ({ ...f, rounds: Math.min(30, f.rounds + 1) }))}
@@ -107,15 +104,15 @@ export default function NuevaLigaPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-[16px] border border-[#e5e0d4] p-4">
-            <p className="font-bold text-[14px] text-[#0e1a16] mb-3">Modalidad de la liga</p>
+          <div className="bg-white rounded-btn border border-rule p-4">
+            <p className="font-bold text-[14px] text-ink mb-3">Modalidad de la liga</p>
             <div className="space-y-2">
               {MODES.map(m => (
                 <button
                   type="button"
                   key={m.id}
                   onClick={() => setForm(f => ({ ...f, mode: m.id }))}
-                  className="w-full flex items-center justify-between p-3 rounded-[12px] border transition text-left"
+                  className="w-full flex items-center justify-between p-3 rounded-field border transition text-left"
                   style={{
                     backgroundColor: mode === m.id ? '#0e1a16' : '#fff',
                     borderColor: mode === m.id ? '#0e1a16' : '#e5e0d4',
@@ -148,14 +145,14 @@ export default function NuevaLigaPage() {
             </div>
           </div>
 
-          <div className="bg-[#f4f1e9] rounded-[16px] p-3 border border-[#e5e0d4]">
-            <p className="text-[12px] text-[#6b7a72] leading-relaxed">
-              Puntuación estilo F1: <strong className="text-[#0e1a16]">25-18-15-12-10-8-6-4-2-1</strong>. Solo puntúa el{' '}
-              <strong className="text-[#0e1a16]">50% de jugadores</strong> (redondeando arriba).
+          <div className="bg-paper rounded-btn p-3 border border-rule">
+            <p className="text-[12px] text-mute leading-relaxed">
+              Puntuación estilo F1: <strong className="text-ink">25-18-15-12-10-8-6-4-2-1</strong>. Solo puntúa el{' '}
+              <strong className="text-ink">50% de jugadores</strong> (redondeando arriba).
             </p>
           </div>
 
-          {error && <p className="text-[13px] text-[#c6432d] bg-[#fadcd6] rounded-[10px] px-4 py-2.5">{error}</p>}
+          {error && <p className="text-[13px] text-red bg-red-light rounded-[10px] px-4 py-2.5">{error}</p>}
 
           <button
             type="button"
@@ -165,7 +162,7 @@ export default function NuevaLigaPage() {
             style={{ backgroundColor: '#1f8a5b', color: '#0e1a16' }}
           >
             <span>Crear liga · {MODES.find(m => m.id === mode)?.name}</span>
-            <span className="bg-[#0e1a16] text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
+            <span className="bg-ink text-white text-[12px] font-bold px-3 py-1.5 rounded-full">
               {loading ? '…' : 'CREAR →'}
             </span>
           </button>

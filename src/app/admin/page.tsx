@@ -44,8 +44,8 @@ export default function AdminPage() {
 
   if (me === undefined || overview === undefined || !me?.is_admin)
     return (
-      <div className="min-h-screen bg-[#f4f1e9] flex items-center justify-center">
-        <div className="w-7 h-7 rounded-full border-2 border-[#1f8a5b] border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     )
 
@@ -55,10 +55,10 @@ export default function AdminPage() {
   const myEmail = me?.email ?? ''
 
   return (
-    <div className="min-h-screen bg-[#f4f1e9] pb-8">
+    <div className="min-h-screen bg-paper pb-8">
       <div className="safe-top px-[14px] pt-3 pb-4">
         <div className="flex items-center gap-3 mb-4">
-          <Link to="/profile" className="flex items-center gap-1.5 text-[#0e1a16] font-semibold text-[13px]">
+          <Link to="/profile" className="flex items-center gap-1.5 text-ink font-semibold text-[13px]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
                 d="M19 12H5M5 12l7-7M5 12l7 7"
@@ -79,10 +79,10 @@ export default function AdminPage() {
           <p className="text-white/50 text-[12px] mt-0.5">{myEmail}</p>
         </HeroCard>
 
-        {msg && <p className="text-[13px] text-[#1f8a5b] bg-[#d9eedd] rounded-[10px] px-4 py-2.5 mb-3">{msg}</p>}
+        {msg && <p className="text-[13px] text-accent bg-accent-light rounded-[10px] px-4 py-2.5 mb-3">{msg}</p>}
 
         {/* Tabs */}
-        <div className="flex gap-1.5 bg-white rounded-full p-1 border border-[#e5e0d4] mb-4">
+        <div className="flex gap-1.5 bg-white rounded-full p-1 border border-rule mb-4">
           {(['usuarios', 'ligas', 'campos'] as const).map(t => (
             <button
               type="button"
@@ -101,18 +101,16 @@ export default function AdminPage() {
         {tab === 'usuarios' && (
           <div className="space-y-2">
             {users.map(u => (
-              <div key={u._id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
+              <div key={u._id} className="bg-white rounded-btn p-4 border border-rule">
                 <div className="flex items-center gap-3 mb-2">
                   <Avatar name={[u.name, u.last_name].filter(Boolean).join(' ')} size={40} />
                   <div className="flex-1">
-                    <p className="font-bold text-[14px] text-[#0e1a16]">
-                      {[u.name, u.last_name].filter(Boolean).join(' ')}
-                    </p>
-                    <p className="text-[11px] text-[#6b7a72]">HCP {formatHandicap(u.handicap_index)}</p>
+                    <p className="font-bold text-[14px] text-ink">{[u.name, u.last_name].filter(Boolean).join(' ')}</p>
+                    <p className="text-[11px] text-mute">HCP {formatHandicap(u.handicap_index)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <label htmlFor={`hcp-${u._id}`} className="text-[11px] text-[#6b7a72] font-medium">
+                  <label htmlFor={`hcp-${u._id}`} className="text-[11px] text-mute font-medium">
                     Editar HCP:
                   </label>
                   <input
@@ -124,7 +122,7 @@ export default function AdminPage() {
                     max="54"
                     defaultValue={u.handicap_index.toFixed(1)}
                     onBlur={e => updateHandicap(u._id, e.target.value)}
-                    className="flex-1 border border-[#e5e0d4] rounded-[8px] px-3 py-1.5 text-[13px] font-mono text-[#0e1a16] outline-none focus:border-[#1f8a5b]"
+                    className="flex-1 border border-rule rounded-[8px] px-3 py-1.5 text-[13px] font-mono text-ink outline-none focus:border-accent"
                   />
                 </div>
               </div>
@@ -135,17 +133,17 @@ export default function AdminPage() {
         {/* LIGAS */}
         {tab === 'ligas' && (
           <div className="space-y-2">
-            {leagues.length === 0 && <p className="text-center text-[#6b7a72] text-[14px] py-6">No hay ligas.</p>}
+            {leagues.length === 0 && <p className="text-center text-mute text-[14px] py-6">No hay ligas.</p>}
             {leagues.map(l => (
-              <div key={l._id} className="bg-white rounded-[16px] p-4 border border-[#e5e0d4]">
+              <div key={l._id} className="bg-white rounded-btn p-4 border border-rule">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="font-bold text-[14px] text-[#0e1a16]">{l.name}</p>
-                    <p className="text-[11px] text-[#6b7a72] mt-0.5">
+                    <p className="font-bold text-[14px] text-ink">{l.name}</p>
+                    <p className="text-[11px] text-mute mt-0.5">
                       {l.mode} · {l.total_rounds} jornadas · por {l.creator_name}
                     </p>
                     <span
-                      className={`inline-block mt-1 font-mono text-[9px] px-2 py-0.5 rounded-full uppercase ${l.active ? 'bg-[#d9eedd] text-[#1f8a5b]' : 'bg-[#f4f1e9] text-[#6b7a72]'}`}
+                      className={`inline-block mt-1 font-mono text-[9px] px-2 py-0.5 rounded-full uppercase ${l.active ? 'bg-accent-light text-accent' : 'bg-paper text-mute'}`}
                     >
                       {l.active ? 'Activa' : 'Inactiva'}
                     </span>
@@ -153,7 +151,7 @@ export default function AdminPage() {
                   <button
                     type="button"
                     onClick={() => deleteLeague(l._id)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#c6432d] border border-[#c6432d] hover:bg-[#fadcd6] transition"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold text-red border border-red hover:bg-red-light transition"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                       <path
@@ -179,14 +177,14 @@ export default function AdminPage() {
               <Link
                 key={c._id}
                 to={`/admin/course/${c._id}`}
-                className="bg-white rounded-[16px] p-4 border border-[#e5e0d4] flex items-center gap-3 block active:opacity-80"
+                className="bg-white rounded-btn p-4 border border-rule flex items-center gap-3 block active:opacity-80"
               >
                 <div className="flex-1">
-                  <p className="font-bold text-[14px] text-[#0e1a16]">{c.name}</p>
-                  <p className="text-[11px] text-[#6b7a72] mt-0.5">
+                  <p className="font-bold text-[14px] text-ink">{c.name}</p>
+                  <p className="text-[11px] text-mute mt-0.5">
                     Par {c.par} · {c.holes_count} hoyos · Slope {c.slope} · CR {c.course_rating}
                   </p>
-                  {c.record_score && <p className="text-[11px] text-[#e8b75a] mt-0.5">Récord: {c.record_score}</p>}
+                  {c.record_score && <p className="text-[11px] text-amber mt-0.5">Récord: {c.record_score}</p>}
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path d="M9 18l6-6-6-6" stroke="#6b7a72" strokeWidth="2" strokeLinecap="round" />
