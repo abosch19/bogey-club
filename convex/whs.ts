@@ -2,7 +2,7 @@ import { mutation } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { requireProfile } from './helpers'
-import { scoreDifferential, countingRounds, calcHandicapIndex, isPitchAndPutt } from '../src/lib/golf'
+import { scoreDifferential, countingRounds, calcHandicapIndex, courseKind } from '../src/lib/golf'
 
 /**
  * Rebuild every WHS differential for a profile from its completed, non-practice
@@ -44,7 +44,7 @@ export async function recalcProfile(ctx: MutationCtx, profileId: Id<'profiles'>)
       differential: diff,
       played_at: round.date,
       is_counting: false,
-      is_pp: isPitchAndPutt(course.name),
+      is_pp: courseKind(course) === 'pp',
     }
     if (existing) await ctx.db.patch(existing._id, data)
     else await ctx.db.insert('whs_differentials', data)

@@ -115,7 +115,11 @@ export const forUser = query({
         course_id: r.courseId,
         status: r.status,
         course: courseById.get(r.courseId)
-          ? { name: courseById.get(r.courseId)!.name, par: courseById.get(r.courseId)!.par }
+          ? {
+              name: courseById.get(r.courseId)!.name,
+              par: courseById.get(r.courseId)!.par,
+              type: courseById.get(r.courseId)!.type ?? null,
+            }
           : null,
       })),
       scores,

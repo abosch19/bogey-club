@@ -10,9 +10,11 @@ export function courseHandicap(index: number, slope: number, cr: number, par: nu
   return Math.round(index * (slope / 113) + (cr - par))
 }
 
-/** Pitch & Putt courses are flagged by a "P&P" name prefix. */
-export function isPitchAndPutt(courseName: string): boolean {
-  return courseName.startsWith('P&P')
+/** A course's kind, stored explicitly in `courses.type`. Courses that predate
+ *  the field fall back to the legacy "P&P" name prefix. */
+export type CourseKind = 'golf' | 'pp'
+export function courseKind(course: { type?: CourseKind | null; name: string }): CourseKind {
+  return course.type ?? (course.name.startsWith('P&P') ? 'pp' : 'golf')
 }
 
 // ─── Stableford ──────────────────────────────────────────────

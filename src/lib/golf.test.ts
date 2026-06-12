@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test'
 import {
   strokesReceived,
   courseHandicap,
-  isPitchAndPutt,
+  courseKind,
   stablefordPts,
   scoreDifferential,
   countingRounds,
@@ -67,14 +67,20 @@ describe('courseHandicap', () => {
   })
 })
 
-describe('isPitchAndPutt', () => {
-  it('detects courses by their P&P name prefix', () => {
-    expect(isPitchAndPutt('P&P Can Cuyas')).toBe(true)
-    expect(isPitchAndPutt('Golf Barcelona - Masía')).toBe(false)
+describe('courseKind', () => {
+  it('prefers the explicit type over the name', () => {
+    expect(courseKind({ type: 'pp', name: 'Campo sin prefijo' })).toBe('pp')
+    expect(courseKind({ type: 'golf', name: 'P&P Can Cuyas' })).toBe('golf')
+  })
+
+  it('falls back to the P&P name prefix for legacy docs', () => {
+    expect(courseKind({ name: 'P&P Can Cuyas' })).toBe('pp')
+    expect(courseKind({ name: 'Golf Barcelona - Masía' })).toBe('golf')
+    expect(courseKind({ type: null, name: 'P&P Can Cuyas' })).toBe('pp')
   })
 
   it('only matches the prefix, not the middle of the name', () => {
-    expect(isPitchAndPutt('Club P&P Costa')).toBe(false)
+    expect(courseKind({ name: 'Club P&P Costa' })).toBe('golf')
   })
 })
 

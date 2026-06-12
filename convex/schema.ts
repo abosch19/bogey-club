@@ -27,6 +27,9 @@ export default defineSchema({
 
   courses: defineTable({
     name: v.string(),
+    /** golf vs Pitch & Putt — picks which handicap index applies (dual WHS pools).
+     *  Optional only for pre-field docs; `courseKind()` falls back to the name prefix. */
+    type: v.optional(v.union(v.literal('golf'), v.literal('pp'))),
     location: v.optional(v.union(v.string(), v.null())),
     holes_count: v.number(),
     slope: v.number(),

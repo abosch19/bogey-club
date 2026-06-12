@@ -1,16 +1,16 @@
 import { getAuthUserId } from '@convex-dev/auth/server'
 import type { QueryCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
-import { isPitchAndPutt } from '../src/lib/golf'
+import { courseKind, type CourseKind } from '../src/lib/golf'
 
 export const ADMIN_EMAIL = 's.vallve93@gmail.com'
 
 /** The handicap index that applies on a given course (golf vs Pitch & Putt). */
 export function indexForCourse(
   profile: { handicap_index: number; handicap_index_pp?: number },
-  courseName: string,
+  course: { name: string; type?: CourseKind | null },
 ): number {
-  return isPitchAndPutt(courseName) ? (profile.handicap_index_pp ?? profile.handicap_index) : profile.handicap_index
+  return courseKind(course) === 'pp' ? (profile.handicap_index_pp ?? profile.handicap_index) : profile.handicap_index
 }
 
 /** The profile row linked to the currently authenticated user (or null). */

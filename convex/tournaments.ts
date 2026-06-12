@@ -127,7 +127,7 @@ export const create = mutation({
         await Promise.all([
           ...groupPlayers.map(async p => {
             const prof = await ctx.db.get(p.id)
-            const idx = prof ? indexForCourse(prof, course?.name ?? '') : (p.handicap_index ?? 0)
+            const idx = prof ? (course ? indexForCourse(prof, course) : prof.handicap_index) : (p.handicap_index ?? 0)
             await ctx.db.insert('round_players', {
               roundId,
               profileId: p.id,

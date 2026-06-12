@@ -17,6 +17,21 @@ export const setProfileName = internalMutation({
   },
 })
 
+/** One-off: backfill courses.type from the legacy "P&P" name prefix. */
+export const backfillCourseType = internalMutation({
+  args: {},
+  handler: async ctx => {
+    const courses = await ctx.db.query('courses').collect()
+    let patched = 0
+    for (const c of courses) {
+      if (c.type) continue
+      await ctx.db.patch(c._id, { type: c.name.startsWith('P&P') ? 'pp' : 'golf' })
+      patched++
+    }
+    return { patched, total: courses.length }
+  },
+})
+
 /** One-off: flip a round's status (e.g. reopen a signed round for testing/fixes). */
 export const setRoundStatus = internalMutation({
   args: { roundId: v.id('rounds'), status: v.union(v.literal('active'), v.literal('completed')) },
