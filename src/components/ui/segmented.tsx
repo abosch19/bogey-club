@@ -87,7 +87,7 @@ export function Segmented<K extends string>({
     >
       <div
         aria-hidden
-        className="absolute top-1 bottom-1 left-1 rounded-full transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0.28,1)]"
+        className="absolute top-1 bottom-1 left-1 rounded-full transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
         style={{
           backgroundColor: color,
           // p-1 (4px each side) + gap-1 (4px) between the n buttons

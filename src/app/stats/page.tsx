@@ -1,10 +1,12 @@
 import { PageSkeleton } from '@/components/ui/skeleton'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
-import { formatDate, formatHandicap } from '@/lib/golf'
+import { courseKind, formatDate, formatHandicap } from '@/lib/golf'
+import { useCollapsedHeader } from '@/lib/use-collapsed-header'
 import { Avatar, avatarColor } from '@/components/ui/avatar'
+import { CountUp } from '@/components/ui/count-up'
 import { HeroCard } from '@/components/ui/hero-card'
 import { Segmented } from '@/components/ui/segmented'
 
@@ -35,21 +37,6 @@ function Sparkline({ values, color = '#1f8a5b' }: { values: number[]; color?: st
       <circle cx={lx} cy={ly} r="3" fill={color} />
     </svg>
   )
-}
-
-/** Eases a number from 0 to its value on mount (used by the WHS hero). */
-function CountUp({ value, format }: { value: number; format: (v: number) => string }) {
-  const [progress, setProgress] = useState(0)
-  useEffect(() => {
-    const started = performance.now()
-    let raf = requestAnimationFrame(function step(now) {
-      const p = Math.min(1, (now - started) / 800)
-      setProgress(1 - Math.pow(1 - p, 3))
-      if (p < 1) raf = requestAnimationFrame(step)
-    })
-    return () => cancelAnimationFrame(raf)
-  }, [])
-  return <>{format(value * progress)}</>
 }
 
 const COURSE_TYPES = [
@@ -136,6 +123,7 @@ export default function StatsPage() {
   const me = useQuery(api.profiles.me)
   const [section, setSection] = useState<'general' | 'hoyos' | 'social' | 'campos'>('general')
   const [courseType, setCourseType] = useState<'golf' | 'pp'>('golf')
+  const collapsed = useCollapsedHeader()
 
   const myId = me?._id ?? ''
   const statScores = (data?.scores ?? []) as unknown as StatScore[]
@@ -164,7 +152,8 @@ export default function StatsPage() {
         })
       const courseName = course?.name ?? 'Campo'
       // Drop rounds with no score or of the other course type — drives every stat below.
-      if (!(myTotal > 0 && (courseType === 'pp') === courseName.startsWith('P&P'))) return []
+      const kind = course ? courseKind(course) : 'golf'
+      if (!(myTotal > 0 && courseType === kind)) return []
       return [
         {
           id: r.id,
@@ -289,7 +278,13 @@ export default function StatsPage() {
         className="sticky top-0 bg-paper/85 backdrop-blur-md z-40 px-[14px] pb-3 border-b border-rule"
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
       >
-        <h1 className="text-[26px] font-black tracking-tight text-ink mb-2">Estadísticas</h1>
+        <h1
+          className={`font-black tracking-tight text-ink transition-all duration-200 ${
+            collapsed ? 'text-[15px] mb-1.5' : 'text-[26px] mb-2'
+          }`}
+        >
+          Estadísticas
+        </h1>
         <Segmented options={SECTIONS} value={section} onChange={setSection} className="mb-2" />
         {/* Golf / P&P filter — applies to every stat */}
         <Segmented options={COURSE_TYPES} value={courseType} onChange={setCourseType} color="#1f8a5b" />

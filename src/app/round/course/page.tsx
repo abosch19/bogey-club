@@ -4,10 +4,12 @@ import { useQuery } from 'convex/react'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { Drawer } from 'vaul'
+import { courseKind, type CourseKind } from '@/lib/golf'
 
 type Course = {
   _id: Id<'courses'>
   name: string
+  type?: CourseKind | null
   holes_count: number
   par: number
   slope: number
@@ -15,8 +17,6 @@ type Course = {
   record_score: number | null
   myScores: number[]
 }
-
-const isPP = (name: string) => name.startsWith('P&P')
 
 type HoleMode = 'all' | 'front' | 'back' | '9_once' | '9_twice'
 
@@ -283,9 +283,7 @@ function SeleccionarCampoPage() {
   const setHoleMode = (holeMode: HoleMode) => setModal(m => ({ ...m, holeMode }))
 
   const searchLower = search.toLowerCase()
-  const filtered = (courses ?? []).filter(
-    c => (tab === 'pp' ? isPP(c.name) : !isPP(c.name)) && c.name.toLowerCase().includes(searchLower),
-  )
+  const filtered = (courses ?? []).filter(c => courseKind(c) === tab && c.name.toLowerCase().includes(searchLower))
 
   function handleCourseSelect(course: Course) {
     setSelected(course)
@@ -385,14 +383,15 @@ function SeleccionarCampoPage() {
         ) : filtered.length === 0 ? (
           <p className="text-center text-mute text-[14px] pt-10">No hay campos con ese nombre</p>
         ) : (
-          filtered.map(course => (
-            <CourseCard
-              key={course._id}
-              course={course}
-              isSel={selected?._id === course._id}
-              onSelect={() => handleCourseSelect(course)}
-              onEdit={() => navigate(`/course/${course._id}`)}
-            />
+          filtered.map((course, i) => (
+            <div key={course._id} className="rise-in" style={{ '--rise-index': Math.min(i, 8) } as React.CSSProperties}>
+              <CourseCard
+                course={course}
+                isSel={selected?._id === course._id}
+                onSelect={() => handleCourseSelect(course)}
+                onEdit={() => navigate(`/course/${course._id}`)}
+              />
+            </div>
           ))
         )}
       </div>

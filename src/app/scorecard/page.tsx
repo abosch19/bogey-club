@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { Ticker } from '@/components/ui/ticker'
 import { useSearchParams, useNavigate } from 'react-router'
 import { useState, Suspense } from 'react'
 import { useQuery, useMutation } from 'convex/react'
@@ -448,7 +449,9 @@ function ScorecardHeader({
           {leader && (
             <div className="shrink-0 text-right">
               <p className="font-mono text-[9px] uppercase tracking-wide text-white/45">Líder</p>
-              <p className="font-mono text-[32px] font-black leading-none text-white">{leader.total}</p>
+              <p className="font-mono text-[32px] font-black leading-none text-white">
+                <Ticker value={leader.total} />
+              </p>
               <p className="font-mono text-[12px] font-black" style={{ color: scoreDeltaColor(leader.delta) }}>
                 {scoreDeltaLabel(leader.delta)}
               </p>
@@ -493,7 +496,9 @@ function ScorecardHeader({
                   <p className="truncate text-[11px] font-bold text-white/75">{p.name}</p>
                   {total > 0 ? (
                     <div className="flex items-baseline gap-1.5">
-                      <span className="font-mono text-[18px] font-black text-white leading-none">{total}</span>
+                      <span className="font-mono text-[18px] font-black text-white leading-none">
+                        <Ticker value={total} />
+                      </span>
                       <span className="font-mono text-[11px] font-bold" style={{ color: scoreDeltaColor(delta) }}>
                         {scoreDeltaLabel(delta)}
                       </span>

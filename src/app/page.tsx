@@ -303,7 +303,8 @@ function ClubFeed({ feed }: ClubFeedProps) {
           <Link
             key={item.id}
             to={`/scorecard?round=${item.round_id}`}
-            className={`flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-rule-soft' : ''}`}
+            className={`rise-in flex items-center gap-3 py-2.5 active:opacity-70 ${i > 0 ? 'border-t border-rule-soft' : ''}`}
+            style={{ '--rise-index': Math.min(i, 8) } as React.CSSProperties}
           >
             <PlayerLink profileId={item.profile_id}>
               <Avatar name={item.name} src={item.avatar_url} size={36} />
@@ -350,7 +351,7 @@ function RecentRoundsList({ rounds }: RecentRoundsListProps) {
         <span className="font-mono text-[10px] text-mute uppercase tracking-wide">Todos</span>
       </div>
       <div className="space-y-2">
-        {rounds.map(r => {
+        {rounds.map((r, i) => {
           const leader = r.players.find(p => p.total !== null)
           const front = r.holes.filter(h => h.hole_number <= 9)
           const back = r.holes.filter(h => h.hole_number >= 10)
@@ -359,7 +360,8 @@ function RecentRoundsList({ rounds }: RecentRoundsListProps) {
               key={r.id}
               to={`/scorecard?round=${r.id}`}
               onClick={e => e.currentTarget.style.setProperty('view-transition-name', 'round-card')}
-              className="block rounded-card border border-[#ded8cb] bg-white p-2 shadow-card active:scale-[0.99] transition overflow-hidden"
+              className="rise-in block rounded-card border border-[#ded8cb] bg-white p-2 shadow-card active:scale-[0.99] transition overflow-hidden"
+              style={{ '--rise-index': Math.min(i, 8) } as React.CSSProperties}
             >
               <div className="relative overflow-hidden rounded-[18px] bg-ink px-3.5 py-3.5">
                 <div

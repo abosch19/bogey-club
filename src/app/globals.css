@@ -93,6 +93,137 @@ body {
   padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
 
+/* ——— Motion primitives ——— */
+
+/* Card entrance: fade + rise, staggered via --rise-index (set per item). */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.rise-in {
+  animation: rise-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--rise-index, 0) * 40ms);
+}
+
+/* Skeleton shimmer: a soft diagonal sweep instead of a plain pulse. */
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.skeleton-shimmer {
+  background: linear-gradient(100deg, var(--c-rule-soft) 40%, #f8f5ee 50%, var(--c-rule-soft) 60%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+/* HeroCard orb: a slow breathing drift. */
+@keyframes orb-drift {
+  to {
+    transform: scale(1.06) translate(-2%, 2%);
+  }
+}
+.orb-drift {
+  animation: orb-drift 8s ease-in-out infinite alternate;
+}
+
+/* Score chip celebration (birdie or better). */
+@keyframes score-pop {
+  0% {
+    transform: scale(0.8);
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.score-pop {
+  animation: score-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Odometer ticker: old value rolls out upward, new one rolls in from below. */
+.ticker {
+  position: relative;
+  display: inline-flex;
+  overflow: hidden;
+}
+@keyframes ticker-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+@keyframes ticker-out {
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+.ticker-in {
+  animation: ticker-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ticker-out {
+  position: absolute;
+  inset: 0;
+  animation: ticker-out 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Mid-round celebration: a soft green glow from the score sheet (birdie+). */
+@keyframes hole-flash {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.hole-flash {
+  background: radial-gradient(circle at 50% 75%, color-mix(in srgb, var(--c-accent) 38%, transparent), transparent 70%);
+  animation: hole-flash 650ms ease-out both;
+}
+
+/* Confetti piece fall (shared by ConfettiBurst and the signing Celebration). */
+@keyframes confetti-fall {
+  from {
+    transform: translateY(-6vh) rotate(0deg);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(108vh) rotate(660deg);
+    opacity: 0;
+  }
+}
+
+/* Respect reduced motion: collapse app animations/transitions to instant and
+   disable view-transition choreography. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 /* Dark hero surface (HeroCard): depth gradient, pinstripes and diagonal sheen. */
 .hero-card {
   background: linear-gradient(140deg, #0a1511 0%, var(--c-ink) 46%, #17291f 100%);

@@ -164,7 +164,7 @@ export function TabBar() {
         onPointerCancel={handlePointerEnd}
       >
         <div
-          className="absolute left-0 top-0 h-[46px] w-[62px] rounded-full bg-[#ececec] transition-transform duration-150 ease-out"
+          className="absolute left-0 top-0 h-[46px] w-[62px] rounded-full bg-[#ececec] transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
           style={{ transform: `translateX(${indicatorIndex * TAB_WIDTH}px)` }}
         />
         {tabs.map(({ key, href, label, icon }) => {

@@ -6,11 +6,15 @@ import { api } from '@convex/_generated/api'
 import type { Id } from '@convex/_generated/dataModel'
 import { Avatar } from '@/components/ui/avatar'
 import { PlayerLink } from '@/components/ui/player-link'
+import { useCollapsedHeader } from '@/lib/use-collapsed-header'
+import { useFlip } from '@/lib/use-flip'
 
 export default function LigaPage() {
   const data = useQuery(api.leagues.listForUser)
   const removeLeague = useMutation(api.leagues.remove)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const collapsed = useCollapsedHeader()
+  const flipRef = useFlip()
 
   const leagues = data ?? []
 
@@ -36,7 +40,13 @@ export default function LigaPage() {
         style={{ paddingTop: 'max(14px, env(safe-area-inset-top))' }}
       >
         <div className="flex items-center justify-between">
-          <h1 className="text-[26px] font-black tracking-tight text-ink">Liga</h1>
+          <h1
+            className={`font-black tracking-tight text-ink transition-all duration-200 ${
+              collapsed ? 'text-[15px]' : 'text-[26px]'
+            }`}
+          >
+            Liga
+          </h1>
           <Link
             to="/league/new"
             className="btn-glow flex items-center gap-1.5 px-3.5 py-2 rounded-full font-bold text-[13px] text-white transition active:scale-[0.97]"
@@ -199,8 +209,14 @@ export default function LigaPage() {
                       {st.slice(0, 5).map((s: any, i: number) => (
                         <div
                           key={s.profile_id}
-                          className="flex items-center gap-3 py-1.5 px-2 rounded-field"
-                          style={{ backgroundColor: i === 0 ? '#f6e6c4' : 'transparent' }}
+                          ref={flipRef(`${league._id}:${s.profile_id}`)}
+                          className="rise-in flex items-center gap-3 py-1.5 px-2 rounded-field"
+                          style={
+                            {
+                              backgroundColor: i === 0 ? '#f6e6c4' : 'transparent',
+                              '--rise-index': Math.min(i, 8),
+                            } as React.CSSProperties
+                          }
                         >
                           <span
                             className="font-mono text-[12px] font-bold w-5 text-center"

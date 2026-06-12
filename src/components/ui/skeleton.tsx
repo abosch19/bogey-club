@@ -2,7 +2,7 @@
 // so the layout doesn't jump from a centered spinner to the real content.
 
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div aria-hidden className={`animate-pulse bg-rule-soft ${className}`} />
+  return <div aria-hidden className={`skeleton-shimmer ${className}`} />
 }
 
 /** Generic tab-page skeleton: title strip, hero surface and a few card rows. */

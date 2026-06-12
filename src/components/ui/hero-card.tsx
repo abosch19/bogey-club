@@ -27,7 +27,7 @@ export function HeroCard({
   return (
     <div className={`hero-card rounded-card relative overflow-hidden shadow-hero ${className}`} style={style}>
       <div
-        className="absolute rounded-full"
+        className="orb-drift absolute rounded-full"
         style={{
           right: offset,
           top: offset,

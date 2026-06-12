@@ -7,6 +7,7 @@ import { strokesReceived, stablefordPts } from '@/lib/golf'
 import { pendingHoles$, enqueuePendingHole, clearPendingHole, withTimeout } from '@/lib/offline-scores'
 import { Drawer } from 'vaul'
 import { Avatar } from '@/components/ui/avatar'
+import { ConfettiBurst } from '@/components/ui/confetti-burst'
 
 type Hole = { hole_number: number; par: number; stroke_index: number; distance_m: number | null }
 type Player = { id: string; name: string; course_handicap: number; avatar_url?: string | null }
@@ -228,7 +229,9 @@ function PlayerCard({
                 key={s}
                 type="button"
                 onClick={() => setScore(p.id, s)}
-                className="flex-1 h-12 rounded-field transition active:scale-95 flex flex-col items-center justify-center"
+                className={`flex-1 h-12 rounded-field transition active:scale-95 flex flex-col items-center justify-center ${
+                  isSelected && d < 0 ? 'score-pop' : ''
+                }`}
                 style={{
                   backgroundColor: isSelected ? c.bg : '#f4f1e9',
                   color: isSelected ? c.text : '#9b9b8a',
@@ -378,6 +381,59 @@ function PlayerCard({
   )
 }
 
+type AvatarSelectorProps = {
+  players: Player[]
+  par: number
+  activeId: string | null
+  get: (pid: string) => PlayerScore
+  onSelect: (pid: string) => void
+}
+
+/** Horizontal strip of player avatars; each shows its hole score as a badge. */
+function AvatarSelector({ players, par, activeId, get, onSelect }: AvatarSelectorProps) {
+  return (
+    <div className="flex gap-3 mb-2 overflow-x-auto px-0.5 py-2">
+      {players.map(p => {
+        const psc = get(p.id)
+        const isActive = activeId === p.id
+        const pd = psc.strokes != null ? scoreColor(psc.strokes - par) : null
+        return (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => onSelect(p.id)}
+            className="flex flex-col items-center gap-1 flex-shrink-0 transition active:scale-95"
+            style={{ width: 56 }}
+          >
+            <div className="relative">
+              <Avatar
+                name={p.name}
+                src={p.avatar_url}
+                size={48}
+                style={{ outline: isActive ? '3px solid #0e1a16' : '3px solid transparent', outlineOffset: 2 }}
+              />
+              {psc.strokes != null && pd && (
+                <div
+                  className="score-pop absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-black border-2 border-white"
+                  style={{ backgroundColor: pd.bg, color: pd.text }}
+                >
+                  {psc.strokes}
+                </div>
+              )}
+            </div>
+            <span
+              className="text-[11px] font-semibold truncate w-full text-center"
+              style={{ color: isActive ? '#0e1a16' : '#6b7a72' }}
+            >
+              {p.name.split(' ')[0]}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 type HoleEntryProps = {
   roundId: string
   holeNum: number
@@ -392,9 +448,15 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
   // Only the user's edits live in state; the saved scores are derived from the
   // server query, so there is no effect syncing state to a prop.
   const [edits, setEdits] = useState<Record<string, PlayerScore>>({})
-  const [saving, setSaving] = useState(false)
+  // Save lifecycle: in-flight flag + the celebration the last save earned.
+  const [save, setSave] = useState<{
+    saving: boolean
+    celebrate: { kind: 'birdie' | 'eagle'; key: number } | null
+  }>({ saving: false, celebrate: null })
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
+  const { saving, celebrate } = save
+  const setSaving = (saving: boolean) => setSave(s => ({ ...s, saving }))
 
   const roundModes = data?.modes ?? []
   // 9_twice: a 9-hole course played twice — holes 10-18 reuse the par/SI of 1-9
@@ -484,6 +546,16 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
       profileId.startsWith('guest_') ? [] : [{ profileId: profileId as Id<'profiles'>, ...sc }],
     )
     const advance = () => {
+      // Birdie or better on this hole → green flash; eagle adds confetti.
+      const holePar = hole?.par ?? 4
+      const deltas = scoresArray.flatMap(s => (s.strokes != null ? [s.strokes - holePar] : []))
+      const best = deltas.length ? Math.min(...deltas) : 1
+      if (best <= -1)
+        setSave(s => ({
+          ...s,
+          celebrate: { kind: best <= -2 ? 'eagle' : 'birdie', key: (s.celebrate?.key ?? 0) + 1 },
+        }))
+
       const isLast = holeNum >= totalHoles
       if (isLast) onFinish()
       else onChangeHole(holeNum + 1)
@@ -530,6 +602,12 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
 
   return (
     <div className="flex flex-col">
+      {celebrate && (
+        <div key={celebrate.key}>
+          <div className="hole-flash pointer-events-none fixed inset-0 z-[55]" />
+          {celebrate.kind === 'eagle' && <ConfettiBurst />}
+        </div>
+      )}
       {/* Header */}
       <div className="px-[14px] pb-2 text-center">
         <span className="font-mono text-[10px] text-mute uppercase tracking-[0.15em]">
@@ -565,46 +643,13 @@ function HoleEntry({ roundId, holeNum, onChangeHole, onFinish }: HoleEntryProps)
       {/* Players — avatar selector + active player's card (non-scramble) */}
       {!roundModes.includes('scramble') && (
         <div className="px-[14px]">
-          {/* Avatar selector */}
-          <div className="flex gap-3 mb-2 overflow-x-auto px-0.5 py-2">
-            {players.map(p => {
-              const psc = get(p.id)
-              const isActive = activePlayer?.id === p.id
-              const pd = psc.strokes != null ? scoreColor(psc.strokes - par) : null
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setSelectedPlayerId(p.id)}
-                  className="flex flex-col items-center gap-1 flex-shrink-0 transition active:scale-95"
-                  style={{ width: 56 }}
-                >
-                  <div className="relative">
-                    <Avatar
-                      name={p.name}
-                      src={p.avatar_url}
-                      size={48}
-                      style={{ outline: isActive ? '3px solid #0e1a16' : '3px solid transparent', outlineOffset: 2 }}
-                    />
-                    {psc.strokes != null && pd && (
-                      <div
-                        className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-black border-2 border-white"
-                        style={{ backgroundColor: pd.bg, color: pd.text }}
-                      >
-                        {psc.strokes}
-                      </div>
-                    )}
-                  </div>
-                  <span
-                    className="text-[11px] font-semibold truncate w-full text-center"
-                    style={{ color: isActive ? '#0e1a16' : '#6b7a72' }}
-                  >
-                    {p.name.split(' ')[0]}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+          <AvatarSelector
+            players={players}
+            par={par}
+            activeId={activePlayer?.id ?? null}
+            get={get}
+            onSelect={setSelectedPlayerId}
+          />
           {(activePlayer ? [activePlayer] : []).map(p => (
             <PlayerCard
               key={p.id}

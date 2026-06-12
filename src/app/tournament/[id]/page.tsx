@@ -7,6 +7,7 @@ import { Id } from '@convex/_generated/dataModel'
 import { stablefordPts, strokesReceived } from '@/lib/golf'
 import { HeroCard } from '@/components/ui/hero-card'
 import { Avatar } from '@/components/ui/avatar'
+import { Ticker } from '@/components/ui/ticker'
 
 type TPlayer = {
   id: string
@@ -87,7 +88,7 @@ function LeaderboardTab({
                     className="font-mono text-[20px] font-black leading-none"
                     style={{ color: isFirst ? '#e8b75a' : '#0e1a16' }}
                   >
-                    {p.score}
+                    <Ticker value={p.score} />
                   </p>
                   {delta !== null && (
                     <p

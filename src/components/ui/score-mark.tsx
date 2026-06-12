@@ -3,11 +3,20 @@
 // number = par. Monochrome, like a pencil-marked paper card.
 
 const INK = 'var(--c-ink)'
+const STROKE = 1.5
 
 export function ScoreMark({ strokes, delta, size = 22 }: { strokes: number; delta: number; size?: number }) {
-  const color = INK
-  const number = (
-    <span className="font-mono font-bold leading-none" style={{ color: INK, fontSize: Math.round(size * 0.5) }}>
+  // Inside a box the digit needs a tiny downward nudge: digits sit on the
+  // baseline with empty descent below, so the ink otherwise rides high.
+  const number = (nudge: boolean) => (
+    <span
+      className="font-mono font-bold leading-none"
+      style={{
+        color: INK,
+        fontSize: Math.round(size * 0.5),
+        transform: nudge ? 'translateY(0.05em)' : undefined,
+      }}
+    >
       {strokes}
     </span>
   )
@@ -16,36 +25,35 @@ export function ScoreMark({ strokes, delta, size = 22 }: { strokes: number; delt
   if (delta === 0) {
     return (
       <div className="flex items-center justify-center mx-auto" style={{ width: size, height: size }}>
-        {number}
+        {number(false)}
       </div>
     )
   }
 
   const isCircle = delta < 0
   const double = Math.abs(delta) >= 2
-  const outer: React.CSSProperties = {
-    width: size,
-    height: size,
-    border: `1.5px solid ${color}`,
-    borderRadius: isCircle ? 9999 : 4,
+  const shape = (inset: number, radius: number) => {
+    const props = { fill: 'none', stroke: INK, strokeWidth: STROKE }
+    return isCircle ? (
+      <circle cx={size / 2} cy={size / 2} r={(size - inset * 2 - STROKE) / 2} {...props} />
+    ) : (
+      <rect
+        x={inset + STROKE / 2}
+        y={inset + STROKE / 2}
+        width={size - inset * 2 - STROKE}
+        height={size - inset * 2 - STROKE}
+        rx={radius}
+        {...props}
+      />
+    )
   }
   return (
-    <div className="flex items-center justify-center mx-auto" style={outer}>
-      {double ? (
-        <div
-          className="flex items-center justify-center"
-          style={{
-            width: size - 6,
-            height: size - 6,
-            border: `1.5px solid ${color}`,
-            borderRadius: isCircle ? 9999 : 2,
-          }}
-        >
-          {number}
-        </div>
-      ) : (
-        number
-      )}
+    <div className="relative flex items-center justify-center mx-auto" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="absolute inset-0" aria-hidden>
+        {shape(0, 4)}
+        {double && shape(3, 2)}
+      </svg>
+      {number(true)}
     </div>
   )
 }

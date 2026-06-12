@@ -2,6 +2,7 @@
 // Métricas. Shared by /scorecard (when signed) and the public share view.
 
 import { Avatar, avatarColor } from '@/components/ui/avatar'
+import { CountUp } from '@/components/ui/count-up'
 import { PlayerLink } from '@/components/ui/player-link'
 import type { Player, Hole } from '@/components/ScorecardTable'
 
@@ -105,7 +106,7 @@ export function RoundStats({ players, scores, holes, myId, linkPlayers = true }:
                     style={{ backgroundColor: wins ? '#d9eedd' : 'transparent' }}
                   >
                     <p className="font-mono text-[14px] font-black" style={{ color: wins ? '#1f8a5b' : '#0e1a16' }}>
-                      {v != null ? `${v}${row.pct ? '%' : ''}` : '–'}
+                      {v != null ? <CountUp value={v} format={n => `${Math.round(n)}${row.pct ? '%' : ''}`} /> : '–'}
                     </p>
                   </div>
                 )
